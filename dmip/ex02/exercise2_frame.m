@@ -58,8 +58,8 @@ title('Cutted Image');
 %   d: (d/2) = maximal value at the radius boundary
 %   R - max(max(R))*0.5: shifting the positive range to half positive/half
 %   negative range
-a = 3;
-b = 9;
+a = 9;
+b = 3;
 d = 12;
 h = floor(minI/2);
 R = d*sqrt(a*((X-h)/minI).^2 + b*((Y-h)/minI).^2);

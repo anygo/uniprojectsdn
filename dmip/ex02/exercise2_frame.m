@@ -59,7 +59,7 @@ title('Cutted Image');
 %   R - max(max(R))*0.5: shifting the positive range to half positive/half
 %   negative range
 a = 3;
-b = 25;
+b = 9;
 d = 12;
 h = floor(minI/2);
 R = d*sqrt(a*((X-h)/minI).^2 + b*((Y-h)/minI).^2);
@@ -102,8 +102,8 @@ title('Distorted Image');
 
 %   1. Number of lattice points (this only works for symmetric images)
 
-nx = 8; 
-ny = 8;
+nx = 12; 
+ny = 12;
 
 % Step size
 sx = size(I,2);
@@ -190,11 +190,11 @@ title('Grid for sampling the distorted image to get the corrected image (XD->XU)
 % d=2: parabola
 % d>=2: continuous non-linear curve 
 % E.g. d=5: 4 extrema
-d = 3;
+d = 7;
 
 
 %   Number of Coefficients
-NumKoeff = d+1;
+NumKoeff = d*(d+2);
 
 %   Number of Correspondences
 NumCorresp = nx*ny;
@@ -207,7 +207,6 @@ disp('NumCorresp');
 NumCorresp
 
 %   3. Create the matrix A
-
 A = zeros(NumCorresp,NumKoeff);
 
 % Realign the grid matrix to a vector.
@@ -222,7 +221,7 @@ for r = 1:NumCorresp
   c = 1;
   for i = 0:d
     for j = 0:(d-i)
-      A(r,c) = YU2vec(r)^j * XU2vec(r)^i;
+      A(r,c) = A(r,c)+YU2vec(r)^j * XU2vec(r)^i;
       c = c + 1;
     end
   end
@@ -290,7 +289,7 @@ title('Undistorted/corrected Image');
 figure(1);
 subplot(2,3,5);			
 imagesc(abs(I-undist));
-%imagesc(log(abs(I-undist)));
+imagesc(log(abs(I-undist)));
 %colorbar
 axis image
 title('Cutted - Corrected Image');
@@ -298,7 +297,7 @@ title('Cutted - Corrected Image');
 figure(1);
 subplot(2,3,6);	
 imagesc(abs(I-Idist));
-%imagesc(log(abs(I-Idist)));
+imagesc(log(abs(I-Idist)));
 axis image
 title('Cutted - Distorted Image');
 %colormap('Jet');

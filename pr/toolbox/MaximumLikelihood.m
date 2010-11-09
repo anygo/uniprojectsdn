@@ -1,4 +1,4 @@
-function test_targets = MaximumLikelihoodEstimator(train_patterns, train_targets, test_patterns, params)
+function test_targets = MaximumLikelihood(train_patterns, train_targets, test_patterns, approach)
 
 
 %% initialization

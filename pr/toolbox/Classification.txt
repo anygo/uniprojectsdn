@@ -1,5 +1,5 @@
-LogisticRegression@sameCov@0@S
-MaximumLikelihood@method@1@S
+GaussianLogisticRegression@sameCov@1@S
+MaximumLikelihood@approach@1@S
 kNearestNeighbors@k@3@S
 NearestNeighbor@ @ @N
 None@ @ @N

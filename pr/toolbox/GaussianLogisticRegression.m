@@ -1,8 +1,8 @@
-function test_targets = MaximumLikelihoodEstimator(train_patterns, train_targets, test_patterns, params)
+function test_targets = GaussianLogisticRegression(train_patterns, train_targets, test_patterns, sameCov)
 
 
 %% initialization
-L			= length(train_targets);
+L			    = length(train_targets);
 N               = size(test_patterns, 2);
 test_targets    = zeros(1,N); 
 

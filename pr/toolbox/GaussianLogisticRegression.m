@@ -1,57 +1,61 @@
 function test_targets = GaussianLogisticRegression(train_patterns, train_targets, test_patterns, sameCov)
 
-
-%% initialization
-L			    = length(train_targets);
-N               = size(test_patterns, 2);
-test_targets    = zeros(1,N); 
+N = length(train_patterns);
+classes = unique(train_targets);
 
 
-%% compute mean vectors
-mu0 = [0; 0];
-mu1 = [0; 0];
-mu0_count = 0;
-mu1_count = 1;
-for i = 1:L
-    if (train_targets(1,i) == 0)
-        mu0_count = mu0_count+1;
-        mu0 = mu0 + train_patterns(:,i);
+class1 = find(train_targets == 0);
+class2 = find(train_targets == 1);
+
+%% mean and cov
+mu1 = mean(train_patterns(:, class1)')'
+mu2 = mean(train_patterns(:, class2)')'
+
+sigma1 = cov(train_patterns(:, class1)')
+sigma2 = cov(train_patterns(:, class2)')
+
+if (sameCov == 1)
+    sigma = 0.5 * sigma1 + 0.5 * sigma2;
+    sigma1 = sigma;
+    sigma2 = sigma;
+end
+
+%% prior
+p1 = length(class1) / N;
+p2 = length(class2) / N;
+
+N_test = length(test_patterns);
+test_targets = zeros(1, N_test);
+
+
+%% invert covs
+S1_inv = inv(sigma1);
+S2_inv = inv(sigma2);
+
+
+%% computations
+t0 = log(p1/p2);
+
+t1 = log(det((2*pi*sigma2)) ./ det((2*pi*sigma1)));
+t2 = (mu2' * S2_inv * mu2) - (mu1' * S1_inv * mu1);
+
+a0 = t0 + 1/2 * (t1 + t2);
+
+%% linear term
+at = mu1' * S1_inv - mu2' * S2_inv;
+
+%% quadratic term
+A = 1/2 * (S2_inv - S1_inv);
+
+%% loop
+for k = 1:N_test
+    p0 = 1.0 / (1 + exp(-(test_patterns(:,k)' * A * test_patterns(:,k) + at * test_patterns(:,k) + a0)));
+    if (p0 > 0.5)
+        test_targets(1,k) = 0;
     else
-        mu1_count = mu1_count+1;
-        mu1 = mu1 + train_patterns(:,i);
+        test_targets(1,k) = 1;
     end
 end
-mu0 = mu0 / mu0_count;
-mu1 = mu1 / mu1_count;
 
-
-%% compute covariance matrices
-cov0 = zeros(2,2);
-cov1 = zeros(2,2);
-cov0_count = 0;
-cov1_count = 0;
-for i = 1:L
-    x_k = train_patterns(:,i);
-    if (train_targets(1,i) == 0)
-        cov0_count = cov0_count+1;     
-        cov0 = cov0 + (x_k - mu0)*(x_k - mu0)';
-    else
-        cov1_count = cov1_count+1;
-        cov1 = cov1 + (x_k - mu1)*(x_k - mu1)';
-    end
 end
-cov0 = cov0 / cov0_count;
-cov1 = cov1 / cov1_count;
 
-
-%% classify test_patterns
-for i = 1:N
-    x = test_patterns(:,i);
-    prob0 = log((1/det(2*pi*cov0))) -0.5*(x-mu0)'*inv(cov0)*(x-mu0);
-    prob1 = log((1/det(2*pi*cov1))) -0.5*(x-mu1)'*inv(cov0)*(x-mu1);
-    if (prob0 > prob1)
-        test_targets(1,i) = 0;
-    else
-        test_targets(1,i) = 1;
-    end
-end

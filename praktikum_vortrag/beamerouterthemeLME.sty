@@ -1,0 +1,93 @@
+\ProvidesPackage{beamerouterthemeLME}
+
+\mode<presentation>
+
+\defbeamertemplate*{footline}{LME theme}
+{
+  \leavevmode%
+  \hbox{%
+  \begin{beamercolorbox}[wd=\paperwidth,ht=2.25ex,dp=1ex,left]{author in head/foot}%
+    \usebeamerfont{author in head/foot}\hspace*{2ex}\insertshortauthor:\hspace*{2ex}\insertshorttitle%
+  \end{beamercolorbox}}%
+  \vskip0pt%
+}
+
+\defbeamertemplate*{headline}{LME theme}
+{
+  \leavevmode%
+  \hbox{%
+  \begin{beamercolorbox}[wd=\paperwidth,ht=2.25ex,dp=1ex,right]{date in head/foot}%
+    \usebeamerfont{date in head/foot}
+    \insertframenumber{} / \inserttotalframenumber\hspace*{2ex}
+  \end{beamercolorbox}}%
+  \vskip0pt%
+}
+
+\defbeamertemplate{background canvas}{LME title}{
+  \beamerLMEexactplacement{-5mm}{-94mm}{
+    \includegraphics[width=138mm,height=96mm]{beamerLMEtitleback}
+  }
+}
+
+\defbeamertemplate*{title page}{LME theme}[1][]
+{
+  \vskip-56mm % to top of page
+  % title
+  \beamerLMEexactplacement{-2mm}{-4mm}{\parbox{118mm}{
+    {\usebeamerfont{title}\usebeamercolor[fg]{title}\inserttitle\par}
+    \ifx\insertsubtitle\@empty
+    \else
+      \vskip0.25em
+      {\usebeamerfont{subtitle}\usebeamercolor[fg]{subtitle}\insertsubtitle\par}
+    \fi
+  }}
+  % date
+  \beamerLMEexactplacement{10mm}{-36mm}{\parbox{100mm}{
+    {\usebeamerfont{date}\usebeamercolor[fg]{date}\insertdate}
+  }}
+  % author & institute
+  \beamerLMEexactplacement{38mm}{-65mm}{\parbox{70mm}{
+    {\usebeamerfont{author}\usebeamercolor[fg]{author}\insertauthor\par}
+    \vskip3mm
+    {\usebeamerfont{institute}\usebeamercolor[fg]{institute}\insertinstitute}
+  }}
+}
+
+\defbeamertemplate*{sidebar right}{LME theme}
+{
+  \vfill%
+  \llap{\usebeamertemplate***{navigation symbols}\hskip0.2cm}%
+  \vskip-8pt%
+}
+
+\defbeamertemplate*{frametitle}{LME theme}[1][left]
+{
+  \ifbeamercolorempty[bg]{frametitle}{}{\nointerlineskip}%
+  \@tempdima=\textwidth%
+  \advance\@tempdima by\beamer@leftmargin%
+  \advance\@tempdima by\beamer@rightmargin%
+  %\advance\@tempdima by-1.0cm
+  \begin{beamercolorbox}[sep=0.3cm,#1,wd=\the\@tempdima]{frametitle}
+    \usebeamerfont{frametitle}%
+    \vbox{}\vskip-1ex%
+    \if@tempswa\else\csname beamer@fte#1\endcsname\fi%
+    \beamerLMEexactplacement{112.0mm}{-2.2mm}{\includegraphics[height=8.8mm]{LMElogo_ohneschrift}}%
+    \strut\insertframetitle\strut
+    \par%
+    {%
+      \ifx\insertframesubtitle\@empty%
+      \else%
+      {\usebeamerfont{framesubtitle}\usebeamercolor[fg]{framesubtitle}\insertframesubtitle\strut\par
+}%
+      \fi
+    }%
+    
+    \vskip-1ex%
+    \if@tempswa\else\vskip-.3cm\fi% set inside beamercolorbox... evil here...
+  \end{beamercolorbox}%
+}
+
+\setbeamersize{text margin left=1em,text margin right=1em}
+
+\mode
+<all>

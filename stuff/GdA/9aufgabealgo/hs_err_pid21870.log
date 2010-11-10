@@ -1,0 +1,188 @@
+#
+# An unexpected error has been detected by Java Runtime Environment:
+#
+#  Internal Error (53414645504F494E540E43505000ED), pid=21870, tid=1912028080
+#
+# Java VM: Java HotSpot(TM) Server VM (1.6.0_03-b05 mixed mode)
+# If you would like to submit a bug report, please visit:
+#   http://java.sun.com/webapps/bugreport/crash.jsp
+#
+
+---------------  T H R E A D  ---------------
+
+Current thread (0x08119c00):  VMThread [id=21874]
+
+Stack: [0x71ef4000,0x71f74000),  sp=0x71f73010,  free space=508k
+Native frames: (J=compiled Java code, j=interpreted, Vv=VM code, C=native code)
+V  [libjvm.so+0x53b9a7]
+V  [libjvm.so+0x225fdf]
+V  [libjvm.so+0x4aabf0]
+V  [libjvm.so+0x54e54c]
+V  [libjvm.so+0x54e13f]
+V  [libjvm.so+0x4532a9]
+C  [libpthread.so.0+0x50bd]
+
+VM_Operation (0x71cb2fe0): enable-biased-locking, mode: safepoint, requested by thread 0x08135400
+
+
+---------------  P R O C E S S  ---------------
+
+Java Threads: ( => current thread )
+  0x08133c00 JavaThread "Low Memory Detector" daemon [_thread_blocked, id=21880]
+  0x08132000 JavaThread "CompilerThread1" daemon [_thread_blocked, id=21879]
+  0x08130c00 JavaThread "CompilerThread0" daemon [_thread_blocked, id=21878]
+  0x0812f800 JavaThread "Signal Dispatcher" daemon [_thread_blocked, id=21877]
+  0x08120400 JavaThread "Finalizer" daemon [_thread_blocked, id=21876]
+  0x0811c800 JavaThread "Reference Handler" daemon [_thread_blocked, id=21875]
+  0x08058800 JavaThread "main" [_thread_in_Java, id=21871]
+
+Other Threads:
+=>0x08119c00 VMThread [id=21874]
+  0x08135400 WatcherThread [id=21881]
+
+VM state:synchronizing (normal execution)
+
+VM Mutex/Monitor currently owned by a thread:  ([mutex/lock_event])
+[0x08056008/0x08056030] Safepoint_lock - owner thread: 0x08119c00
+[0x08056088/0x080560b0] Threads_lock - owner thread: 0x08119c00
+
+Heap
+ PSYoungGen      total 6208K, used 231K [0xadd30000, 0xae410000, 0xb4c10000)
+  eden space 5376K, 4% used [0xadd30000,0xadd69c98,0xae270000)
+  from space 832K, 0% used [0xae340000,0xae340000,0xae410000)
+  to   space 832K, 0% used [0xae270000,0xae270000,0xae340000)
+ PSOldGen        total 56832K, used 0K [0x76610000, 0x79d90000, 0xadd30000)
+  object space 56832K, 0% used [0x76610000,0x76610000,0x79d90000)
+ PSPermGen       total 16384K, used 1624K [0x72610000, 0x73610000, 0x76610000)
+  object space 16384K, 9% used [0x72610000,0x727a62a8,0x73610000)
+
+Dynamic libraries:
+06000000-065a0000 r-xp 00000000 00:17 12944361   /local/java/jre/lib/i386/server/libjvm.so
+065a0000-065db000 rwxp 005a0000 00:17 12944361   /local/java/jre/lib/i386/server/libjvm.so
+065db000-069fc000 rwxp 065db000 00:00 0 
+08048000-08052000 r-xp 00000000 00:17 12993019   /local/java/bin/java
+08052000-08053000 rwxp 00009000 00:17 12993019   /local/java/bin/java
+08053000-0818f000 rwxp 08053000 00:00 0          [heap]
+71c34000-71c35000 ---p 71c34000 00:00 0 
+71c35000-71cb4000 rwxp 71c35000 00:00 0 
+71cb4000-71cb7000 ---p 71cb4000 00:00 0 
+71cb7000-71d04000 rwxp 71cb7000 00:00 0 
+71d04000-71d07000 ---p 71d04000 00:00 0 
+71d07000-71d84000 rwxp 71d07000 00:00 0 
+71d84000-71d87000 ---p 71d84000 00:00 0 
+71d87000-71e04000 rwxp 71d87000 00:00 0 
+71e04000-71e07000 ---p 71e04000 00:00 0 
+71e07000-71e54000 rwxp 71e07000 00:00 0 
+71e54000-71e57000 ---p 71e54000 00:00 0 
+71e57000-71ea4000 rwxp 71e57000 00:00 0 
+71ea4000-71ea7000 ---p 71ea4000 00:00 0 
+71ea7000-71ef4000 rwxp 71ea7000 00:00 0 
+71ef4000-71ef5000 ---p 71ef4000 00:00 0 
+71ef5000-71fa4000 rwxp 71ef5000 00:00 0 
+71fa4000-72120000 r-xs 02c8f000 00:17 12944455   /local/java/jre/lib/rt.jar
+72120000-72121000 ---p 72120000 00:00 0 
+72121000-721a0000 rwxp 72121000 00:00 0 
+721a0000-721a1000 ---p 721a0000 00:00 0 
+721a1000-72228000 rwxp 721a1000 00:00 0 
+72228000-72240000 rwxp 72228000 00:00 0 
+72240000-7225c000 rwxp 72240000 00:00 0 
+7225c000-723fc000 rwxp 7225c000 00:00 0 
+723fc000-72404000 rwxp 723fc000 00:00 0 
+72404000-7241c000 rwxp 72404000 00:00 0 
+7241c000-72438000 rwxp 7241c000 00:00 0 
+72438000-725d7000 rwxp 72438000 00:00 0 
+725d7000-725db000 rwxp 725d7000 00:00 0 
+725db000-7260f000 rwxp 725db000 00:00 0 
+7260f000-73610000 rwxp 7260f000 00:00 0 
+73610000-76610000 rwxp 73610000 00:00 0 
+76610000-79d90000 rwxp 76610000 00:00 0 
+79d90000-add30000 rwxp 79d90000 00:00 0 
+add30000-ae410000 rwxp add30000 00:00 0 
+ae410000-b4c10000 rwxp ae410000 00:00 0 
+b4c1f000-b4c28000 rwxp b4c1f000 00:00 0 
+b4c28000-b4cdf000 rwxp b4c28000 00:00 0 
+b4cdf000-b4f1f000 rwxp b4cdf000 00:00 0 
+b4f1f000-b7cdf000 rwxp b4f1f000 00:00 0 
+b7cdf000-b7d02000 r-xp 00000000 00:17 12944373   /local/java/jre/lib/i386/libjava.so
+b7d02000-b7d04000 rwxp 00023000 00:17 12944373   /local/java/jre/lib/i386/libjava.so
+b7d04000-b7d0d000 r-xp 00000000 09:00 5013646    /lib/tls/libnss_files-2.3.6.so
+b7d0d000-b7d0f000 rwxp 00008000 09:00 5013646    /lib/tls/libnss_files-2.3.6.so
+b7d0f000-b7d17000 r-xp 00000000 09:00 5013648    /lib/tls/libnss_nis-2.3.6.so
+b7d17000-b7d19000 rwxp 00007000 09:00 5013648    /lib/tls/libnss_nis-2.3.6.so
+b7d1c000-b7d2b000 r-xp 00000000 00:17 12944375   /local/java/jre/lib/i386/libzip.so
+b7d2b000-b7d2d000 rwxp 0000e000 00:17 12944375   /local/java/jre/lib/i386/libzip.so
+b7d2d000-b7d38000 r-xp 00000000 00:17 12944372   /local/java/jre/lib/i386/libverify.so
+b7d38000-b7d39000 rwxp 0000b000 00:17 12944372   /local/java/jre/lib/i386/libverify.so
+b7d39000-b7d41000 rwxs 00000000 09:00 1229861    /tmp/hsperfdata_sidoneum/21870
+b7d41000-b7d47000 r-xp 00000000 09:00 5013658    /lib/tls/librt-2.3.6.so
+b7d47000-b7d49000 rwxp 00005000 09:00 5013658    /lib/tls/librt-2.3.6.so
+b7d49000-b7d4c000 ---p b7d49000 00:00 0 
+b7d4c000-b7d99000 rwxp b7d4c000 00:00 0 
+b7d99000-b7dbc000 r-xp 00000000 09:00 5013641    /lib/tls/libm-2.3.6.so
+b7dbc000-b7dbe000 rwxp 00022000 09:00 5013641    /lib/tls/libm-2.3.6.so
+b7dbe000-b7dbf000 rwxp b7dbe000 00:00 0 
+b7dbf000-b7ee7000 r-xp 00000000 09:00 5013634    /lib/tls/libc-2.3.6.so
+b7ee7000-b7eec000 r-xp 00127000 09:00 5013634    /lib/tls/libc-2.3.6.so
+b7eec000-b7eee000 rwxp 0012c000 09:00 5013634    /lib/tls/libc-2.3.6.so
+b7eee000-b7ef1000 rwxp b7eee000 00:00 0 
+b7ef1000-b7ef3000 r-xp 00000000 09:00 5013640    /lib/tls/libdl-2.3.6.so
+b7ef3000-b7ef5000 rwxp 00001000 09:00 5013640    /lib/tls/libdl-2.3.6.so
+b7ef5000-b7efc000 r-xp 00000000 00:17 12976918   /local/java/jre/lib/i386/jli/libjli.so
+b7efc000-b7efe000 rwxp 00006000 00:17 12976918   /local/java/jre/lib/i386/jli/libjli.so
+b7efe000-b7f0c000 r-xp 00000000 09:00 5013655    /lib/tls/libpthread-2.3.6.so
+b7f0c000-b7f0e000 rwxp 0000d000 09:00 5013655    /lib/tls/libpthread-2.3.6.so
+b7f0e000-b7f11000 rwxp b7f0e000 00:00 0 
+b7f11000-b7f18000 r-xp 00000000 09:00 5013644    /lib/tls/libnss_compat-2.3.6.so
+b7f18000-b7f1a000 rwxp 00006000 09:00 5013644    /lib/tls/libnss_compat-2.3.6.so
+b7f1a000-b7f2c000 r-xp 00000000 09:00 5013643    /lib/tls/libnsl-2.3.6.so
+b7f2c000-b7f2e000 rwxp 00011000 09:00 5013643    /lib/tls/libnsl-2.3.6.so
+b7f2e000-b7f30000 rwxp b7f2e000 00:00 0 
+b7f30000-b7f36000 r-xp 00000000 00:17 12944359   /local/java/jre/lib/i386/native_threads/libhpi.so
+b7f36000-b7f37000 rwxp 00006000 00:17 12944359   /local/java/jre/lib/i386/native_threads/libhpi.so
+b7f37000-b7f38000 rwxp b7f37000 00:00 0 
+b7f38000-b7f39000 ---p b7f38000 00:00 0 
+b7f39000-b7f3b000 rwxp b7f39000 00:00 0 
+b7f3b000-b7f3c000 r-xp b7f3b000 00:00 0          [vdso]
+b7f3c000-b7f51000 r-xp 00000000 09:00 709611     /lib/ld-2.3.6.so
+b7f51000-b7f53000 rwxp 00014000 09:00 709611     /lib/ld-2.3.6.so
+bfa26000-bfa3b000 rwxp bffeb000 00:00 0          [stack]
+
+VM Arguments:
+java_command: HeapImpl
+Launcher Type: SUN_STANDARD
+
+Environment Variables:
+PATH=/usr/local/bin:/usr/bin:/bin:/usr/bin/X11:/usr/games
+LD_LIBRARY_PATH=/local/java/jre/lib/i386/server:/local/java/jre/lib/i386:/local/java/jre/../lib/i386
+SHELL=/local/bin/bash
+
+Signal Handlers:
+SIGSEGV: [libjvm.so+0x53c560], sa_mask[0]=0x7ffbfeff, sa_flags=0x10000004
+SIGBUS: [libjvm.so+0x53c560], sa_mask[0]=0x7ffbfeff, sa_flags=0x10000004
+SIGFPE: [libjvm.so+0x451a50], sa_mask[0]=0x7ffbfeff, sa_flags=0x10000004
+SIGPIPE: [libjvm.so+0x451a50], sa_mask[0]=0x7ffbfeff, sa_flags=0x10000004
+SIGILL: [libjvm.so+0x451a50], sa_mask[0]=0x7ffbfeff, sa_flags=0x10000004
+SIGUSR1: SIG_DFL, sa_mask[0]=0x00000000, sa_flags=0x00000000
+SIGUSR2: [libjvm.so+0x453a80], sa_mask[0]=0x00000000, sa_flags=0x10000004
+SIGHUP: [libjvm.so+0x4534a0], sa_mask[0]=0x7ffbfeff, sa_flags=0x10000004
+SIGINT: [libjvm.so+0x4534a0], sa_mask[0]=0x7ffbfeff, sa_flags=0x10000004
+SIGQUIT: [libjvm.so+0x4534a0], sa_mask[0]=0x7ffbfeff, sa_flags=0x10000004
+SIGTERM: [libjvm.so+0x4534a0], sa_mask[0]=0x7ffbfeff, sa_flags=0x10000004
+SIGUSR2: [libjvm.so+0x453a80], sa_mask[0]=0x00000000, sa_flags=0x10000004
+
+
+---------------  S Y S T E M  ---------------
+
+OS:4.0
+
+uname:Linux 2.6.23.8 #5 SMP Fri Nov 23 16:00:35 CET 2007 i686
+libc:glibc 2.3.6 NPTL 2.3.6 
+rlimit: STACK 8192k, CORE 0k, NPROC 400, NOFILE 1024, AS infinity
+load average:2.00 2.05 1.59
+
+CPU:total 2 (1 cores per cpu, 1 threads per core) family 15 model 5 stepping 10, cmov, cx8, fxsr, mmx, sse, sse2, mmxext, 3dnow, 3dnowext
+
+Memory: 4k page, physical 4086148k(2430792k free), swap 8209080k(8195128k free)
+
+vm_info: Java HotSpot(TM) Server VM (1.6.0_03-b05) for linux-x86, built on Sep 24 2007 22:32:39 by "java_re" with gcc 3.2.1-7a (J2SE release)
+

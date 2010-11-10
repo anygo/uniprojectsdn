@@ -1,0 +1,100 @@
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+#include <dirent.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <limits.h>
+
+static char *getPath(char *path)
+{
+	int len;
+	char *ret;
+
+	len = (int)strlen(path);
+
+	if (path[len - 1] == '/')
+	{
+		ret = (char *)malloc(sizeof(char)*(len + 1));
+		strcpy(ret, path);
+	}
+	else
+	{
+		ret = (char *)malloc(sizeof(char)*(len + 2));
+		strncpy(ret, path, len);
+		ret[len] = '/';
+		ret[len + 1] = '\0';
+	}
+	return ret;
+}
+
+static void tiefensuche(char *path, int curdepth, int maxdepth)
+{	
+	DIR *openeddir;
+	char *curdir;
+	struct dirent entry;
+	struct dirent *result;
+	struct stat buf;
+	char *pathcomplete;
+
+	pathcomplete = (char *)malloc(sizeof(char)*LINE_MAX);
+	if (pathcomplete == NULL)
+	{
+		perror("malloc");
+		return;
+	}
+
+	curdir = getPath(path);
+	strcpy(pathcomplete, curdir);
+	
+	openeddir = opendir(curdir);
+	if (openeddir == NULL)
+	{
+		perror(curdir);
+		return;
+	}
+	result = (struct dirent *)1;
+	while (result != NULL)
+	{
+		if (readdir_r(openeddir, &entry, &result) != 0)
+		{
+			perror("aaah");
+		}
+		else
+		{
+			strcat(pathcomplete, entry.d_name);
+			if (lstat(pathcomplete, &buf) != 0)
+			{
+				perror(pathcomplete);
+				continue;
+			}
+			if (entry.d_name[0] != '.')
+			{
+				fprintf(stdout, "%s\n", pathcomplete);
+				if (S_ISDIR(buf.st_mode))
+				{
+					if (curdepth < maxdepth)
+					{
+						tiefensuche(pathcomplete, curdepth+1, maxdepth);
+					}
+				}
+			}
+		}
+	}
+	return;
+}
+
+
+
+int main(int argc, char* argv[])
+{
+	char *curdir;
+
+	curdir = getPath(argv[1]);
+
+	tiefensuche(curdir, 0, 3);
+	
+	return EXIT_SUCCESS;
+}

@@ -1,0 +1,25 @@
+\begin{picture}(0,0)%
+\includegraphics{\texfigdir/klassenhierarchie_ohne_.\texfig}%
+\end{picture}%
+\setlength{\unitlength}{4144sp}%
+%
+\begingroup\makeatletter\ifx\SetFigFontNFSS\undefined%
+\gdef\SetFigFontNFSS#1#2#3#4#5{%
+  \reset@font\fontsize{#1}{#2pt}%
+  \fontfamily{#3}\fontseries{#4}\fontshape{#5}%
+  \selectfont}%
+\fi\endgroup%
+\begin{picture}(5604,2904)(2284,-2683)
+\put(4546, 29){\makebox(0,0)[b]{\smash{{\SetFigFontNFSS{8}{9.6}{\familydefault}{\mddefault}{\updefault}{\color[rgb]{0,0,0}\structure{\texttt{abstract class VisualSpectrogram}}}%
+}}}}
+\put(3466,-2581){\makebox(0,0)[b]{\smash{{\SetFigFontNFSS{8}{9.6}{\familydefault}{\mddefault}{\updefault}{\color[rgb]{0,0,0}\structure{\texttt{VisualSpectrogamAudioStream}}}%
+}}}}
+\put(5716,-2581){\makebox(0,0)[b]{\smash{{\SetFigFontNFSS{8}{9.6}{\familydefault}{\mddefault}{\updefault}{\color[rgb]{0,0,0}\structure{\texttt{VisualSpectrogramAudioFile}}}%
+}}}}
+\put(3061,-1141){\makebox(0,0)[b]{\smash{{\SetFigFontNFSS{8}{9.6}{\familydefault}{\mddefault}{\updefault}{\color[rgb]{1,1,1}\texttt{interface FrameSource}}%
+}}}}
+\put(5986,-691){\makebox(0,0)[b]{\smash{{\SetFigFontNFSS{8}{9.6}{\familydefault}{\mddefault}{\updefault}{\color[rgb]{1,1,1}\texttt{interface Visualizer}}%
+}}}}
+\put(7066,-1456){\makebox(0,0)[b]{\smash{{\SetFigFontNFSS{8}{9.6}{\familydefault}{\mddefault}{\updefault}{\color[rgb]{1,1,1}\texttt{interface FrameChanger}}%
+}}}}
+\end{picture}%

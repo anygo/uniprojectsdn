@@ -1,0 +1,27 @@
+\begin{picture}(0,0)%
+\includegraphics{\texfigdir/audiofiles.\texfig}%
+\end{picture}%
+\setlength{\unitlength}{4144sp}%
+%
+\begingroup\makeatletter\ifx\SetFigFontNFSS\undefined%
+\gdef\SetFigFontNFSS#1#2#3#4#5{%
+  \reset@font\fontsize{#1}{#2pt}%
+  \fontfamily{#3}\fontseries{#4}\fontshape{#5}%
+  \selectfont}%
+\fi\endgroup%
+\begin{picture}(6279,2049)(169,-1828)
+\put(4546,-61){\makebox(0,0)[b]{\smash{{\SetFigFontNFSS{8}{9.6}{\familydefault}{\mddefault}{\updefault}{\color[rgb]{0,0,0}\texttt{RectangularWindow}}%
+}}}}
+\put(4546,-1051){\makebox(0,0)[b]{\smash{{\SetFigFontNFSS{8}{9.6}{\familydefault}{\mddefault}{\updefault}{\color[rgb]{0,0,0}\texttt{HammingWindow}}%
+}}}}
+\put(4546,-556){\makebox(0,0)[b]{\smash{{\SetFigFontNFSS{8}{9.6}{\familydefault}{\mddefault}{\updefault}{\color[rgb]{0,0,0}\texttt{HannWindow}}%
+}}}}
+\put(856,-556){\makebox(0,0)[b]{\smash{{\SetFigFontNFSS{8}{9.6}{\familydefault}{\mddefault}{\updefault}{\color[rgb]{0,0,0}\texttt{AudioFileReader}}%
+}}}}
+\put(5941,-556){\makebox(0,0)[b]{\smash{{\SetFigFontNFSS{8}{9.6}{\familydefault}{\mddefault}{\updefault}{\color[rgb]{0,0,0}\texttt{FFT}}%
+}}}}
+\put(5491,-1726){\makebox(0,0)[b]{\smash{{\SetFigFontNFSS{8}{9.6}{\familydefault}{\mddefault}{\updefault}{\color[rgb]{0,0,0}\structure{\texttt{VisualSpectrogramAudioFile}}}%
+}}}}
+\put(2701,-556){\makebox(0,0)[b]{\smash{{\SetFigFontNFSS{8}{9.6}{\familydefault}{\mddefault}{\updefault}{\color[rgb]{0,0,0}\structure{\texttt{BufferedAudioSource}}}%
+}}}}
+\end{picture}%

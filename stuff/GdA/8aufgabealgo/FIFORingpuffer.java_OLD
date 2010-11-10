@@ -1,0 +1,125 @@
+public class FIFORingpuffer implements FIFOSchlange {
+
+	private int[] puffer;
+	private int startpointer;
+	private int endpointer;
+	private int status;
+	private int numberElements;
+
+	/**
+	* Konstruiert eine neue RingPufferWarteschlange mit 'n' Warteplaetzen.
+	*/
+	public FIFORingpuffer(int n) {
+		puffer = new int[n];
+		startpointer = 0;
+		endpointer = 0;
+		numberElements = 0;
+		
+		// status: 
+		// 		-1 -> puffer leer;
+		// 		1 -> puffer voll;
+		// 		0 -> teilweise gefuellt
+		status = -1;
+	}
+
+	public boolean einfuegen(int zahl) {
+		if (status == -1) {
+			puffer[endpointer] = zahl;
+			status = 0;
+			numberElements++;
+			return true;
+		}
+		
+		if (status == 0) {
+			endpointer++;
+			endpointer %= (puffer.length);
+			puffer[endpointer] = zahl;
+			if ((endpointer + 1) % puffer.length == startpointer) {
+				status = 1;
+			}
+			numberElements++;
+			return true;
+		} 
+		
+		else {
+			System.out.println("Fehler: Ringpuffer bereits voll - es kann kein weiteres Element eingefuegt werden.");
+			return false;
+		}
+	}
+
+	public int herausnehmen() {
+		if (status == -1) {
+			System.out.println("Fehler: Ringpuffer leer - es kann kein Element herausgenommen werden.");
+			return -1;
+		}
+
+		else {
+			numberElements--;
+			int toReturn = puffer[startpointer];
+			if (startpointer == endpointer) {
+				status = -1;
+				return toReturn;
+			}
+			if (numberElements != 0) {
+				startpointer++;
+				/////////////////////////////////////
+			}
+			status = 0;
+			return toReturn;
+		}
+	}
+
+	public String toString() {
+		String elemente = new String();
+		int whereami = startpointer;
+		int counter = whereami;
+		
+		if (numberElements == 0) {
+			elemente = "keine ";
+		} else {
+
+			while (counter < numberElements + startpointer) {
+				elemente += puffer[whereami];
+				elemente += " ";
+				counter++;
+				whereami = counter % puffer.length;
+			}
+		}
+
+		return "Schlange vom Typ Ringpuffer, Kapazitaet="+puffer.length+", Elemente: "+elemente+", erster index="+startpointer+", letzter index="+endpointer;
+	}
+
+	public int[] eintraege() {
+		int[] toReturn = new int[numberElements];
+		for (int i = 0; i < numberElements; i++) {
+			toReturn[i] = herausnehmen();
+		}
+		return toReturn;
+	}
+
+	public static void main(String[] args) {
+		FIFORingpuffer test = new FIFORingpuffer(15);
+		
+		for (int i = 1; i <= 14; i++) {
+			test.einfuegen(i);
+		}
+		for (int i = 0; i < 12; i++) {
+			test.herausnehmen();
+		}
+/*		for (int i = 1; i <= 11; i++) {
+			test.einfuegen(i);
+		}
+/*		for (int i = 1; i < 11; i++) {
+			test.herausnehmen();
+		} 
+		for (int i = 1; i <= 10; i++) {
+			test.einfuegen(i);
+		}
+		test.herausnehmen();
+i*/		System.out.println(test);
+		System.out.println("\n\n so, ab gehts:");
+		//int[] kaka = test.eintraege();
+		//for (int i = 0; i < kaka.length; i++) System.out.print(kaka[i] + " ");
+	}
+
+}

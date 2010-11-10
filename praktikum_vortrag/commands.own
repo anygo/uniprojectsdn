@@ -1,0 +1,33 @@
+\def\mat#1{\ensuremath{\bm{\mathit{#1}}}}
+\def\vec#1{{\ensuremath{\bm{\mathit{#1}}}}}
+\newcommand{\entspricht}{\mathrel{\widehat{=}}}
+\def\argmin{\mathop{\mathrm{argmin}}}
+\def\argmax{\mathop{\mathrm{argmax}}}
+\def\eg{e.\,g.\xspace}
+\def\ie{i.\,e.\ }
+\def\etal{et\,al.\ }
+\def\wrt{w.\,r.\,t.\ }
+\makeatletter
+\def\noVSpace{\@minipagetrue}
+\newenvironment{tabItemize}{%
+  \@minipagetrue%
+  \begin{itemize*}%
+}{\vspace{-\normalbaselineskip}%
+  \end{itemize*}}
+\makeatother
+% \textsubscript analog zu textsuperscript
+\makeatletter
+\DeclareRobustCommand*\textsubscript[1]{%
+  \@textsubscript{\selectfont#1}}
+\newcommand{\@textsubscript}[1]{%
+  {\m@th\ensuremath{_{\mbox{\fontsize\sf@size\z@#1}}}}}
+\makeatother
+% Makro zur Umstellung des Doppelpunkts im mathematischen Modus.
+% Damit ist dieser auf der mathematischen Achse zentriert, die
+% auch die Mitte des Gleichheitszeichens bestimmt.
+\mathchardef\ordinarycolon\mathcode`\:
+\mathcode`\:=\string"8000
+\begingroup \catcode`\:=\active
+\gdef:{\mathrel{\mathop\ordinarycolon}}
+\endgroup
+\newcolumntype{v}[1]{>{\raggedright\hspace{0pt}}p{#1}}

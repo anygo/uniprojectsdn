@@ -1,0 +1,66 @@
+SECTIONS
+ {
+	
+   . = 0x100000;     /* Startadresse des Systems */
+
+   .text :
+    {
+      *(".text")
+      *(".text$")
+      *(".init")
+      *(".fini")
+      *(".gnu.linkonce.*")
+    }
+
+   .data :
+    {
+      *(".data")
+      *(".data$")
+      *(".rodata")
+      ___CTOR_LIST__ = .;
+      *(".ctors")
+      *(".ctor")
+      ___CTOR_LIST_END__ = .;
+      ___DTOR_LIST__ = .;
+      *(".dtors")
+      *(".dtor")
+      ___DTOR_LIST_END__ = .;
+      *(".got")
+      *(".got.plt")
+      *(".eh_frame")
+      *(".eh_fram")
+      *(".jcr")
+    }
+
+   /* Startcode fuer die APs, wird von SMPSystem::copyStartAPtoLowMem() reloziert */
+   .setup_ap_seg ALIGN(0x10) :
+    {
+      ___SETUP_AP_START__ = .;
+      *(".setup_ap_seg")
+      *(".setup_ap_seg$")
+      ___SETUP_AP_END__ = .;
+    }
+    .vesa_detection ALIGN(0x10):
+    {
+	__VESA_DETECTION_CODE_START__ = .;
+	*(".vesa_detection")
+	*(".vesa_detection$")
+	__VESA_DETECTION_CODE_END__ = .;
+    }
+   .bss : 
+    {
+      *(".bss")
+    }
+	
+/*
+   /DISCARD/ :
+    {
+      *(".note")
+      *(".comment")
+      *(".debug_line")
+      *(".debug_info")
+      *(".debug_abbrev")
+      *(".debug_aranges")
+    }
+*/
+ }

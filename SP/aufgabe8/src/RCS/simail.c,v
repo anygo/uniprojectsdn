@@ -1,0 +1,493 @@
+head	1.7;
+access;
+symbols;
+locks
+	sidoneum:1.7; strict;
+comment	@ * @;
+
+
+1.7
+date	2009.01.17.22.21.39;	author sidoneum;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2009.01.17.21.16.45;	author sidoneum;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2009.01.17.21.12.53;	author sidoneum;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2009.01.17.17.36.38;	author sidoneum;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2009.01.17.15.22.25;	author sidoneum;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2009.01.17.15.07.00;	author sidoneum;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2009.01.17.12.30.01;	author sidoneum;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.7
+log
+@*** empty log message ***
+@
+text
+@#include <stdio.h>
+#include <stdlib.h>
+#include <pwd.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <limits.h>
+#include <netdb.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <errno.h>
+
+#define PRINTUSAGE fprintf(stderr, "Usage: ./simail [-s subject] <address>\n");
+#define dbg 0
+
+extern int h_errno;
+
+
+static void handle_server_message(char *messagebuf, int s_fd, const char *correctstatus)
+{
+	char smallbuf;
+	int i;
+
+	smallbuf = '\0';
+	i = 0;
+	while(smallbuf != '\n')
+	{
+		if (read(s_fd, (void *)&smallbuf, 1) == -1)
+		{
+			perror("read()");
+			close(s_fd);
+			exit(EXIT_FAILURE);
+		}
+		messagebuf[i] = smallbuf;
+		errno = 0;
+		if (dbg)	putc(smallbuf, stdout);
+		i++;
+	}
+	messagebuf[i] = '\0';
+	if (strncmp(messagebuf, correctstatus, 3) != 0)
+	{
+		fprintf(stderr, "%sError. Exiting.\n", messagebuf);
+		exit(EXIT_FAILURE);
+	}
+}
+
+static void mywrite(int fd, const void *buf, size_t count)
+{
+	if (write(fd, buf, count) == -1)
+	{
+		perror("write()");
+		exit(EXIT_FAILURE);
+	}
+}
+
+int main(int argc, const char* argv[])
+{
+	char hostname[LINE_MAX];
+	struct hostent *hostent;
+	struct hostent *hostent_server;
+	char fqdn[LINE_MAX];
+	char mailfrom[LINE_MAX];
+	char fullname[LINE_MAX];
+	struct passwd *mypwd;
+	const char *subject;
+	const char *to;
+	struct sockaddr_in sin;
+	int s_fd;
+	struct sockaddr_in server;
+	char messagebuf[LINE_MAX];
+	char tmp;
+
+	/* initialize structs */
+	memset(&sin, 0, sizeof(sin));
+	memset(&server, 0, sizeof(server));
+	memset(&hostname, 0, LINE_MAX);
+	memset(&fqdn, 0, LINE_MAX);
+	memset(&mailfrom, 0, LINE_MAX);
+	memset(&fullname, 0, LINE_MAX);
+	memset(&messagebuf, 0, LINE_MAX);
+	
+	/* check cmdline parameters */
+	subject = NULL;
+	if (argc == 4)
+	{
+		if (strcmp(argv[1], "-s") == 0)
+		{
+			subject = argv[2];
+			to = argv[3];
+		}
+		else 
+		{
+			PRINTUSAGE
+			return EXIT_FAILURE;
+		}
+	}
+	else if (argc == 2)
+	{
+		to = argv[1];
+	}
+	else
+	{
+		PRINTUSAGE
+		return EXIT_FAILURE;
+	}
+
+	/* get FQDN */
+	if (gethostname(hostname, LINE_MAX) != 0)
+	{
+		perror("gethostname()");
+		return EXIT_FAILURE;
+	}
+	if ((hostent = gethostbyname(hostname)) == NULL)
+	{
+		herror("gethostbyname()");
+		return EXIT_FAILURE;
+	}
+	strcpy(fqdn, hostent->h_name);
+	
+	/* get fullname and string for "MAIL FROM" line */
+	if ((mypwd = getpwuid(getuid())) == NULL)
+	{
+		perror("getpwuid");
+		return EXIT_FAILURE;
+	}
+	strcpy(fullname, mypwd->pw_gecos);
+	if (strtok(fullname, ",") == NULL)
+	{
+		fprintf(stderr, "Err: strtok()\n");
+		return EXIT_FAILURE;
+	}
+	strcpy(mailfrom, "<");
+	strcat(mailfrom, mypwd->pw_name);
+	strcat(mailfrom, "@@");
+	strcat(mailfrom, fqdn);
+	strcat(mailfrom, ">");
+
+	strcat(fullname, " ");
+	strcat(fullname, mailfrom);
+	
+	/* prepare communication */
+	if ((s_fd = socket(PF_INET, SOCK_STREAM, 0)) == -1)
+	{
+		perror("socket()");
+		return EXIT_FAILURE;
+	}
+	sin.sin_family = AF_INET;
+	sin.sin_addr.s_addr = htonl(INADDR_ANY);
+	sin.sin_port = htons(0);
+	if (bind(s_fd, (struct sockaddr *) &sin, sizeof(sin)) != 0)
+	{
+		perror("bind()");
+		return EXIT_FAILURE;
+	}
+	
+	if ((hostent_server = gethostbyname("faui03.informatik.uni-erlangen.de")) == NULL)
+	{
+		herror("gethostbyname()");
+		return EXIT_FAILURE;
+	}
+	memcpy(&server.sin_addr, hostent_server->h_addr, hostent_server->h_length); 
+	server.sin_family = AF_INET; 
+	server.sin_port = htons(25);
+	server.sin_family = AF_INET;
+	
+	/* connect to server */
+	if (connect(s_fd, (struct sockaddr *) &server, sizeof(server)) != 0)
+	{
+		perror("connect()");
+		return EXIT_FAILURE;
+	}
+	
+	memset(&messagebuf, 0, LINE_MAX);
+
+	
+	handle_server_message(messagebuf, s_fd, "220");
+	
+	/* send HELO */
+	mywrite(s_fd, "HELO ", 5);
+	mywrite(s_fd, fqdn, strlen(fqdn));
+	mywrite(s_fd, "\n", 1);
+
+	if (dbg)	mywrite(STDOUT_FILENO, "HELO ", 5);
+	if (dbg)	mywrite(STDOUT_FILENO, fqdn, strlen(fqdn));
+	if (dbg)	mywrite(STDOUT_FILENO, "\n", 1);
+
+	
+	handle_server_message(messagebuf, s_fd, "250");
+
+	/* send MAIL FROM */
+	mywrite(s_fd, "MAIL FROM: ", 11);
+	mywrite(s_fd, mailfrom, strlen(mailfrom));
+	mywrite(s_fd, "\n", 1);
+
+	if (dbg)	mywrite(STDOUT_FILENO, "MAIL FROM: ", 11);
+	if (dbg)	mywrite(STDOUT_FILENO, mailfrom, strlen(mailfrom));
+	if (dbg)	mywrite(STDOUT_FILENO, "\n", 1);
+
+	
+	handle_server_message(messagebuf, s_fd, "250");
+	
+	/* send RCPT TO */
+	mywrite(s_fd, "RCPT TO: ", 9);
+	mywrite(s_fd, to, strlen(to));
+	mywrite(s_fd, "\n", 1);
+
+	if (dbg)	mywrite(STDOUT_FILENO, "RCPT TO: ", 9);
+	if (dbg)	mywrite(STDOUT_FILENO, to, strlen(to));
+	if (dbg)	mywrite(STDOUT_FILENO, "\n", 1);
+
+	
+	handle_server_message(messagebuf, s_fd, "250");
+
+	/* send DATA */
+	mywrite(s_fd, "DATA\n", 5);
+
+	if (dbg)	mywrite(STDOUT_FILENO, "DATA\n", 5);
+
+
+	handle_server_message(messagebuf, s_fd, "354");
+
+	/* send From */
+	mywrite(s_fd, "From: ", 6);
+	mywrite(s_fd, fullname, strlen(fullname));
+	mywrite(s_fd, "\r\n", 2);
+
+	if (dbg)	mywrite(STDOUT_FILENO, "From: ", 6);
+	if (dbg)	mywrite(STDOUT_FILENO, fullname, strlen(fullname));
+	if (dbg)	mywrite(STDOUT_FILENO, "\r\n", 2);
+
+	/* send To */
+	mywrite(s_fd, "To: <", 5);
+	mywrite(s_fd, to, strlen(to));
+	mywrite(s_fd, ">\r\n", 3);
+	
+	if (dbg)	mywrite(STDOUT_FILENO, "To: <", 5);
+	if (dbg)	mywrite(STDOUT_FILENO, to, strlen(to));
+	if (dbg)	mywrite(STDOUT_FILENO, ">\r\n", 3);
+
+	/* send Subject */
+	if (subject != NULL)
+	{
+		mywrite(s_fd, "Subject: ", 9);
+		mywrite(s_fd, subject, strlen(subject));
+		mywrite(s_fd, "\r\n", 2);
+	
+	if (dbg)	mywrite(STDOUT_FILENO, "Subject: ", 9);
+	if (dbg)	mywrite(STDOUT_FILENO, subject, strlen(subject));
+	if (dbg)	mywrite(STDOUT_FILENO, "\r\n", 2);
+	}
+
+	/* send seperator-line */
+	mywrite(s_fd, "\r\n", 2);
+
+	if (dbg)	mywrite(STDOUT_FILENO, "\r\n", 2);
+
+	/* read and send Body */
+	while (errno = 0, (tmp = fgetc(stdin)) != EOF)
+	{
+		if (errno != 0)
+		{
+			perror("fgetc()");
+			return EXIT_FAILURE;
+		}
+		mywrite(s_fd, &tmp, 1);
+	if (dbg)	mywrite(STDOUT_FILENO, &tmp, 1);
+	}
+
+	/* send .-Line */
+	mywrite(s_fd, "\n.\r\n", 4);
+
+	if (dbg)	mywrite(STDOUT_FILENO, "\n.\r\n", 4);
+
+	handle_server_message(messagebuf, s_fd, "250");
+
+	/* send QUIT */
+	mywrite(s_fd, "QUIT\r\n", 6);
+	
+	if (dbg)	mywrite(STDOUT_FILENO, "QUIT\r\n", 6);
+
+	handle_server_message(messagebuf, s_fd, "221");
+
+	close(s_fd);
+	return EXIT_SUCCESS;
+}
+@
+
+
+1.6
+log
+@*** empty log message ***
+@
+text
+@d24 1
+a24 1
+	smallbuf = 0;
+d76 5
+d115 1
+a115 1
+		fprintf(stderr, "gethostbyname(): %i\n", h_errno);
+d158 1
+a158 1
+		fprintf(stderr, "Err: gethostbyname(): %i\n", h_errno);
+@
+
+
+1.5
+log
+@*** empty log message ***
+@
+text
+@d250 1
+a250 1
+	if (dbg)mywrite(STDOUT_FILENO, "\r\n", 2);
+@
+
+
+1.4
+log
+@*** empty log message ***
+@
+text
+@d11 1
+d14 1
+d35 2
+a36 1
+		fputc(smallbuf, stdout);
+a70 3
+	char smallbuf;
+	int statuscode;
+	int i;
+d178 3
+a180 3
+	mywrite(STDOUT_FILENO, "HELO ", 5);
+	mywrite(STDOUT_FILENO, fqdn, strlen(fqdn));
+	mywrite(STDOUT_FILENO, "\n", 1);
+d190 3
+a192 3
+	mywrite(STDOUT_FILENO, "MAIL FROM: ", 11);
+	mywrite(STDOUT_FILENO, mailfrom, strlen(mailfrom));
+	mywrite(STDOUT_FILENO, "\n", 1);
+d199 1
+a199 1
+	mywrite(s_fd, "<domoson@@rommel.stw.uni-erlangen.de>", strlen("<domoson@@rommel.stw.uni-erlangen.de>"));
+d202 3
+a204 3
+	mywrite(STDOUT_FILENO, "RCPT TO: ", 9);
+	mywrite(STDOUT_FILENO, "<domoson@@rommel.stw.uni-erlangen.de>", strlen("<domoson@@rommel.stw.uni-erlangen.de>"));
+	mywrite(STDOUT_FILENO, "\n", 1);
+d212 1
+a212 1
+	mywrite(STDOUT_FILENO, "DATA\n", 5);
+d222 3
+a224 3
+	mywrite(STDOUT_FILENO, "From: ", 6);
+	mywrite(STDOUT_FILENO, fullname, strlen(fullname));
+	mywrite(STDOUT_FILENO, "\r\n", 2);
+d231 3
+a233 3
+	mywrite(STDOUT_FILENO, "To: <", 5);
+	mywrite(STDOUT_FILENO, to, strlen(to));
+	mywrite(STDOUT_FILENO, ">\r\n", 3);
+d242 3
+a244 3
+		mywrite(STDOUT_FILENO, "Subject: ", 9);
+		mywrite(STDOUT_FILENO, subject, strlen(subject));
+		mywrite(STDOUT_FILENO, "\r\n", 2);
+d250 1
+a250 1
+	mywrite(STDOUT_FILENO, "\r\n", 2);
+d253 1
+a253 1
+	while ((tmp = fgetc(stdin)) != EOF)
+d255 5
+d261 1
+a261 1
+		mywrite(STDOUT_FILENO, &tmp, 1);
+d267 1
+a267 1
+	mywrite(STDOUT_FILENO, "\n.\r\n", 4);
+d274 1
+a274 1
+	mywrite(STDOUT_FILENO, "QUIT\r\n", 6);
+@
+
+
+1.3
+log
+@*** empty log message ***
+@
+text
+@d16 37
+d57 2
+a58 1
+	char *fqdn;
+d67 5
+d73 1
+d76 1
+a76 1
+
+d86 5
+a90 2
+		else PRINTUSAGE
+		return EXIT_FAILURE;
+d113 1
+a113 1
+	fqdn = hostent->h_name;
+d135 2
+a136 2
+
+	/* start communication */
+d150 12
+a161 1
+
+d167 10
+d178 3
+d183 91
+@
+
+
+1.2
+log
+@*** empty log message ***
+@
+text
+@d28 1
+d30 2
+d97 14
+a110 1
+	sin.sin_port = htons(25);
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d1 97
+@

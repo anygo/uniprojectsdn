@@ -1,0 +1,43 @@
+\ProvidesPackage{beamerthemeLME}
+
+% Generelles theme für LME
+
+% Eine Methode, \rput zu ersetzen (und damit pstricks nicht mehr zu
+% benoetigen, wodurch pdflatex verwendet werden kann)
+
+\newcommand{\beamerLMEexactplacement}[3]{%
+  \makebox[0mm][l]{
+    \hspace*{#1}
+    \raisebox{#2}[0mm][0mm]{
+      #3
+    }
+  }%
+}
+
+\DeclareOptionBeamer{compress}{\beamer@compresstrue}
+\ProcessOptionsBeamer
+
+\mode<presentation>
+
+% Struktur etc.
+\useoutertheme{LME}
+
+% Die Standard-Farben der LME-Folien
+\definecolor{LMEblue}{rgb}{0,0,0.6}
+\definecolor{LMEgrey}{rgb}{0.83,0.83,0.83}
+
+% Als Standard übernehmen
+\setbeamercolor*{structure}{fg=LMEblue,bg=white}
+
+% Farben des Titelfeldes, der Kopf- und Fusszeile etc.
+\usecolortheme{LMEouter}
+% Farben des Inhalts (Text) etc.
+\usecolortheme{LMEinner}
+
+% Beeinflusst Aussehen des Inhaltes.
+\useinnertheme{LME}
+
+\setbeamerfont{block title}{size={}}
+
+\mode
+<all>

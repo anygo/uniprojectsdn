@@ -1,0 +1,37 @@
+% askdfjlsdf
+
+gueltige_werte(1).
+gueltige_werte(2).
+gueltige_werte(3).
+gueltige_werte(4).
+gueltige_werte(5).
+gueltige_werte(6).
+gueltige_werte(7).
+gueltige_werte(8).
+gueltige_werte(9).
+
+
+%feld([[_,_,_,_,_,_,_,_,_],[_,_,_,_,_,_,_,_,_],[_,_,_,_,_,_,_,_,_],[_,_,_,_,_,_,_,_,_],[_,_,_,_,_,_,_,_,_],[_,_,_,_,_,_,_,_,_],[_,_,_,_,_,_,_,_,_],[_,_,_,_,_,_,_,_,_],[_,_,_,_,_,_,_,_,_]]).
+
+regel1([]).
+regel1([H|T]) :- \+ member(H,T), regel1(T).
+
+macheliste(A) :- macheliste([],A,0).
+macheliste(Output,Output,9).
+macheliste(A,Output,Laenge) :- gueltige_werte(X),\+ member(X,A),append(A,[X],C),Laenge2 is Laenge+1,macheliste(C,Output,Laenge2).
+
+%macheliste([A,B,C,D,E,F,G,H,I]) :- 			
+%			A\=B,A\=C,A\=D,A\=E,A\=F,A\=G,A\=H,A\=I,
+%			B\=C,B\=D,B\=E,B\=F,B\=G,B\=H,B\=I,
+%			C\=D,C\=E,C\=F,C\=G,C\=H,C\=I,
+%			D\=E,D\=F,D\=G,D\=H,D\=I,
+%			E\=F,E\=G,E\=H,E\=I,
+%			F\=G,F\=H,F\=I,
+%			G\=H,G\=I,
+%			H\=I,
+%			gueltige_werte(A), gueltige_werte(B), gueltige_werte(C), gueltige_werte(D),gueltige_werte(E),gueltige_werte(F),gueltige_werte(G),gueltige_werte(H),gueltige_werte(I).
+
+
+loesung(A,B,C,D,E,F,G,H,I) :- macheliste(A),macheliste(B),macheliste(C),macheliste(D),macheliste(E),macheliste(F),macheliste(G),macheliste(H),macheliste(I),
+		%	regel1(A),regel1(B),regel1(C),regel1(D),regel1(E),regel1(F),regel1(G),regel1(H),regel1(I),
+			A\=B.

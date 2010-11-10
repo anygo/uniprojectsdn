@@ -1,0 +1,47 @@
+\begin{picture}(0,0)%
+\includegraphics{\texfigdir/streams.\texfig}%
+\end{picture}%
+\setlength{\unitlength}{4144sp}%
+%
+\begingroup\makeatletter\ifx\SetFigFontNFSS\undefined%
+\gdef\SetFigFontNFSS#1#2#3#4#5{%
+  \reset@font\fontsize{#1}{#2pt}%
+  \fontfamily{#3}\fontseries{#4}\fontshape{#5}%
+  \selectfont}%
+\fi\endgroup%
+\begin{picture}(8844,2274)(169,-2638)
+\put(4141,-556){\makebox(0,0)[b]{\smash{{\SetFigFontNFSS{8}{9.6}{\familydefault}{\mddefault}{\updefault}{\color[rgb]{0,0,0}\texttt{AutoCorrelation}}%
+}}}}
+\put(2521,-556){\makebox(0,0)[b]{\smash{{\SetFigFontNFSS{8}{9.6}{\familydefault}{\mddefault}{\updefault}{\color[rgb]{0,0,0}\texttt{RectangularWindow}}%
+}}}}
+\put(2521,-1546){\makebox(0,0)[b]{\smash{{\SetFigFontNFSS{8}{9.6}{\familydefault}{\mddefault}{\updefault}{\color[rgb]{0,0,0}\texttt{HammingWindow}}%
+}}}}
+\put(2521,-1051){\makebox(0,0)[b]{\smash{{\SetFigFontNFSS{8}{9.6}{\familydefault}{\mddefault}{\updefault}{\color[rgb]{0,0,0}\texttt{HannWindow}}%
+}}}}
+\put(5761,-556){\makebox(0,0)[b]{\smash{{\SetFigFontNFSS{8}{9.6}{\familydefault}{\mddefault}{\updefault}{\color[rgb]{0,0,0}\texttt{LPCSpectrum}}%
+}}}}
+\put(7381,-556){\makebox(0,0)[b]{\smash{{\SetFigFontNFSS{8}{9.6}{\familydefault}{\mddefault}{\updefault}{\color[rgb]{0,0,0}\texttt{Formants}}%
+}}}}
+\put(5761,-1051){\makebox(0,0)[b]{\smash{{\SetFigFontNFSS{8}{9.6}{\familydefault}{\mddefault}{\updefault}{\color[rgb]{0,0,0}\texttt{F0}}%
+}}}}
+\put(856,-2536){\makebox(0,0)[b]{\smash{{\SetFigFontNFSS{8}{9.6}{\familydefault}{\mddefault}{\updefault}{\color[rgb]{0,0,0}\texttt{SineGenerator}}%
+}}}}
+\put(856,-2041){\makebox(0,0)[b]{\smash{{\SetFigFontNFSS{8}{9.6}{\familydefault}{\mddefault}{\updefault}{\color[rgb]{0,0,0}\texttt{ConstantGenerator}}%
+}}}}
+\put(856,-1546){\makebox(0,0)[b]{\smash{{\SetFigFontNFSS{8}{9.6}{\familydefault}{\mddefault}{\updefault}{\color[rgb]{0,0,0}\texttt{AudioCapture}}%
+}}}}
+\put(856,-1051){\makebox(0,0)[b]{\smash{{\SetFigFontNFSS{8}{9.6}{\familydefault}{\mddefault}{\updefault}{\color[rgb]{0,0,0}\texttt{AudioFileListReader}}%
+}}}}
+\put(856,-556){\makebox(0,0)[b]{\smash{{\SetFigFontNFSS{8}{9.6}{\familydefault}{\mddefault}{\updefault}{\color[rgb]{0,0,0}\texttt{AudioFileReader}}%
+}}}}
+\put(3916,-1546){\makebox(0,0)[b]{\smash{{\SetFigFontNFSS{8}{9.6}{\familydefault}{\mddefault}{\updefault}{\color[rgb]{0,0,0}\texttt{FFT}}%
+}}}}
+\put(6256,-1546){\makebox(0,0)[b]{\smash{{\SetFigFontNFSS{8}{9.6}{\familydefault}{\mddefault}{\updefault}{\color[rgb]{0,0,0}\texttt{DCT}}%
+}}}}
+\put(7426,-1546){\makebox(0,0)[b]{\smash{{\SetFigFontNFSS{8}{9.6}{\familydefault}{\mddefault}{\updefault}{\color[rgb]{0,0,0}\texttt{Slope}}%
+}}}}
+\put(8596,-1546){\makebox(0,0)[b]{\smash{{\SetFigFontNFSS{8}{9.6}{\familydefault}{\mddefault}{\updefault}{\color[rgb]{0,0,0}\texttt{MVN}}%
+}}}}
+\put(5086,-1546){\makebox(0,0)[b]{\smash{{\SetFigFontNFSS{8}{9.6}{\familydefault}{\mddefault}{\updefault}{\color[rgb]{0,0,0}\texttt{Melfilter}}%
+}}}}
+\end{picture}%

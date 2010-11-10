@@ -1,0 +1,544 @@
+\documentclass{beamer}
+%\documentclass[handout]{beamer}
+
+\usepackage[german]{babel}
+\usepackage[latin1]{inputenc}
+\usepackage{helvet}
+\usepackage[T1]{fontenc}
+\usepackage{ifpdf}
+\usepackage{multimedia}
+\usepackage[sans]{dsfont}
+\usepackage{pgfpages}
+\usepackage{xspace}
+\usepackage{threeparttable}
+\usepackage{%
+  array,
+  rotating,
+  booktabs,
+  colortbl,
+  multirow
+}
+
+
+\mode<presentation> {
+  \usetheme{LME}
+}
+
+\mode<handout> {
+  \setbeameroption{show notes}
+% \pgfpagesuselayout{resize to}[a4paper,border shrink=7mm,landscape]
+  \pgfpagesuselayout{2 on 1}[a4paper,border shrink=7mm]
+% \pgfpagesuselayout{4 on 1}[a4paper,border shrink=7mm,landscape]
+}
+
+
+\title{\vspace*{0.3cm} Visualisierung von Spektrogrammen}
+% \subtitle {\footnotesize This is my subtitle} 
+\subject{Visualisierung von Spektrogrammen}
+\author[Dominik Neumann, Felix Lugauer] {Dominik Neumann, Felix Lugauer}
+\date{12.03.2010}
+
+\institute[Lehrstuhl f\"ur Informatik 5] {
+  Lehrstuhl f{\"u}r Informatik 5 (Mustererkennung)\\
+  Universit{\"a}t Erlangen-N{\"u}rnberg\\
+}
+
+
+
+\newcolumntype{R}[1]{%
+  >{\begin{turn}{90}\begin{minipage}{#1}\raggedright\hspace{0pt}}l%
+  <{\end{minipage}\end{turn}}%
+}
+
+
+% Folgendes sollte gelöscht werden, wenn man nicht am Anfang jedes
+% Unterabschnitts die nochmal sehen möchte.
+\AtBeginSection[] {
+  \begin{frame}<beamer>
+    \frametitle{Overview}
+    \tableofcontents[currentsection] %,currentsubsection]
+  \end{frame}
+}
+
+% Falls Aufzählungen immer schrittweise gezeigt werden sollen, kann
+% folgendes Kommando benutzt werden:
+%\beamerdefaultoverlayspecification{<+->}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Eigene Definitionen
+
+\newenvironment<>{codeblock}[1]%
+{\setbeamertemplate{blocks}[rounded][shadow=true]%
+   \begin{exampleblock}{#1}}
+{\end{exampleblock}%
+   \setbeamertemplate{blocks}[default]}
+
+\definecolor{bgblue}{rgb}{0.04,0.39,0.53}  % 10  99  136  %HEX: A  63  87
+\definecolor{lmeblue}{rgb}{0.0,0.0,0.6}
+\definecolor{blue2}{rgb}{0.0,0.2,0.9}
+\definecolor{bgred}{rgb}{0.8,0.2,0.2}    % 204  51  51    %HEX CC 33 33
+\definecolor{c1}{rgb}{1.0,1.0,0.0}
+\definecolor{c2}{rgb}{1.0,0.5,0.0}
+\definecolor{c3}{rgb}{1.0,0.0,0.0}
+\definecolor{c4}{rgb}{1.0,0.0,0.5}
+\definecolor{c5}{rgb}{1.0,0.0,1.0}
+\definecolor{c6}{rgb}{0.5,0.0,1.0}
+\definecolor{c7}{rgb}{0.0,0.0,1.0}
+\definecolor{c8}{rgb}{0.0,0.5,1.0}
+\definecolor{c9}{rgb}{0.0,1.0,1.0}
+\definecolor{c10}{rgb}{0.0,1.0,0.5}
+\definecolor{c11}{rgb}{0.0,1.0,0.0}
+\definecolor{c12}{rgb}{0.5,1.0,0.0}
+\definecolor{c13}{rgb}{1.0,1.0,1.0}
+\definecolor{gold}{rgb}{.99,1,.9}%
+\def\b{\color{LMEblue}\bf}
+\def\bb{\color{blue2}\bf}
+\def\r{\color{bgred}\bf}
+\def\yellowbox{\colorbox[rgb]{1,1,0.8}}
+\let\Otemize =\itemize
+\let\Onumerate =\enumerate
+% Zero the vertical spacing parameters
+\def\Nospacing{\itemsep=0pt\topsep=0pt\partopsep=0pt\parskip=0pt\parsep=0pt\left
+margin 2.5em}
+\def\Sspacing{\itemsep=0pt\topsep=0pt\partopsep=0pt\parskip=0pt\parsep=0pt\leftm
+argin 2.5em}
+\def\ispacing{\itemsep=7pt\topsep=5pt\partopsep=5pt\parskip=5pt\parsep=5pt\leftm
+argin 2.5em}
+\def\Mspacing{\itemsep=10pt\topsep=0pt\partopsep=0pt\parskip=0pt\parsep=0pt\left
+margin=10.5cm}
+% Redefine the environments in terms of the original values
+%\renewenvironment{itemize}{\Otemize\ispacing}{\endlist}
+\newenvironment{Itemize}{\Otemize\Nospacing}{\endlist}
+\newenvironment{Stemize}{\Otemize\Sspacing\small}{\endlist}
+\newenvironment{Enumerate}{\Onumerate\Nospacing}{\endlist}
+\newenvironment{Mtemize}{\Otemize\Mspacing}{\endlist}
+\def\bitem{\item[$\bullet$]}
+\def\forts{{\tiny (Forts.)}}
+\def\stopp#1{\pause\vspace*{#1}}
+\def\spread{\vspace*{\fill}}
+\def\pspread{\pause\spread}
+
+
+
+\begin{document}
+
+\input{commands.own}
+
+\setbeamertemplate{background canvas}[LME title]
+\setbeamertemplate{navigation symbols}{}
+\begin{frame}[plain]
+  \titlepage
+\end{frame}
+
+\setbeamertemplate{background canvas}[default]
+
+\mode<beamer> {
+  \setbeamertemplate{navigation symbols}{
+    \insertslidenavigationsymbol
+    \insertsubsectionnavigationsymbol
+    \insertbackfindforwardnavigationsymbol
+  }
+}
+
+
+% Verwendung des pdf-Formats bei ps-Bildern, wenn mit pdflatex bersetzt wird
+\ifpdf
+  \def\ps{pdf}  \def\psdir{./eps_c}
+  \def\jpg{jpg} \def\jpgdir{./jpg}
+  \def\fig{pdf} \def\figdir{./fig_c}
+  \def\texfig{pdf} \def\texfigdir{./texfig_c}
+\else
+  \def\ps{eps}  \def\psdir{./eps}
+  \def\jpg{eps} \def\jpgdir{./jpg_c}
+  \def\fig{eps} \def\figdir{./fig_c}
+  \def\texfig{pstex} \def\texfigdir{./texfig_c}
+\fi
+
+
+\begin{frame}
+  \frametitle{Overview}
+  \tableofcontents
+  % Die Option [pausesections] könnte ntzlich sein.
+\end{frame}
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+
+\section{Motivation}
+
+\begin{frame}
+	\frametitle{Aufgabenstellung}
+	\structure{Paket 3:} Visualisierungskomponenten f"ur Funktionen $f(t) \in \mathds{R}^2$\\
+		\begin{itemize}
+			\item Komponente zur Darstellung des Spektrogramms von Audiostreams
+			\item Komponente zur Darstellung des Spektrogramms von Audiodateien\\[.5cm]
+		\end{itemize}
+		\pause
+	\structure{}\textit{Und so k"onnte es aussehen:}\\
+	\begin{center}
+		\includegraphics[width=\linewidth/2]{\jpgdir/wavesurfer.\jpg}
+	\end{center}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Spektrogramme}
+	\structure{Definition}
+		\begin{quote}
+			Ein Spektrogramm ist die Darstellung des zeitlichen Verlaufs des Spektrums eines Signals
+		\end{quote}
+		\begin{itemize}
+			\item x-Achse: Zeit
+			\item y-Achse: Frequenz
+			\item Intensit"at der Bildpunkte: Amplitude der jeweiligen Frequenz im Spektrum
+		\end{itemize}
+		\begin{center}
+			\includegraphics[width=\linewidth/2]{\jpgdir/spectrogram.\jpg}
+		\end{center}
+\end{frame}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Vorstellung der Komponenten}
+
+\begin{frame}
+	\frametitle{Klassenhierarchie}
+	\structure{}
+		\resizebox{\linewidth}{!}
+			{\alt<2>{
+				\input{\texfigdir/klassenhierarchie.pstex_t}
+				}{
+				\input{\texfigdir/klassenhierarchie_ohne_.pstex_t}
+				}
+			}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Klassenhierarchie}
+%	\structure{wieviel code? einarbeitung? klassenhierarchie erst am ende entstanden; usw}
+		Relevante Klassen und Interfaces\\[.3cm]
+		\texttt{package visual}
+		\begin{itemize}	
+			\item \structure{\texttt{interface Visualizer}}\\Synchronisation mit anderen Komponenten
+			\item \structure{\texttt{interface FrameChanger}}\\Kommunikation mit Komponenten auf Frame-Ebene
+			\item \structure{\texttt{abstract class VisualSpectrogram}}
+			\item \structure{\texttt{class VisualSpectrogramAudioStream}}\\Visualisierung von Spektrogrammen von Audio-Streams
+			\item \structure{\texttt{class VisualSpectrogramAudioFile}}\\Visualisierung von Spektrogrammen von Audio-Dateien
+		\end{itemize}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Eingliederung in das vorhandene Stream-Konzept}
+	\structure{}
+	\begin{center}
+		\resizebox{\linewidth}{!}
+			{\alt<2>{
+				\input{\texfigdir/audiostream.pstex_t}
+			}{
+				\input{\texfigdir/streams.pstex_t}}
+			}
+	\end{center}
+	\pause
+	Visualisierer f"ur Spektrogramme von \structure{Audio-Streams} lassen sich nahtlos in das bereits bestehende Stream-Konzept eingliedern
+\end{frame}
+
+\begin{frame}
+	\frametitle{Problematik bei Audiodateien}
+	\structure{}
+		Eingliederung eines Audiodatei-Visualisierers in das vorhandenes Stream-Konzept problematisch\\[.3cm]
+		\structure{Anforderungen:}
+		\begin{itemize}
+			\item M"oglichkeit zur Anzeige beliebiger Teile der Audiodatei (von - bis)
+			\item Nutzung unterschiedlicher Fensterfunktionen
+			\item Unabh"angigkeit von anderen Visualisierungskomponenten
+			\item ...
+		\end{itemize}
+		\pause
+		\textit{... und das alles zur Laufzeit}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Verwendung des vorhandenen Stream-Konzepts}
+	\structure{Realisierung:} Die Komponente selbst "ubernimmt einen Teil des Stream-Konzepts\\[.3cm]
+		\resizebox{\linewidth}{!}{\input{\texfigdir/audiofiles.pstex_t}}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Funktionsumfang}
+	\structure{Features der Visualisierungskomponenten}\\[.3cm]
+		\begin{itemize}
+			\item Visualisierung von Funktionen $f(t) \in \mathds{R}^2$\\[.1cm]
+			\item Logarithmische Skala\\[.1cm]
+			\item Regulierung von Helligkeit und Kontrast \\[.1cm]
+			\item M"oglichkeit zur Kolorierung (Hitzeskala)\\[.1cm]
+			\item Farbige Bereichsmarkierungen\\[.1cm]
+			\item ...\\[.1cm]
+		\end{itemize}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Funktionsumfang \forts}
+	\structure{Weitere Features}\\[.3cm]
+		\begin{itemize}
+			\item Anpassung der Fensterfunktion zur Laufzeit
+			\item Export des Spektrogramms als Bilddatei
+			\item Zusatzinformation "uber das Spektrogramm darstellen
+			\item Optimierung: "Uberfl"ussige Berechnungen vermeiden
+			\item Rechenintensives von eigenen Threads ausf"uhren lassen
+			\item Ausf"uhrliche Code-Dokumentation mittels JavaDoc
+			\item ...
+		\end{itemize}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Demoapplikation Audiostream}
+	\structure{}Implementierung einer GUI zur Demonstration des Funktionsumfangs\\[.5cm]
+	\begin{center}
+		\includegraphics[width=0.8\linewidth]{\jpgdir/stream.\jpg}\\[.2cm]
+	\end{center}
+	\structure{\texttt{visual.DemoSpectrogramStream}}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Demoapplikation Audiodatei}
+	\structure{}Implementierung einer GUI zur Demonstration des Funktionsumfangs\\[.5cm]
+	\begin{center}
+		\includegraphics[width=0.8\linewidth]{\jpgdir/file.\jpg}\\[.2cm]
+	\end{center}
+	\structure{\texttt{visual.DemoSpectrogramFile}}
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Details zur Implementierung}
+
+\begin{frame}
+	\frametitle{Einsparung von unn"otigen Berechnungen}
+	\structure{Ziel:} Wiederverwendung von bereits berechneten Spektrogrammdaten\\[.3cm]
+	Realisierung: 
+		\begin{itemize}
+			\item zun"achst werden alle Daten zur Anzeige des aktuellen Spektrogramms in einem Puffer gespeichert\\[.2cm]
+			\item bei "Anderung des anzuzeigenden Bereichs:
+				\begin{itemize}
+					\item falls neuer Bereich innerhalb des alten Bereichs liegt: benutze Werte aus Puffer, \structure{keine Neuberechnung} 
+					\item sonst: Berechnung der neuen Werte n"otig\\[.2cm]
+				\end{itemize}
+			\item bei "Anderung der Fensterfunktion: Neuberechnung zwingend erforderlich
+		\end{itemize}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Optimierte Darstellung der Spektrogrammdaten}
+	\structure{Ziel: Ber"ucksichtigung aller Daten durch Mittelwertbildung}\\[.2cm]	
+		\begin{itemize}
+			\item Einpassung der Spektrogrammdaten aus dem Puffer auf die gew"unschte Bildgr"o"se
+			\item Entscheidendes Verh"altnis \texttt{ $ ratio = \dfrac{bufferLength}{imageWidth} $}
+			\begin{itemize}
+				\item $ ratio < 1.0 $ mehrere Pixel bekommen den gleichen Wert
+				\item $ ratio > 1.0 $ mehrere Pufferwerte kommen auf einen Pixel\\[.5cm]
+			\end{itemize}
+			\item Optisch \textit{angenehmeres} Aussehen, Gl"attung von Rauschen
+		\end{itemize}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Kommunikation mit Komponenten auf Frame-Ebene}
+	\structure{Synchronisation der Anzeige mit Spektrum, MFCC-Diagramm, ...}\\[.3cm]
+		\begin{itemize}
+			\item GUI-Entwickler meldet die Komponenten der Frame-Ebene beim Spektrogramm an
+			\item Realisierung durch Liste: Speichern der Referenz auf zu synchronisierende Komponenten
+			\item Ereignis l"asst die Komponenten bestimmtes Frame analysieren \structure{\texttt{FrameListener.show(int startSample)}}\\[.5cm]
+			\item Interfaces garantieren einheitliche Kommunikation:
+				\begin{itemize}
+			 		\item Spektrogramm Visualisierer: \structure{\texttt{visual.FrameChanger}} 
+					\item Frame-Ebene Visualisierer: \structure{\texttt{visual.FrameListener}}	
+				\end{itemize}	
+		\end{itemize}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Farbiges Spektrogramm}
+	\structure{}Hitzeskala "uber HSB-Farbmodell\\[.3cm]
+		\begin{columns}
+		\column{0.6\linewidth}
+			\begin{itemize}
+				\item HSB-Farbmodell 
+					\begin{itemize}
+						\item Farbton
+						\item S"attigung
+						\item Helligkeit\\[.2cm]
+					\end{itemize}
+				\item Grauskala: keine S"attigung
+					\begin{itemize}
+						\item Wei"s: \structure{\texttt{brightness = 1.f}}
+						\item Grau: \structure{\texttt{0.f < brightness < 1.f}}
+						\item Schwarz: \structure{\texttt{brightness = 0.f}}\\[.2cm]
+					\end{itemize}
+			\end{itemize}
+
+		\column{0.4\linewidth}
+			\begin{center}
+				\includegraphics[width=\linewidth]{\jpgdir/hsb.\jpg}
+			\end{center}
+		\end{columns}	
+		\vspace{.5cm}
+		\begin{itemize}	
+			\item \structure{\texttt{static int java.awt.Color.HSBtoRGB(float hue, float saturation, float brightness)}}
+		\end{itemize}
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+	\frametitle{M"oglichkeit zur "Anderung der Fensterfunktion}
+	\structure{Ziel:} Veranschaulichung von Auswirkungen der verwendeten Fensterfunktion auf das Spektrogramm\\[.3cm]
+		\begin{itemize}
+			\item Fenstereigenschaften
+				\begin{itemize}
+					\item Typ: \structure{\texttt{Hamming | Hanning | Rectangle}}
+					\item Gr"o"se: Anzahl der Abtastwerte pro Fenster
+					\item Shift: Sprungweite\\[.2cm]
+				\end{itemize}
+			\item Anpassung aller genannten Eigenschaften \structure{zur Laufzeit} m"oglich 
+		\end{itemize}
+	\begin{center}	
+		\includegraphics[width=0.5\linewidth]{\jpgdir/vergleich_fenster.\jpg}\\[.1cm]
+	\end{center}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Implementierung des internen Datenstroms}
+		\begin{enumerate}
+			\item Auslesen des gepufferten Audiosignals 
+			\item Fensterung liefert Werte f"ur FFT-Berechnung
+			\item FFT liefert Frames, die im internen Puffer gespeichert werden
+		\end{enumerate}
+		\begin{columns}
+			\column{\linewidth}
+			\begin{codeblock}{\footnotesize Implementierung}
+				\scriptsize
+				\input{codeExamples/stream.tex}
+			\end{codeblock}	
+		\end{columns}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Flexible Darstellungsm"oglichkeiten}
+	\structure{}Anpassung des Spektrogramms an die Komponentengr"o"se\\[.3cm]
+		\begin{itemize}
+			\item Funktion zur Gr"o"sen"anderung des internen \structure{\texttt{BufferedImages}}
+			\item Listener "uberwacht "Anderung an der Komponente
+			\item Interface \structure{\texttt{java.awt.event.ComponentListener}}\\[.3cm]
+		\end{itemize}
+		\begin{columns}
+			\column{0.05\linewidth} 
+			\column{0.6\linewidth}
+			\begin{codeblock}{\footnotesize Implementierung}
+				\scriptsize
+				\input{codeExamples/test.tex}
+			\end{codeblock}
+			\column{0.25\linewidth}
+		\end{columns}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Normierung und Kontrastspreizung der Darstellung}
+	\structure{Ziel: Verbesserung der Sichtbarkeit des Spektrogramms}\\[.3cm]
+		\begin{itemize}
+			\item Frequenzb"ander die stark ausgepr"agt sind sollen umso dunkler im Spektrogramm sein
+			\item Abbildung von Werten aus der FFT auf Grauskala
+			\item Formel zur Anpassung der Abstufungen im Wertebereich:\\[.3cm] $ pixelWert =  \dfrac{FFTWert}{Kontrast} ,  \quad Kontrast \geq FFTWert $
+		\end{itemize}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Umsetzung der Kontrastanpassung}
+		\begin{itemize}
+			\item Kontrastdifferenzierung erh"oht bzw. verringert 'Lesbarkeit' des Spektrogramms\\[.3cm]
+			\item Realisierung durch Einschr"ankung der Werteskala:\\[.3mm]
+			\begin{itemize}
+				\item kleiner Wertebereich: deutlichere Abstufungen zu benachbarten Graustufen
+				\item gro"ser Wertebereich: kaum Unterschiede zu benachbarten Graustufen
+			\end{itemize}
+		\end{itemize}
+		\begin{center}
+			\includegraphics[width=0.9\linewidth]{\jpgdir/kontrastumfang.\jpg}
+		\end{center}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Entkopplung von Anzeige und Berechnung}
+	\structure{Ziel:} Einsparung von Rechenzeit bei Neuzeichnung der Komponente\\[.3cm]
+		\begin{itemize}
+			\item Zusatzinformationen bei jeder Mausbewegung in Komponente
+			\item Information nicht ins Bild, sondern auf Komponente zeichnen
+			\item Darstellung von Informationen \structure{ohne Neuberechnung} des Bildes 
+			\item Transformation der Pufferdaten auf Bilddaten \structure{nur}, wenn sich am Spektrogramm etwas "andern soll: Kontrast, Farbe,...\\[.5cm]
+			\item Entkopplung der Zeichenfunktionen: 
+			\begin{itemize}
+				\item \structure{\texttt{paint()}}
+				\item \structure{\texttt{paintOverlay()}}
+				\item \structure{\texttt{createSpectrogramImage}}
+			\end{itemize}
+		\end{itemize}
+\end{frame}
+
+
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Review und Ausblick}
+
+\begin{frame}
+	\frametitle{Was w"urden wir jetzt anders machen?}
+	\structure{Think before you ink!}\\[.5cm]
+	\begin{itemize}
+		\item Mehr Vor"uberlegungen zu Projekt und Struktur
+		\item Code-Leichen und 'hingehackte' Codest"ucke fr"uher "uber Board werfen ;-)
+		\item Kommentare nicht erst am Ende
+	\end{itemize}
+\end{frame}
+
+
+\begin{frame}
+	\frametitle{Ausblick}
+	\structure{Wenn wir noch mehr Zeit h"atten:}\\[.5cm]
+	\begin{itemize}
+		\item Weitere Verbesserungen der Speicherverwaltung
+		\item Einzelne Features verbessern
+			\begin{itemize}
+				\item Vielf"altigere M"oglichkeiten zur Exportierung des Spektrogramms
+				\item Weitere Ma"snahmen zur Synchronisation mit anderen Komponenten
+			\end{itemize}
+		\item Berechnungen parallelisieren\pause
+		\item ...eine \structure{noch} sch"onere Demo-GUI schreiben :-)
+	\end{itemize}
+\end{frame}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Live Programmvorf"uhrung}
+
+\begin{frame}
+	\frametitle{Ende}
+	\begin{center}
+		\structure{\begin{Large}Vielen Dank f"ur die Aufmerksamkeit!\end{Large}}
+	\end{center}
+\end{frame}
+
+
+\end{document}
+
+

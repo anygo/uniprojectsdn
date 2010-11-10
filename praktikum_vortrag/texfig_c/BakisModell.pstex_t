@@ -1,0 +1,41 @@
+\begin{picture}(0,0)%
+\includegraphics{\texfigdir/BakisModell.\texfig}%
+\end{picture}%
+\setlength{\unitlength}{4144sp}%
+%
+\begingroup\makeatletter\ifx\SetFigFontNFSS\undefined%
+\gdef\SetFigFontNFSS#1#2#3#4#5{%
+  \reset@font\fontsize{#1}{#2pt}%
+  \fontfamily{#3}\fontseries{#4}\fontshape{#5}%
+  \selectfont}%
+\fi\endgroup%
+\begin{picture}(6347,2297)(855,-4067)
+\put(4216,-3856){\makebox(0,0)[b]{\smash{{\SetFigFontNFSS{11}{13.2}{\rmdefault}{\mddefault}{\updefault}{\color[rgb]{0,0,0}\aBD}%
+}}}}
+\put(2986,-3856){\makebox(0,0)[b]{\smash{{\SetFigFontNFSS{11}{13.2}{\rmdefault}{\mddefault}{\updefault}{\color[rgb]{0,0,0}\aAC}%
+}}}}
+\put(5401,-2206){\makebox(0,0)[b]{\smash{{\SetFigFontNFSS{11}{13.2}{\rmdefault}{\mddefault}{\updefault}{\color[rgb]{0,0,0}\aDD}%
+}}}}
+\put(4816,-2956){\makebox(0,0)[b]{\smash{{\SetFigFontNFSS{11}{13.2}{\rmdefault}{\mddefault}{\updefault}{\color[rgb]{0,0,0}\aCD}%
+}}}}
+\put(4201,-2206){\makebox(0,0)[b]{\smash{{\SetFigFontNFSS{11}{13.2}{\rmdefault}{\mddefault}{\updefault}{\color[rgb]{0,0,0}\aCC}%
+}}}}
+\put(3601,-2956){\makebox(0,0)[b]{\smash{{\SetFigFontNFSS{11}{13.2}{\rmdefault}{\mddefault}{\updefault}{\color[rgb]{0,0,0}\aBC}%
+}}}}
+\put(2401,-2971){\makebox(0,0)[b]{\smash{{\SetFigFontNFSS{11}{13.2}{\rmdefault}{\mddefault}{\updefault}{\color[rgb]{0,0,0}\aAB}%
+}}}}
+\put(3001,-2206){\makebox(0,0)[b]{\smash{{\SetFigFontNFSS{11}{13.2}{\rmdefault}{\mddefault}{\updefault}{\color[rgb]{0,0,0}\aBB}%
+}}}}
+\put(1831,-2206){\makebox(0,0)[b]{\smash{{\SetFigFontNFSS{11}{13.2}{\rmdefault}{\mddefault}{\updefault}{\color[rgb]{0,0,0}\aAA}%
+}}}}
+\put(5416,-3151){\makebox(0,0)[b]{\smash{{\SetFigFontNFSS{11}{13.2}{\rmdefault}{\mddefault}{\updefault}{\color[rgb]{0,0,0}\sD}%
+}}}}
+\put(4186,-3136){\makebox(0,0)[b]{\smash{{\SetFigFontNFSS{11}{13.2}{\rmdefault}{\mddefault}{\updefault}{\color[rgb]{0,0,0}\sC}%
+}}}}
+\put(3001,-3151){\makebox(0,0)[b]{\smash{{\SetFigFontNFSS{11}{13.2}{\rmdefault}{\mddefault}{\updefault}{\color[rgb]{0,0,0}\sB}%
+}}}}
+\put(1801,-3121){\makebox(0,0)[b]{\smash{{\SetFigFontNFSS{11}{13.2}{\rmdefault}{\mddefault}{\updefault}{\color[rgb]{0,0,0}\sA}%
+}}}}
+\put(6601,-3661){\makebox(0,0)[rb]{\smash{{\SetFigFontNFSS{11}{13.2}{\sfdefault}{\mddefault}{\updefault}{\color[rgb]{0,0,0}Bakis-Modell}%
+}}}}
+\end{picture}%

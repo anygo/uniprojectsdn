@@ -1,0 +1,7 @@
+\beamer@endinputifotherversion {3.07pt}
+\select@language {german}
+\beamer@sectionintoc {1}{Motivation}{3}{0}{1}
+\beamer@sectionintoc {2}{Vorstellung der Komponenten}{7}{0}{2}
+\beamer@sectionintoc {3}{Details zur Implementierung}{20}{0}{3}
+\beamer@sectionintoc {4}{Review und Ausblick}{31}{0}{4}
+\beamer@sectionintoc {5}{Live Programmvorf"uhrung}{35}{0}{5}

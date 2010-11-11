@@ -44,8 +44,8 @@ int main(int argc, char* argv[])
 
 
 
-		delete arr2;
-		delete arr;
+		delete [] arr2;
+		delete [] arr;
 
 		return 0;
 }

@@ -60,7 +60,7 @@ title('Cutted Image');
 %   negative range
 a = 9;
 b = 3;
-d = 12;
+d = 20;
 h = floor(minI/2);
 R = d*sqrt(a*((X-h)/minI).^2 + b*((Y-h)/minI).^2);
 R = R - max(max(R))*0.5;
@@ -190,7 +190,7 @@ title('Grid for sampling the distorted image to get the corrected image (XD->XU)
 % d=2: parabola
 % d>=2: continuous non-linear curve 
 % E.g. d=5: 4 extrema
-d = 7;
+d = 5;
 
 
 %   Number of Coefficients

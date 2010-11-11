@@ -1,19 +1,10 @@
-#==================================================================================================
-#
-#  Advanced Programming Techniques (AdvPT)
-#  Winter Term 2010
-#  Assignment 2 - Makefile
-#
-#==================================================================================================
+# KLAUS: For C++ compilation you require to set the CXX and CXXFLAGS variables. In your case, both
+#        variables are ignored since you only have cpp-files.
+CC=gcc
+CFLAGS=-Wall
+main: main5 main6 main7 main8 main9 main12
 
-
-CXX = g++
-CXXFLAGS = -Wall -Werror -Wshadow -ansi -pedantic
-
-SRC = $(wildcard ./*.cpp)
-BIN = $(SRC:.cpp=)
-
-default: $(BIN)
 
 clean:
-	$(RM) $(BIN)
+		rm -f main5 main6 main7 main8 main9 main12
+

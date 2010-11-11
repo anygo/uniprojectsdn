@@ -12,4 +12,26 @@
 //=================================================================================================
 
 
+#include <iostream>
+#include <stdexcept>
+#include <vector>
 
+using namespace std;
+
+int main(int argc, char* argv[])
+{
+		vector<int> v(10,42);
+		
+		for (int i = 0; i < 15; i++)
+		{
+			try
+			{
+				std::cout << v.at(i) << std::endl;
+			}
+			catch (std::logic_error &e)
+			{
+				std::cout << e.what() << std::endl;
+			}
+		}
+		return 0;
+}

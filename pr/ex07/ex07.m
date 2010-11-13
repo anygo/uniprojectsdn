@@ -10,7 +10,7 @@ n_features = 2500;
 %% feature matrix
 f = rand(dim,n_features) + ones(dim,n_features)*22;
 
-for i = 1:47
+for i = 1:dim-3
     i
     f = pca_dimensionality_reduction(f);
 end;
@@ -22,9 +22,9 @@ end;
 hold on;
 [U S V] = svd(f);
 
-for i = 1:dim
-    plot3([0 U(1,i)*sqrt(S(i,i))],[0 U(2,i)*sqrt(S(i,i))],[0 U(3,i)*sqrt(S(i,i))],'r');
-end
+% for i = 1:3
+%     plot3([0 U(1,i)*sqrt(S(i,i))],[0 U(2,i)*sqrt(S(i,i))],[0 U(3,i)*sqrt(S(i,i))],'r');
+% end
 
 for i = 1:size(f,2)
     pt = U(:,1)'*f(:,i)*U(:,1);

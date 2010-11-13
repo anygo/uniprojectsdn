@@ -26,7 +26,7 @@ function defect_interpolation
     % Load test image (discrete signal f)
     I = double(imread('testimg.bmp')); 
 
-    [m,n] = size(I) % m=112, n=118
+    [m,n] = size(I); % m=112, n=118
     
     if (m<n)
         minS = m;
@@ -41,16 +41,16 @@ function defect_interpolation
         minS = minS - 1;
     end
     
-    minS
+    %minS
     
     cutI = I(1:minS,1:minS);
     
     % Load the defect pixel mask (binary window w)
     % 1=ok, 0=defect
-    % ???
+    w = ones(minS,minS); w(15:16,:) = 0; w(50:52,80:85) = 0; w(:,12:14) = 0;
     
     % Observed image g = f*w (this is not Matlab notation)
-    % ???
+    g = cutI.*w;
     
     figure(1);
     subplot(3,4,1); 
@@ -58,15 +58,11 @@ function defect_interpolation
     colormap gray
     axis image
     title('Original cutted image');
-    xlabel('x');
-    ylabel('y');
     
     subplot(3,4,2); 
     imagesc(g);
     axis image
     title('Original image with defect pixels');
-    xlabel('x');
-    ylabel('y');
     
     % Spatial domain: Median filtering
     medI = medfilt2(g);
@@ -75,33 +71,25 @@ function defect_interpolation
     imagesc(medI);
     axis image
     title('Reconstructed image (spatial domain)');
-    xlabel('x');
-    ylabel('y');
     
     subplot(3,4,4); 
     imagesc(abs(cutI-medI)); 
     title('|Original - spatial interpolated|');
     % colorbar
     axis image
-    xlabel('x');
-    ylabel('y');
    
-    % imgrec = ???
+    imgrec = interpdefectimage(cutI, g, w, maxIter, 32);
     
     subplot(3,4,7); 
     imagesc(imgrec); 
     title('Reconstructed image (frequency domain)');
     axis image
-    xlabel('x');
-    ylabel('y');
     
     subplot(3,4,12); 
     imagesc(recon-imgrec); 
     title('Difference between reconstructed images (frequency-spatial)');
     axis image
     colorbar
-    xlabel('x');
-    ylabel('y');
 end
 
 function f = interpdefectimage(im, g, w, maxit, pad)

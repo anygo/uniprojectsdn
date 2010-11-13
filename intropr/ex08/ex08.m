@@ -3,18 +3,17 @@ close all;
 clear all; 
 clc;
 
-n_bits = 4;
+n_bits = 2;
 max_iter = 15;
 
 
 %% read image
 I = imread('image.jpg');
-I = imresize(I,0.01);
+I = imresize(I,0.1);
 
 %% do stuff
 I3d = together(I, n_bits, max_iter);
-%Isep = separately(I, n_bits, max_iter);
-
+Isep = separately(I, n_bits, max_iter);
 
 
 %% plot

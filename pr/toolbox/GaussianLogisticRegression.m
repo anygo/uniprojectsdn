@@ -1,18 +1,17 @@
 function test_targets = GaussianLogisticRegression(train_patterns, train_targets, test_patterns, sameCov)
 
 N = length(train_patterns);
-classes = unique(train_targets);
 
 
 class1 = find(train_targets == 0);
 class2 = find(train_targets == 1);
 
 %% mean and cov
-mu1 = mean(train_patterns(:, class1)')'
-mu2 = mean(train_patterns(:, class2)')'
+mu1 = mean(train_patterns(:, class1)')';
+mu2 = mean(train_patterns(:, class2)')';
 
-sigma1 = cov(train_patterns(:, class1)')
-sigma2 = cov(train_patterns(:, class2)')
+sigma1 = cov(train_patterns(:, class1)');
+sigma2 = cov(train_patterns(:, class2)');
 
 if (sameCov == 1)
     sigma = 0.5 * sigma1 + 0.5 * sigma2;

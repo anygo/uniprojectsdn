@@ -1,3 +1,4 @@
+LinearDiscriminantAnalysis@ @ @N
 NaiveBayes2@ @ @N
 GaussianLogisticRegression@sameCov@1@S
 MaximumLikelihood@approach@1@S

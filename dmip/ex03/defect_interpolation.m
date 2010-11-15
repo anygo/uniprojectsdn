@@ -47,7 +47,10 @@ function defect_interpolation
     
     % Load the defect pixel mask (binary window w)
     % 1=ok, 0=defect
-    w = ones(minS,minS); w(15:16,:) = 0; w(50:52,80:85) = 0; w(:,12:14) = 0;
+    w = ones(minS,minS); 
+    w(15:16,:) = 0;
+    w(50:52,80:84) = 0;
+    w(:,90:91) = 0;
     
     % Observed image g = f*w (this is not Matlab notation)
     g = cutI.*w;
@@ -86,7 +89,7 @@ function defect_interpolation
     axis image
     
     subplot(3,4,12); 
-    imagesc(recon-imgrec); 
+    imagesc(medI-imgrec); 
     title('Difference between reconstructed images (frequency-spatial)');
     axis image
     colorbar
@@ -102,16 +105,16 @@ function f = interpdefectimage(im, g, w, maxit, pad)
     % of computed fourier coefficients depends on the number of (pixel) samples
     % in the spatial domain. To increase the number of computed fourier coefficients (frequency resolution)
     % we can simply increase the image size by padding. 
-    % g = ???
-    % w = ???
+    g = padarray(g,[pad pad],'replicate','both');
+    w = padarray(w,[pad pad],'replicate','both');
     
     % Image dimension
     dim = size(g);      
     % Half of the image dimension
     halfDim = floor(dim/2); 
     % Fourier Transform of g & w
-    % G = ??? 
-    % W = ??? 
+    G = fft2(g);
+    W = fft2(w);
     
     maxDeltaE_G_Ratio = Inf;
     maxDeltaE_G_Ratio_Tres = 1.0e-6;
@@ -134,7 +137,7 @@ function f = interpdefectimage(im, g, w, maxit, pad)
         deltaE_G = abs(G(1:dim(1), 1:halfDim(2)+1));
         % Find the indices of the maximum values & return them in the
         % vector idx
-        % [maxDeltaE_G] = ???
+        [maxDeltaE_G] = max(max(deltaE_G));
         idx = find(deltaE_G==maxDeltaE_G);
         % Return a random permutation of the integers 1:(Number of elements
         % in array)
@@ -159,10 +162,10 @@ function f = interpdefectimage(im, g, w, maxit, pad)
         s2 = s1; t2 = t1;
         
         if s1f > 0
-            % s2 = ???
+            s2 = halfDim(1)-s2+halfDim(1)+1; 
         end
         if t1f > 0
-            % t2 = ???
+            t2 = halfDim(2)-t2+halfDim(2)+1;
         end
         if s1f==0 && t1f==0 % Special case (0,0)
             s2 = -1; t2 = -1;
@@ -192,7 +195,7 @@ function f = interpdefectimage(im, g, w, maxit, pad)
             fprintf('SPECIAL case \n');
         else 
             % Handle the general case
-            % tval = ???
+            tval = dim(2)*(G(s1,t1)*W(1,1) - G(s1,t1)*W(twice_s1,twice_t1)) / (norm(W(1,1))^2 - norm(W(twice_s1,twice_t1))^2);
             
             % Accumulation: Update pair (s1,t1),(s2,t2)
             FhatNext(s1, t1) = FhatNext(s1, t1) + tval;
@@ -204,7 +207,9 @@ function f = interpdefectimage(im, g, w, maxit, pad)
         % Make sure we don't get any rounding errors,
         % G(s1,t1) and G(s2,t2) should be zero
         G(s1,t1) = 0;
-        if all([s2,t2]~=-1) G(s2,t2) = 0; end
+        if all([s2,t2]~=-1) 
+            G(s2,t2) = 0; 
+        end
         Fhat = FhatNext;
         
         % Visualize each 100. iteration
@@ -246,7 +251,7 @@ function f = interpdefectimage(im, g, w, maxit, pad)
             title('Error spectrum: abs(ifftshift(G))');
             
             subplot(3,4,9);
-            plot([1:i], log(lastEredVal(1:i)/dim(1) +(abs(lastEredVal(1:i))==0)));
+            plot(1:i, log(lastEredVal(1:i)/dim(1) +(abs(lastEredVal(1:i))==0)));
             title('Energy');
             xlabel('Number of iterations');
             
@@ -259,7 +264,7 @@ function f = interpdefectimage(im, g, w, maxit, pad)
     idx = find(w==0);         % Find the important mask entries
     f = g;                    % Return the result
     f(idx) = fhat(idx);
-    % f = ??? 
+    f = f(pad+1:end-pad,pad+1:end-pad);
 end
 
 % Do the convolution of the m-times-n matrix F and W

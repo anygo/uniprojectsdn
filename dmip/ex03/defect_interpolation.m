@@ -81,7 +81,7 @@ function defect_interpolation
     % colorbar
     axis image
    
-    imgrec = interpdefectimage(cutI, g, w, maxIter, 0);
+    imgrec = interpdefectimage(cutI, g, w, maxIter, 64);
     
     subplot(3,4,7); 
     imagesc(imgrec); 
@@ -105,8 +105,8 @@ function f = interpdefectimage(im, g, w, maxit, pad)
     % of computed fourier coefficients depends on the number of (pixel) samples
     % in the spatial domain. To increase the number of computed fourier coefficients (frequency resolution)
     % we can simply increase the image size by padding. 
-    g = padarray(g,[pad pad]);
-    w = padarray(w,[pad pad]);
+    g = padarray(g,[pad pad],'symmetric');
+    w = padarray(w,[pad pad],'symmetric');
     
     % Image dimension
     dim = size(g);      

@@ -4,25 +4,25 @@ clear all
 clc
 
 %% params
-dim = 100;
-n_features = 25000;
+dim = 22;
+n_features = 250;
 
 %% feature matrix
 f = rand(dim,n_features);
 f2 = f;
 
-for i = 1:dim-3
+for i = 1:dim-2
     tic;
     i;
     f = pca_dimensionality_reduction(f,1);
     toc;
 end;
 
-f2 = pca_dimensionality_reduction(f2,dim-3);
+f2 = pca_dimensionality_reduction(f2,dim-2);
 
 
 %% plot
-scatter3(f2(1,:),f2(2,:),f2(3,:),'+','red');
+scatter(f2(1,:),f2(2,:),'+','red');
 hold on;
-scatter3(f(1,:),f(2,:),f(3,:),'x','green');
+scatter(f(1,:),f(2,:),'x','green');
 hold off;

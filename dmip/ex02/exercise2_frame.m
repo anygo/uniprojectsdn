@@ -58,9 +58,9 @@ title('Cutted Image');
 %   d: (d/2) = maximal value at the radius boundary
 %   R - max(max(R))*0.5: shifting the positive range to half positive/half
 %   negative range
-a = 9;
-b = 3;
-d = 20;
+a = 3;
+b = 9;
+d = 12;
 h = floor(minI/2);
 R = d*sqrt(a*((X-h)/minI).^2 + b*((Y-h)/minI).^2);
 R = R - max(max(R))*0.5;
@@ -102,8 +102,8 @@ title('Distorted Image');
 
 %   1. Number of lattice points (this only works for symmetric images)
 
-nx = 12; 
-ny = 12;
+nx = 8; 
+ny = 8;
 
 % Step size
 sx = size(I,2);
@@ -194,7 +194,7 @@ d = 5;
 
 
 %   Number of Coefficients
-NumKoeff = d*(d+2);
+NumKoeff = (d+2)*(d+1)/2; % kleiner Gauss
 
 %   Number of Correspondences
 NumCorresp = nx*ny;
@@ -221,7 +221,7 @@ for r = 1:NumCorresp
   c = 1;
   for i = 0:d
     for j = 0:(d-i)
-      A(r,c) = A(r,c)+YU2vec(r)^j * XU2vec(r)^i;
+      A(r,c) = YU2vec(r)^j*XU2vec(r)^i;
       c = c + 1;
     end
   end
@@ -288,16 +288,16 @@ title('Undistorted/corrected Image');
 
 figure(1);
 subplot(2,3,5);			
-imagesc(abs(I-undist));
-imagesc(log(abs(I-undist)));
+%imagesc(abs(I-undist));
+imagesc(log(1+abs(I-undist)));
 %colorbar
 axis image
 title('Cutted - Corrected Image');
 
 figure(1);
 subplot(2,3,6);	
-imagesc(abs(I-Idist));
-imagesc(log(abs(I-Idist)));
+%imagesc(abs(I-Idist));
+imagesc(log(1+abs(I-Idist)));
 axis image
 title('Cutted - Distorted Image');
 %colormap('Jet');

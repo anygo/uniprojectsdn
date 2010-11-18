@@ -47,10 +47,7 @@ function defect_interpolation
     
     % Load the defect pixel mask (binary window w)
     % 1=ok, 0=defect
-    w = ones(minS,minS); 
-    w(15:15,20:end-10) = 0;
-    w(50:52,80:84) = 0;
-    w(:,90:91) = 0;
+    load('mask', 'w');
     
     % Observed image g = f*w (this is not Matlab notation)
     g = cutI.*w;
@@ -81,7 +78,7 @@ function defect_interpolation
     % colorbar
     axis image
    
-    imgrec = interpdefectimage(cutI, g, w, maxIter, 64);
+    imgrec = interpdefectimage(cutI, g, w, maxIter, 32);
     
     subplot(3,4,7); 
     imagesc(imgrec); 
@@ -105,8 +102,8 @@ function f = interpdefectimage(im, g, w, maxit, pad)
     % of computed fourier coefficients depends on the number of (pixel) samples
     % in the spatial domain. To increase the number of computed fourier coefficients (frequency resolution)
     % we can simply increase the image size by padding. 
-    g = padarray(g,[pad pad],'symmetric');
-    w = padarray(w,[pad pad],'symmetric');
+    g = padarray(g,[pad pad]);
+    w = padarray(w,[pad pad]);
     
     % Image dimension
     dim = size(g);      

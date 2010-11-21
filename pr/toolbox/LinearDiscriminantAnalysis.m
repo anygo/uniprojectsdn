@@ -21,6 +21,7 @@ for i = 1:N
         covJoint = covJoint + (x-mu1)*(x-mu1)';
     end
 end
+covJoint = covJoint / N;
 
 % compute SVD
 [U S V] = svd(covJoint);

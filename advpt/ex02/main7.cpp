@@ -26,16 +26,16 @@ int main(int argc, char* argv[]) {
 		cin >> m >> n;
 
 		int **matrix = new int*[m];
-		for(int i = 0; i < m; i++)
+		for(int i = 0; i < m; ++i)
 				matrix[i] = new int[n];
 
-		for(int i = 0; i < m; i++)
-			for(int j = 0; j < n; j++)
+		for(int i = 0; i < m; ++i)
+			for(int j = 0; j < n; ++j)
 				matrix[i][j] = i*m + j;
 
 		cout << "Original: " << endl;
-		for(int i = 0; i < m; i++) {	
-			for(int j = 0; j < n; j++) { 
+		for(int i = 0; i < m; ++i) {	
+			for(int j = 0; j < n; ++j) { 
 				cout << matrix[i][j] << " ";
 			}
 			cout << endl;
@@ -43,20 +43,20 @@ int main(int argc, char* argv[]) {
 
 
 		int **matrix2 = new int*[m];
-		for(int i = 0; i < m; i++) {
+		for(int i = 0; i < m; ++i) {
 			matrix2[i] = new int[n];
 			copy(matrix[i],matrix[i]+n,matrix2[i]);
 		}
 		
 		cout << "Kopie: " << std::endl;
-		for(int i = 0; i < m; i++) {	
-			for(int j = 0; j < n; j++) { 
+		for(int i = 0; i < m; ++i) {	
+			for(int j = 0; j < n; ++j) { 
 				cout << matrix[i][j] << " ";
 			}
 			cout << endl;
 		}
 
-		for(int i = 0; i < m; i++) {	
+		for(int i = 0; i < m; ++i) {	
 			delete [] matrix[i];
 			delete [] matrix2[i];	
 		}

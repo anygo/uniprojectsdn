@@ -27,12 +27,12 @@ int main(int argc, char* argv[]) {
 
 		for (int i = 0; i < m; ++i)
 			for (int j = 0; j < n; ++j)
-				matrix[i*m+j] = i*m + j;
+				matrix[i*n + j] = i*n + j;
 
 		cout << "Original: " << endl;
 		for (int i = 0; i < m; ++i) {	
 			for (int j = 0; j < n; ++j) { 
-				cout << matrix[i*m+j] << " ";
+				cout << matrix[i*n + j] << " ";
 			}
 			cout << endl;
 		}
@@ -44,7 +44,7 @@ int main(int argc, char* argv[]) {
 		cout << "Kopie: " << std::endl;
 		for (int i = 0; i < m; ++i) {	
 			for (int j = 0; j < n; ++j) { 
-				cout << matrix2[i*m + j] << " ";
+				cout << matrix2[i*n + j] << " ";
 			}
 			cout << endl;
 		}

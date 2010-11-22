@@ -22,7 +22,7 @@ int main(int argc, char* argv[])
 {
 		vector<int> v(10,42);
 		
-		for (int i = 0; i < 15; i++)
+		for (int i = 0; i < 15; ++i)
 		{
 			try
 			{

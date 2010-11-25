@@ -47,7 +47,7 @@ function defect_interpolation
     
     % Load the defect pixel mask (binary window w)
     % 1=ok, 0=defect
-    load('mask', 'w');
+    load('mask');
     
     % Observed image g = f*w (this is not Matlab notation)
     g = cutI.*w;
@@ -86,7 +86,7 @@ function defect_interpolation
     axis image
     
     subplot(3,4,12); 
-    imagesc(medI-imgrec); 
+    imagesc(imgrec-medI); 
     title('Difference between reconstructed images (frequency-spatial)');
     axis image
     colorbar

@@ -3,6 +3,8 @@ clear all;
 %close all;
 clc;
 pausetime = 0.5;
+figure(1);
+colormap gray;
     
 %% bild laden    
 img = rgb2gray(imread('bild_sb/b (9).jpg'));
@@ -44,4 +46,11 @@ drawnow;
 pause(pausetime);
 
 
+%% kleine zellen finden
+segmented = img .* uint8(imgbw);
+figure(2);
+imagesc(histeq(segmented));
+title('krypten ausgeschnitten');
 colormap gray;
+
+

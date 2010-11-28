@@ -1,53 +1,35 @@
-function ex10()
+%% cleanup
 close all;
 clear all;
 clc;
 
+%% (normalisiertes) histogramm erstellen
 I = imread('object.png');
+I = mat2gray(I);
+bins = 512;
 
-bins = 128;
 [counts x] = imhist(I,bins);
+normalized_hist = counts / sum(counts);
+counts(1)=0;
 
-totalSquaredError = zeros(bins,1);
 
-for theta = 2:bins-1
+%% maximum likelihood estimation
+for theta = 1:bins
+    params1 = mle(x(1:theta), 'frequency', counts(1:theta));
+    params2 = mle(x(theta+1:end), 'frequency', counts(theta+1:end));
     
-    % f <= theta
-    vec_left = [];
-    for i = 1:theta
-        vec_left = [vec_left; repmat(x(i),counts(i),1)];
-    end
-    left = mle(vec_left);
-    squaredErrorLeft = 0;
+    prior1 = sum(counts(1:theta))/sum(counts);
+    prior2 = sum(counts(theta+1:end))/sum(counts);
     
-    if sum(counts(1:theta)) > 0
-        for i = 1:theta
-            squaredErrorLeft = squaredErrorLeft + (eval_gauss(x(i), left(1), left(2)) - counts(i)/sum(counts(1:theta)))^2;
-        end
-    else
-        totalSquaredError(theta) = -1;
-    end
+    cla;
+    %plot(x, normalized_hist, 'black');
+    hold on;
+    y1 = prior1 * eval_gauss(x, params1(1), params1(2));
+    y2 = prior2 * eval_gauss(x, params2(1), params2(2));
+    plot(x, y1, 'red');
+    plot(x, y2, 'cyan');
+    line([x(theta) x(theta)], [0 5]);
+    hold off;
     
-    
-    
-    % f > theta
-    vec_right = [];
-    for i = theta+1:bins
-        vec_right = [vec_right; repmat(x(i),counts(i),1)];
-    end
-    right = mle(vec_right);
-    squaredErrorRight = 0;
-    
-    if sum(counts(theta+1:bins)) > 0
-        for i = theta+1:bins
-            squaredErrorRight = squaredErrorRight + (eval_gauss(x(i), right(1), right(2)) - counts(i)/sum(counts(theta+1:bins)))^2
-        end
-
-        totalSquaredError(theta) = squaredErrorLeft + squaredErrorRight;
-    else
-        totalSquaredError(theta) = -1;
-    end
-    
-   
-end
+    drawnow;
 end

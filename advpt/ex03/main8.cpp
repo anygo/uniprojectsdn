@@ -33,5 +33,114 @@
 //
 //=================================================================================================
 
+#include <fstream>
+#include <iostream>
+#include <cstdlib>
 
+using namespace std;
 
+class Matrix {
+
+	protected:
+		int rows_;
+		int cols_;
+		double* data;
+	
+
+	public: 
+		Matrix(int r, int c) : rows_(r), cols_(c) {
+			data = new double[r*c];
+		}
+
+		// destructor
+		~Matrix() {
+			delete[] data;
+		}
+	
+		// copy-constructor
+		Matrix(const Matrix &m) {
+			rows_ = m.rows();
+			cols_ = m.cols();
+		
+			for(int r = 0; r < m.rows(); ++r) {
+				for(int c = 0; c < m.cols(); ++c) {
+					(*this)(r,c) = m(r,c);
+				}
+			}
+		}
+
+		inline int rows() const { return rows_; }
+		inline int cols() const { return cols_; }
+	
+		void resize(const int r, const int c) {
+			
+			delete[] data;
+			data = new double[r*c];
+		}
+
+		Matrix operator+(const Matrix& other) {
+			
+			if (!(rows() == other.rows()) || !(cols() == other.cols()) ) {
+				std::cout << "Matrix dimensions must agree" << std::endl;
+			}
+			
+			Matrix bla(rows(), cols());
+			for(int r = 0; r < rows(); ++r) {
+				for(int c = 0; c < cols(); ++c) {
+					bla(r,c) = (*this)(r,c) + other(r,c);
+				}
+			}
+		
+			return bla;
+		}
+
+		double& operator()(const int& y, const int& x) {
+			
+			return data[y*cols() + x];
+		}
+		
+		double& operator()(const int& y, const int& x) const {
+			
+			return data[y*cols() + x];
+		}
+};
+
+int main(int argc, char* argv[]) {
+
+	int m, n = 0;
+	
+	ifstream stream(argv[1]);
+	stream >> m >> n;
+	Matrix lhs(m,n);
+	for(int r = 0; r < m; ++r) {
+		for(int c = 0; c < n; ++c) {
+			stream >> lhs(r,c);
+		}
+	}
+	stream.close();
+	
+
+	ifstream stream2(argv[2]);
+	stream2 >> m >> n;
+	Matrix rhs(m,n);
+	for(int r = 0; r < m; ++r) {
+		for(int c = 0; c < n; ++c) {
+			stream2 >> rhs(r,c);
+		}
+	}
+	stream2.close();
+
+	Matrix result = lhs + rhs;
+	
+	// print to file
+	ofstream o(argv[3]);
+	o << result.rows() << " " << result.cols() << std::endl;
+	for (int r = 0; r < result.rows(); ++r) {
+		for (int c = 0; c < result.cols(); ++c) {
+			o << result(r,c) << std::endl;
+		}
+	}
+	o.close();
+
+	return 0;
+}

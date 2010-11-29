@@ -10,5 +10,19 @@
 //
 //=================================================================================================
 
+#include <iostream>
 
+int bla = 0;
 
+int f() {
+		bla++;
+		return bla-1;
+}
+
+int main(int argc, char *argv[]) {
+		for (int i = 0; i < 42; ++i) {
+			std::cout << "Aufruf " << i << ": " << f() << std::endl;
+		}
+
+		return 0;
+}

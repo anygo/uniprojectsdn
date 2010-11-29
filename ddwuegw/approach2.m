@@ -1,8 +1,8 @@
 %% aufraeumen   
 clear all;
-%close all;
+close all;
 clc;
-pausetime = 0.5;
+pausetime = 0.01;
 figure(1);
 colormap gray;
     
@@ -55,15 +55,12 @@ drawnow;
 % colormap gray;
 
 %% kleine zelle finden 2
-
-load('kernel.mat');
-%
 %Ergebniss wird zZ nicht weiter verwende, obwohl es "human optical"
 %vielversprechend aussieht
 image_filtered_sharp = imfilter(img,fspecial('unsharp')); 
 
 %groﬂer (25*25) Log mit kleinem Sigma
-image_filtered = imfilter(img,fspecial('log', 25, 0.4));
+image_filtered = imfilter(img,fspecial('log', [25 25], 0.4));
 %oder
 %image_filtered = imfilter(adapthisteq(img_org),fspecial('log', 25, 0.4));
 
@@ -82,17 +79,17 @@ colormap gray
 
 
 %% region growing
-% figure(5)
-% imagesc(imgbw);
-% colormap gray
-% [x_p,y_p] = ginput(1);
-% 
-% 
-% 
-% for i = 1:size(x_p,1)
-% I = im2double((img)); 
-% J = regiongrowing(I,round(x_p(i)),round(y_p(i)),0.1); 
-% figure(4)
-% imagesc(J)
-% end
+figure(5)
+imagesc(imgbw);
+colormap gray
+[x_p,y_p] = ginput(1);
+
+
+
+for i = 1:size(x_p,1)
+I = im2double((img)); 
+J = regiongrowing(I,round(x_p(i)),round(y_p(i)),0.1); 
+figure(4)
+imagesc(J)
+end
 

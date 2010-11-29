@@ -14,7 +14,7 @@ normalized_hist = counts / sum(counts);
 
 %% maximum likelihood estimation
 squared_error = ones(bins,1)*-1;
-for theta_index = 1:bins
+for theta_index = 5:bins
     params1 = mle(x(1:theta_index), 'frequency', counts(1:theta_index));
     params2 = mle(x(theta_index+1:end), 'frequency', counts(theta_index+1:end));
     
@@ -37,6 +37,7 @@ for theta_index = 1:bins
     subplot(2,1,1);
     area(x, normalized_hist*sum(combined), 'FaceColor', 'black');
     hold on;
+    axis([0 1 0 10]);
     %area(x, y1, 'FaceColor', 'r');
     %area(x, y2, 'FaceColor', 'r');
     area(x, combined, 'FaceColor', 'c');

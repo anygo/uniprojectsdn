@@ -102,8 +102,9 @@ function f = interpdefectimage(im, g, w, maxit, pad)
     % of computed fourier coefficients depends on the number of (pixel) samples
     % in the spatial domain. To increase the number of computed fourier coefficients (frequency resolution)
     % we can simply increase the image size by padding. 
-    g = padarray(g,[pad pad]);
-    w = padarray(w,[pad pad]);
+    odim = size(g);
+    g = padarray(g, size(g), 'symmetric', 'post');
+    w = padarray(w, size(w), 'symmetric', 'post');
     
     % Image dimension
     dim = size(g);      
@@ -159,10 +160,10 @@ function f = interpdefectimage(im, g, w, maxit, pad)
         s2 = s1; t2 = t1;
         
         if s1f > 0
-            s2 = halfDim(1)-s2+halfDim(1)+1; 
+            s2 = halfDim(1) - (s1 - halfDim(1)) + 2;
         end
         if t1f > 0
-            t2 = halfDim(2)-t2+halfDim(2)+1;
+            t2 = halfDim(2) - (t1 - halfDim(2)) + 2;
         end
         if s1f==0 && t1f==0 % Special case (0,0)
             s2 = -1; t2 = -1;
@@ -192,7 +193,8 @@ function f = interpdefectimage(im, g, w, maxit, pad)
             fprintf('SPECIAL case \n');
         else 
             % Handle the general case
-            tval = dim(1) * (G(s1,t1)*W(1,1) - conj(G(s1,t1))*W(twice_s1,twice_t1)) / (abs(W(1,1))^2 - abs(W(twice_s1,twice_t1))^2);
+            tval = dim(1)*dim(2) * (G(s1,t1)*W(1,1) - conj(G(s1,t1))*W(twice_s1,twice_t1)) / ...
+                (abs(W(1,1))^2 - abs(W(twice_s1,twice_t1))^2);
             
             % Accumulation: Update pair (s1,t1),(s2,t2)
             FhatNext(s1, t1) = FhatNext(s1, t1) + tval;
@@ -215,7 +217,7 @@ function f = interpdefectimage(im, g, w, maxit, pad)
             idx = find(w==0);         % Find the important mask entries
             f = g;
             f(idx) = fhat(idx);
-            f = f(pad+1:dim(1)-pad,pad+1:dim(2)-pad); 
+            f = f(1:odim(1),1:odim(2));
             
             subplot(3,4,5);
             imagesc(fhat);
@@ -253,7 +255,7 @@ function f = interpdefectimage(im, g, w, maxit, pad)
             xlabel('Number of iterations');
             
             drawnow;
-            pause
+            %pause
         end
     end
     
@@ -262,7 +264,7 @@ function f = interpdefectimage(im, g, w, maxit, pad)
     idx = find(w==0);         % Find the important mask entries
     f = g;                    % Return the result
     f(idx) = fhat(idx);
-    f = f(pad+1:end-pad,pad+1:end-pad);
+    f = f(1:odim(1),1:odim(2));
 end
 
 % Do the convolution of the m-times-n matrix F and W

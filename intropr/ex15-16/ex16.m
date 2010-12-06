@@ -17,7 +17,7 @@ subplot(2,2,2), stairs(1:bins, cdf), axis([0 bins 0 1]), title('cdf');
 subplot(2,2,3), stairs(1:bins, h), title('hist orig');
 
 %% neues histogramm erstellen
-steps = zeros(bins,1);
+steps = zeros(bins,1);  
 for i = 1:bins
     upper_bound = i * (1/bins);
     steps(i) = size(find(cdf < upper_bound),1) + 1;

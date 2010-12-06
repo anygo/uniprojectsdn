@@ -69,6 +69,11 @@ class Matrix {
 			}
 		}
 
+		// assignment operator
+		Matrix& operator=(const Matrix& mat) {
+
+		}
+
 		inline int rows() const { return rows_; }
 		inline int cols() const { return cols_; }
 	
@@ -95,7 +100,12 @@ class Matrix {
 		}
 
 		
-		double& operator()(const int& y, const int& x) const {
+		double& operator()(const int& y, const int& x) {
+			
+			return data[y*cols() + x];
+		}
+		
+		const double operator()(const int& y, const int& x) const {
 			
 			return data[y*cols() + x];
 		}

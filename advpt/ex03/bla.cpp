@@ -1,13 +1,13 @@
 #include <iostream>
 
-int calc(char *, char *) {return 1;}
-int calc(char* const, char* const) {return 2;}
 
 int main(int argc, char* argv[]) {
+	int i = 1;
+	int j = 1;
 
-	char * x = "abc";
-	char * const y = x;
+	int a = i++;
+	int b = ++j;
 
-	std::cout << calc(x,x);
-	std::cout << calc(y, y);
+	std::cout<< a << " " << b;
+
 }

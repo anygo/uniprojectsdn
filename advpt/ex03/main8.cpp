@@ -94,10 +94,6 @@ class Matrix {
 			return bla;
 		}
 
-		double& operator()(const int& y, const int& x) {
-			
-			return data[y*cols() + x];
-		}
 		
 		double& operator()(const int& y, const int& x) const {
 			

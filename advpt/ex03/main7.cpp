@@ -29,14 +29,13 @@ class Complex {
 						return tmp;
 				}
 
-				friend std::ostream& operator<<(Complex&, std::ostream&);
+				friend std::ostream& operator<<(std::ostream& lhs, Complex& rhs) {
+		
+						lhs << "(" << rhs._real << ", " << rhs._imag << ")";
+						return lhs;
+				}
 };
 
-std::ostream& operator<<(std::ostream& lhs, Complex& rhs) {
-		
-		lhs << "(" << rhs._real << ", " << rhs._imag << ")";
-		return lhs;
-}
 
 int main(int argc, char* argv[]) {
 	
@@ -44,7 +43,8 @@ int main(int argc, char* argv[]) {
 		Complex a(2,1);
 		Complex b = a;
 		Complex c = a + b;
-		Complex d = ++c;
+		Complex d = c++;
 
 		std::cout << a << " " << b << " " << c << " " << d;
 }
+

@@ -12,7 +12,7 @@
 
 #include <iostream>
 
-int bla = 0;
+static int bla = 0;
 
 int f() {
 		bla++;

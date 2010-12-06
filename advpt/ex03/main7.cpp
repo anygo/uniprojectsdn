@@ -1,6 +1,5 @@
 #include <iostream>
 
-
 class Complex {
 
 		private:
@@ -10,7 +9,7 @@ class Complex {
 				Complex(double real, double imag = 0.0) : 
 						_real(real), _imag(imag) {}
 
-				Complex operator+(const Complex& other) {
+				const Complex operator+(const Complex& other) const {
 
 						Complex ret(_real + other._real, _imag + other._imag);
 						return ret;
@@ -22,14 +21,14 @@ class Complex {
 						return *this;
 				}
 
-				Complex operator++(int) {
+				const Complex operator++(int) {
 
 						Complex tmp = *this;	
 						++_real;
 						return tmp;
 				}
 
-				friend std::ostream& operator<<(std::ostream& lhs, Complex& rhs) {
+				friend std::ostream& operator<<(std::ostream& lhs, const Complex& rhs) {
 		
 						lhs << "(" << rhs._real << ", " << rhs._imag << ")";
 						return lhs;

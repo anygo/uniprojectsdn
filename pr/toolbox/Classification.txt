@@ -1,4 +1,4 @@
-RosenbergsPerceptron@NumIter@500@S
+RosenblattsPerceptron@NumIter@500@S
 DifferentNorms@norm@1@S
 LinearDiscriminantAnalysis@ @ @N
 NaiveBayes2@ @ @N

@@ -1,5 +1,5 @@
-function test_targets = RosenbergsPerceptron(train_patterns, train_targets, test_patterns, max_iter)
-    %% rerepresent classes for Rosenbergs Perceptron {0; 1} -> {-1; 1}
+function test_targets = RosenblattsPerceptron(train_patterns, train_targets, test_patterns, max_iter)
+    %% rerepresent classes for Rosenblatts Perceptron {0; 1} -> {-1; 1}
     train_targets(train_targets == 0) = -1;
 
     %% minimization

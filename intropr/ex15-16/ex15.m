@@ -5,7 +5,7 @@ clc;
 
 %% ex 15
 % g(x)
-sigma = 1;
+sigma = 0.5;
 x = -5:10/499:5;
 g_x = 1 / sqrt(2*pi*sigma^2) * exp(-0.5*x.^2/sigma^2);
 

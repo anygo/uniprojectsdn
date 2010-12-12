@@ -1,3 +1,4 @@
+SVM@ @ @N
 RosenblattsPerceptron@NumIter@500@S
 DifferentNorms@norm@1@S
 LinearDiscriminantAnalysis@ @ @N

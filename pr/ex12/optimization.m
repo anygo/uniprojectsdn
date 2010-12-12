@@ -2,10 +2,10 @@ function [] = optimization()
     
     maxIter = 10000;
     epsilon = 1e-5;
-    usedNorm = 2;
+    usedNorm = 'L2';
 
     % init
-    x = [0.9; 0.6];
+    x = [0.6; 0.3];
     
     % matlab steepest descent
     %[x,fval] = fminunc(@wrapper, x);
@@ -20,16 +20,18 @@ function [] = optimization()
         grad_f_x = [f(x(1), x(2)) - f(x(1)-epsilon, x(2)); ...
             f(x(1), x(2)) - f(x(1), x(2)-epsilon)];
         
-        if usedNorm == 1
+        if strcmp(usedNorm, 'L1')
             if abs(grad_f_x(1)) > abs(grad_f_x(2))
                 delta_x = [-sign(grad_f_x(1)); 0];
             else
                 delta_x = [0; -sign(grad_f_x(2))];
             end
-        elseif usedNorm == 2
+        elseif strcmp(usedNorm, 'L2')
             delta_x = -grad_f_x/norm(grad_f_x, 2);
-        elseif usedNorm == 'P'
-            
+        elseif strcmp(usedNorm, 'LP')
+            % TODO - how do I get P???
+            P = [2 0.5; 0.5 2];
+            delta_x = -inv(P)*grad_f_x/norm(grad_f_x, 2);
         end
         
         % line search
@@ -52,7 +54,7 @@ function [] = optimization()
         drawnow;
     end
     
-    disp(['converged after ' num2str(i) ' steps (L' num2str(usedNorm) ' norm) --> ' ...
+    disp(['converged after ' num2str(i) ' steps (' usedNorm ' norm) --> ' ...
         'f(' num2str(x(1)) ', ' num2str(x(2)) ') = ' num2str(wrapper(x))])
     
     % plot
@@ -89,8 +91,8 @@ function plot_function(x)
     figure(1)
     
     subplot(1,2,1)
-    surfc(X1, X2, y, 'FaceColor','green','EdgeColor','none');
-    camlight left; lighting phong
+    surfc(X1, X2, y, 'FaceColor','green','EdgeColor','none', 'FaceAlpha', 0.75);
+    %camlight left; lighting phong
     set(gca, 'GridLineStyle', '--');
     xlabel('x_1');
     ylabel('x_2');
@@ -99,7 +101,7 @@ function plot_function(x)
 
     % current point
     hold on;
-    scatter3(x(1), x(2), wrapper(x), '+r');
+    scatter3(x(1), x(2), wrapper(x), 'or');
     hold off;
     
    
@@ -114,7 +116,7 @@ function plot_function(x)
     
     % current point
     hold on;
-    scatter(x(1), x(2), '+r');
+    scatter(x(1), x(2), 'or');
     hold off;
 end
 

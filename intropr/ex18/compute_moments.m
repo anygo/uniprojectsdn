@@ -6,10 +6,10 @@ mean_X = mean(X);
 mean_Y = mean(Y);
 for y = 1:size(img, 1)
     for x = 1:size(img, 2)
-        if central == 0
-            M_pq = M_pq + (x^p * y^q * img(y, x));
-        else
+        if central % compute central moments (mu)
             M_pq = M_pq + ((x-mean_X)^p * (y-mean_Y)^q * img(y, x));
+        else % compute 'regular' moments (m)
+            M_pq = M_pq + (x^p * y^q * img(y, x));
         end
     end
 end

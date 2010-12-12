@@ -21,8 +21,8 @@ centroid_y = m_01/m_00;
 % in die mitte verschieben
 [y x] = find(I == 1);
 I_translated = zeros(size(I));
-x = floor(x - centroid_x) + 150;
-y = floor(y - centroid_y) + 150;
+x = floor(x - centroid_x) + round(size(I, 2)/2);
+y = floor(y - centroid_y) + round(size(I, 1)/2);
 for i = 1:size(x,1);
     I_translated(y(i), x(i)) = 1/m_00;
 end

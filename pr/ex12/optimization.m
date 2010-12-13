@@ -2,13 +2,14 @@ function [] = optimization()
     
     maxIter = 10000;
     epsilon = 1e-5;
-    usedNorm = 'L2';
+    usedNorm = 'LP';
 
     % init
-    x = [0.6; 0.3];
+    x = [0.6; 0.9];
     
     % matlab steepest descent
-    %[x,fval] = fminunc(@wrapper, x);
+    %[bla,fval,exitflag,output,grad,hessian]  = fminunc(@wrapper, x);
+    
     
     plot_function(x);
     
@@ -30,7 +31,12 @@ function [] = optimization()
             delta_x = -grad_f_x/norm(grad_f_x, 2);
         elseif strcmp(usedNorm, 'LP')
             % TODO - how do I get P???
-            P = [2 0.5; 0.5 2];
+            % arbitrary P?
+            %P = [3 0.5; 0.5 2];
+            % use Hessian?
+            Hessian = [2.5593 -0.0007; -0.0007 11.5167];
+            % how do i compute it? ;)
+            P = Hessian;
             delta_x = -inv(P)*grad_f_x/norm(grad_f_x, 2);
         end
         

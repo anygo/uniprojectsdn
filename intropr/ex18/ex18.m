@@ -30,11 +30,24 @@ subplot(1,3,2), imagesc(I_translated);
 
 % covarianzen berechnen zur rotation
 computeCentralMoment = 1;
-m_20 = compute_moments(I_translated, 2, 0, computeCentralMoment) / size(find(I_translated > 0), 1);
-m_02 = compute_moments(I_translated, 0, 2, computeCentralMoment) / size(find(I_translated > 0), 1);
-m_11 = compute_moments(I_translated, 1, 1, computeCentralMoment) / size(find(I_translated > 0), 1);
+mu_20 = compute_moments(I_translated, 2, 0, computeCentralMoment) / size(find(I_translated > 0), 1);
+mu_02 = compute_moments(I_translated, 0, 2, computeCentralMoment) / size(find(I_translated > 0), 1);
+mu_11 = compute_moments(I_translated, 1, 1, computeCentralMoment) / size(find(I_translated > 0), 1);
 
-rotation = 0.5 * atan(2*m_11 / (m_20 - m_02)) * 180 / pi;
+% mit wikipedia:
+%rotation = 0.5 * atan(2*mu_11 / (mu_20 - mu_02)) * 180 / pi;
 
-I_rotated = imrotate(I_translated, rotation, 'crop');
+% andere variante.. selbst erprobt :-)
+cov_mat = [mu_20 mu_11; mu_11 mu_02];
+[U S V] = svd(cov_mat);
+vec = U(:,1);
+hypothenuse = norm(vec, 2);
+gegenkathete = [1;0]'*vec;
+winkel = -asin(gegenkathete / hypothenuse) * 180 / pi;
+hold on;
+plot([150 150+300*S(1,1)*U(1,1)], [150 150+300*S(1,1)*U(2,1)]);
+plot([150 150+300*S(2,2)*U(1,2)], [150 150+300*S(2,2)*U(2,2)]);
+hold off;
+
+I_rotated = imrotate(I_translated, winkel, 'crop');
 subplot(1,3,3), imagesc(I_rotated);

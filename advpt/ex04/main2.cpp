@@ -10,5 +10,45 @@
 //
 //=================================================================================================
 
+#include <iostream>
+#include <fstream>
+#include <algorithm>
+#include <vector>
 
+int main(int argc, char* argv[]) {
+	
+		if (argc != 3) {
+				std::cout << "Programm richtig aufrufen!" << std::endl;
+				return -1;
+		}
+
+		std::ifstream in(argv[1]);
+		std::ofstream out(argv[2]);
+		if (!in.is_open() || !out.is_open()) {
+				std::cout << "Datei kann nicht geoeffnet werden" << std::endl;
+				return -1;
+		}
+
+
+
+		std::vector<std::string> words;
+		while (!in.eof()) {
+			std::string word;
+			in >> word;
+			if (word.empty())
+					continue;
+			words.push_back(word);
+		}
+
+		in.close();
+
+		sort(words.begin(), words.end());
+
+		for (unsigned int i = 0; i < words.size(); ++i) {
+				out << words[i] << "\n";
+		}
+
+
+		out.close();
+}
 

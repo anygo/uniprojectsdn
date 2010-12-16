@@ -9,7 +9,7 @@ I = imread('momented.png');
 I = im2bw(I, 0.5);
 subplot(1,3,1), imagesc(I), colormap gray;
 
-% image moments berechnen für centroid
+% image moments berechnen fï¿½r centroid
 computeCentralMoment = 0;
 m_00 = compute_moments(I, 0, 0, computeCentralMoment);
 m_10 = compute_moments(I, 1, 0, computeCentralMoment);
@@ -49,5 +49,5 @@ plot([150 150+300*S(1,1)*U(1,1)], [150 150+300*S(1,1)*U(2,1)]);
 plot([150 150+300*S(2,2)*U(1,2)], [150 150+300*S(2,2)*U(2,2)]);
 hold off;
 
-I_rotated = imrotate(I_translated, winkel, 'crop');
+I_rotated = imrotate(I_translated, winkel, 'crop', 'bilinear');
 subplot(1,3,3), imagesc(I_rotated);

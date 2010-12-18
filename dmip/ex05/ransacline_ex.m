@@ -88,11 +88,13 @@ function [bMdl mPts err] = commonransac(data, mn, oRelFr, cProb, mdlEstFct, errF
     mPts = [];
     
     for i=1:it
-        % ???
-        % ???
-        
-        % ???
-        % lErr = ???
+        indices = randperm(n);
+        indices = indices(1:mn); % the first mn random indices for data
+        mData = data(indices, :);
+     
+        cMdl = mdlEstFct(mData);
+
+        lErr = errFct(cMdl, data);
         
         if(lErr < err)
             err = lErr;
@@ -105,24 +107,27 @@ end
 function [err] = lineerror(mdl,pts)
 % Estimates the error for a line fitted through the data points pts using 
 % model parameters mdl
+
+    % line equation: y = mx + t
+    m = mdl(1,1); % slope
+    t = mdl(2,1); % offset
+    thresh = 1;
     
+    % reformulation: y - mx - t = 0
+    % (distance from line)
 
-
-
-
-
-
-
-
-
-    % ???
-
-
-
-
-
+    err = 0;
+    for i = 1:size(pts,1) 
+        x = pts(i,1);
+        y = pts(i,2);
+        distance = abs(y - m*x - t);
         
-    
+        if (distance > thresh)
+            continue; % it is an outlier -> ignore it
+        else
+            err = err + distance^2;
+        end
+    end
 end
 
 function [mdl] = fitline(pts)
@@ -135,16 +140,25 @@ function [mdl] = fitline(pts)
     %  M    * |t| =  ptsY
     %
     % and solve it to get the line eq for l
+
+    % measurement matrix
+    % |x1 1|         |y1|
+    % |x2 1|         |y2|
+    % |x3 1| * |m| = |y3|
+    %  .  .    |t|    .
+    %  .  .           .
+    %  .  .           .
     
     
+    M = ones(size(pts,1),2);
     
+    for i = 1:size(M,1)
+        M(i,1) = pts(i,1);
+    end
     
+    b = pts(:,2);
     
-    
-    % ???
-    
-    
-    
-    
+    % solve the crap
+    mdl = pinv(M)*b; % slope m and offset t
     
 end

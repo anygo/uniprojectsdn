@@ -32,3 +32,8 @@ for a = 1:size(x,2)
 end
 
 subplot(1,2,1), hold on, plot(x, abs(approx_e), 'r'), hold off;
+
+% a = fft(g_x);
+% b = ifft(a);
+% 
+% plot(x, g_x); hold on; plot(x, b); hold off;

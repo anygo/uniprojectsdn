@@ -128,6 +128,7 @@ function [err] = lineerror(mdl,pts)
             err = err + distance^2;
         end
     end
+    
 end
 
 function [mdl] = fitline(pts)

@@ -24,15 +24,17 @@ int main(int argc, char* argv[]) {
 		std::list<int> l(ia, ia+12);
 
 		for (std::vector<int>::iterator it = v.begin(); it != v.end();) {
-				std::vector<int>::iterator here = it++;
-				if (*here%2==0)
-						v.erase(here);
+				if (*it % 2 == 0)
+						it = v.erase(it);
+				else 
+						++it;
 		}
 
 		for (std::list<int>::iterator it = l.begin(); it != l.end();) {
-				std::list<int>::iterator here = it++;
-				if (*here%2==1)
-						l.erase(here);
+				if (*it % 2 == 1)
+						it = l.erase(it);
+				else
+						++it;
 		}
 
 

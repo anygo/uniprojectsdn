@@ -123,6 +123,7 @@ function [err] = lineerror(mdl,pts)
         distance = abs(y - m*x - t);
         
         if (distance > thresh)
+            err = err+1;
             continue; % it is an outlier -> ignore it
         else
             err = err + distance^2;
@@ -132,15 +133,14 @@ function [err] = lineerror(mdl,pts)
 end
 
 function [mdl] = fitline(pts)
-% Fits a line throug pts using least squares and returns values l of points 
-% (xi li) located on the fitted line where xi is specified by x.
+% Fits a line throug pts using least squares
 
     % Build components for eq:
     %
     %         |m|                      
     %  M    * |t| =  ptsY
     %
-    % and solve it to get the line eq for l
+    % and solve it to get the line parameters m and t 
 
     % measurement matrix
     % |x1 1|         |y1|
@@ -153,13 +153,10 @@ function [mdl] = fitline(pts)
     
     M = ones(size(pts,1),2);
     
-    for i = 1:size(M,1)
-        M(i,1) = pts(i,1);
-    end
-    
-    b = pts(:,2);
+    M(:,1) = pts(:,1);
+
+    ptsY = pts(:,2);
     
     % solve the crap
-    mdl = pinv(M)*b; % slope m and offset t
-    
+    mdl = pinv(M)*ptsY; % slope m and offset t 
 end

@@ -54,7 +54,7 @@ template<class Iterator> void bubblesort(Iterator start, Iterator end) {
 
 
 int main(int argc, char* argv[]) {
-	
+
 	std::vector<int> v;
 	v.push_back(4);
 	v.push_back(5);

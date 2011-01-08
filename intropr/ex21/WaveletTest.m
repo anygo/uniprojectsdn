@@ -55,7 +55,7 @@ axis image;
 
 
 % execute the multiresolution analysis filterbank with 3 stages 
-ndec = 3;
+ndec = 3;                       
 waveletcoeffs = mra2(img, ndec);
 
 %----------------------------------------------------

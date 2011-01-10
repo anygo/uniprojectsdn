@@ -15,8 +15,9 @@
 #include <list>
 #include <vector>
 #include <iostream>
+#include <iterator>
 
-template<class Iterator, class T> Iterator find( Iterator start, Iterator end, const T& val) {
+template<class Iterator> Iterator find(Iterator start, Iterator end, iterator_traits<Iterator>::value_type val) {
 	while(start != end) {
 		if (*start == val)
 				break;

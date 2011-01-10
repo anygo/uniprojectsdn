@@ -17,7 +17,7 @@
 #include <iostream>
 
 
-template<class Iter> Iter findMostFrequentElement(Iter first, Iter last) {
+template<class Iter, class Value> Value findMostFrequentElement(Iter first, Iter last) {
 
 		std::map<Iter, int> elems;
 		for ( ; first != last; ++first) {
@@ -29,7 +29,7 @@ template<class Iter> Iter findMostFrequentElement(Iter first, Iter last) {
 
 		Iter max;
 		int max_cnt = 0;
-		std::map<Iter, int>iterator it;
+		typename std::map<Iter, int>::iterator it;
 		for (it = elems.begin(); it != elems.end(); ++it) {
 				if ((*it).second > max_cnt) {
 						max_cnt = (*it).second;

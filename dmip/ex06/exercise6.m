@@ -11,12 +11,14 @@ function fbp()
     close all hidden;
     clc;
 
-    im = phantom(64);
+    im = phantom(32);
 
     % Size of the input image
     [m,n] = size(im);
     
     im = mat2gray(im);
+    
+    %im(15:20,20:25) = 1;
     
     figure(8);
     subplot(1,2,1); imagesc(im); colormap gray; axis image; xlabel('x'); ylabel('y'); title('Original phantom image');
@@ -27,10 +29,17 @@ function fbp()
     % Compute "numberOfProjections" 1-D projections along angle given the "startAngle" and the "angleIncrement". 
     % The result is a parallel projection of the image.
     
-    %angleIncrement = ???; 
-    %startAngle = ???;
+    angleIncrement = 1; 
+    startAngle = 0;
     phi = startAngle;
-    %numberOfProjections = ???;
+    numberOfProjections = ceil(180/angleIncrement);
+    
+    fltr_size = 11;
+    %fltm = [1]; % no filter
+    %fltm = RamLak(fltr_size);
+    fltm = SheppLogan(fltr_size);
+    
+    
 
     % Create a cell array for projections 
     projs = cell(numberOfProjections, 1);
@@ -41,28 +50,24 @@ function fbp()
 
         % Image is rotated by phi degrees counterclockwise, so the projection is lined up in the
         % columns & finally the columns are summed up
-        %rI = ???
+        rI = imrotate(im, phi, 'bilinear');
 
-        figure(1);
-        imagesc(rI);
-        xlabel('x');
-        ylabel('y');
-        axis image
-        colormap gray;
-        title(['Angle: ', num2str(phi), '°']);
-        drawnow;
+%         figure(1);
+%         imagesc(rI);
+%         xlabel('x');
+%         ylabel('y');
+%         axis image
+%         colormap gray;
+%         title(['Angle: ', num2str(phi), '°']);
+%         drawnow;
 
         % Sum up columnwise -> parallel beam
-        %projs{i} = ???
+        projs{i} = sum(rI);
 
         % Compute the next rotation angle
-        %phi = ??? 
+        phi = phi + angleIncrement; 
     end
     
-    fltr = 0; % No filtering, no high-pass filter is applied!
-    % fltr = 1; % Ram-Lak
-    % fltr = 2; % Shepp-Logan
-
     % Reconstructed image
     ct = zeros(size(im));  
 
@@ -85,18 +90,21 @@ function fbp()
         Pt = [dimensions(1)/2; -dimensions(2)/2];
 
         % Which filter should be used?
-        if(fltr == 1)
-            %fltm = ???
-            % Compute the filter step
-            %proj = ???
-        elseif(fltr == 2)
-            %fltm = ???
-            % Compute the filter step
-            %proj = ???
-        else
-            % No filter is applied
-            proj = proj;
-        end
+%         if(fltr == 1)
+%             %fltm = RamLak(fltr_size);
+%             % Compute the filter step
+%             proj = conv(proj, fltm, 'same');
+%         elseif(fltr == 2)
+%             %fltm = SheppLogan(fltr_size);
+%             % Compute the filter step
+%             proj = conv(proj, fltm, 'same');
+%         else
+%             % No filter is applied
+%             proj = proj;
+%         end
+
+        % einfacher, schneller, besser als obiges :-)
+        proj = conv(proj, fltm, 'same');
 
         FBP = zeros(m,n); 
 
@@ -120,15 +128,15 @@ function fbp()
                 % Linear interpolation
                 FBP(j,i) = (1-lowerDiff)*proj(lowerIndex) + (1-upperDiff)*proj(upperIndex);
                 
-                % sprintf('(i,j)=(%i,%i) -> t=%f [lI=%f,uI=%f]=%f', i, j, t, lowerIndex, upperIndex, FBP(j,i))
-                
+%                 sprintf('(i,j)=(%i,%i) -> t=%f [lI=%f,uI=%f]=%f', i, j, t, lowerIndex, upperIndex, FBP(j,i))
+%                 
 %                 figure(7);
 %                 imagesc(FBP); axis image; colormap gray; xlabel('x'); ylabel('y'); title('FBP');
 %                 drawnow;
             end % i
-       end % j
+       end % j    
        % Accumulate FBPs
-       %ct = ???
+       ct = ct + FBP;
        
        figure(8);
        subplot(1,2,2); imagesc(ct); axis image; colormap gray; xlabel('x'); ylabel('y'); title(['Projection: ', num2str(phi), '/', num2str(numberOfProjections)]);
@@ -150,9 +158,12 @@ function [shepp] = SheppLogan(width)
 % Shepp-Logan filtering with kernel size "width" is applied.
 % Formula: chapter "Reconstruction", slide: 47/63
 
-
-% ???
-
+    shepp = zeros(1, width);
+    for t = -floor(width/2):floor(width/2)
+        val = -2 / (pi *(4*t^2 - 1));
+        
+        shepp(1, 1 + t + floor(width/2)) = val;
+    end
 
 end
 
@@ -163,8 +174,20 @@ function [ramlak] = RamLak(width)
 % Ram-Lak filtering with kernel size "width" is applied.
 % Formula: chapter "Reconstruction", slide: 48/63
 
-
-% ???
+    ramlak = zeros(1, width);
+    for t = -floor(width/2):floor(width/2)
+        val = 0;
+        if t == 0
+            val = pi/4;
+        end
+        if mod(t, 2) == 0
+            val = 0;
+        end
+        if mod(t, 2) == 1
+            val = -1 / (pi*t^2); 
+        end
+        ramlak(1, 1 + t + floor(width/2)) = val;
+    end
 
 
 end

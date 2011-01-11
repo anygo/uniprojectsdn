@@ -3,10 +3,10 @@ function WaveletTest()
 close all;
 
 % create an image with a power of two size
-imagesize = 256;
+imagesize = 512;
 % creates a Shepp-Logan phantom image (used often in medical image
 % processing) with intensities [0, 255]
-img = phantom(imagesize) * 255; 
+img = mat2gray(phantom(imagesize)) * 255; 
 
 % you may add noise here for experiments
 % noise = randn(imagesize, imagesize) * 0.05;
@@ -55,18 +55,19 @@ axis image;
 
 
 % execute the multiresolution analysis filterbank with 3 stages 
-ndec = 3;                       
+ndec = 3;
 waveletcoeffs = mra2(img, ndec);
 
 %----------------------------------------------------
 %   COMPRESSION
 %
 
-% ---------------
-% Exercise: 
-% compute a compression scheme and determine the compression rate
-% ---------------
+% weiss nicht ob das stimmt :-)
+thresh = 0.1;
+tmp = mat2gray(waveletcoeffs);
+waveletcoeffs(tmp < thresh) = min(waveletcoeffs(:));
 
+compression = nnz(waveletcoeffs == min(waveletcoeffs(:))) / (size(tmp,1)*size(tmp,2));
 %----------------------------------------------------
 
 % plot the complete decomposition result

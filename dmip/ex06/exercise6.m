@@ -12,6 +12,11 @@ function fbp()
     clc;
 
     im = phantom(32);
+    im = zeros(64,64);
+    im(8:16,8:16) = 1;
+    im = imread('test.jpg');
+    im = rgb2gray(im);
+    im = imresize(im, 0.3);
 
     % Size of the input image
     [m,n] = size(im);
@@ -29,7 +34,7 @@ function fbp()
     % Compute "numberOfProjections" 1-D projections along angle given the "startAngle" and the "angleIncrement". 
     % The result is a parallel projection of the image.
     
-    angleIncrement = 1; 
+    angleIncrement = 5; 
     startAngle = 0;
     phi = startAngle;
     numberOfProjections = ceil(180/angleIncrement);
@@ -43,6 +48,7 @@ function fbp()
 
     % Create a cell array for projections 
     projs = cell(numberOfProjections, 1);
+    phis = zeros(numberOfProjections, 1);
 
     for i=1:numberOfProjections
         % Save the angles of the numberOfProjections in an array
@@ -58,7 +64,7 @@ function fbp()
 %         ylabel('y');
 %         axis image
 %         colormap gray;
-%         title(['Angle: ', num2str(phi), '°']);
+%         title(['Angle: ', num2str(phi), 'ï¿½']);
 %         drawnow;
 
         % Sum up columnwise -> parallel beam

@@ -5,15 +5,15 @@
 % NOTE: Complete the '???' lines
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function fbp()
+function exercise6()
     clear all;
     close all;
     close all hidden;
     clc;
 
-    im = phantom(32);
-    im = zeros(64,64);
-    im(8:16,8:16) = 1;
+    im = phantom(64);
+%     im = zeros(64,64);
+%     im(8:16,8:16) = 1;
     im = imread('test.jpg');
     im = rgb2gray(im);
     im = imresize(im, 0.3);
@@ -34,7 +34,7 @@ function fbp()
     % Compute "numberOfProjections" 1-D projections along angle given the "startAngle" and the "angleIncrement". 
     % The result is a parallel projection of the image.
     
-    angleIncrement = 5; 
+    angleIncrement = 1; 
     startAngle = 0;
     phi = startAngle;
     numberOfProjections = ceil(180/angleIncrement);
@@ -73,6 +73,8 @@ function fbp()
         % Compute the next rotation angle
         phi = phi + angleIncrement; 
     end
+    
+    plot_sinogram(projs);
     
     % Reconstructed image
     ct = zeros(size(im));  
@@ -196,4 +198,26 @@ function [ramlak] = RamLak(width)
     end
 
 
+end
+
+function plot_sinogram(p)
+    
+    max_size = 0;
+    for i = 1:size(p,1);
+        if size(p{i},2) > max_size
+            max_size = size(p{i},2);
+        end
+    end
+    
+    sinogram = zeros(size(p,1), max_size);
+    
+    for i = 1:size(p,1)
+        from = floor((max_size - size(p{i},2))/2)+1;
+
+        sinogram(i,from:from+size(p{i},2)-1) = p{i};
+    end
+    
+    figure;
+    imagesc(sinogram');
+    colormap gray;
 end

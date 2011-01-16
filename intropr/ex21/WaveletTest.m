@@ -3,10 +3,11 @@ function WaveletTest()
 close all;
 
 % create an image with a power of two size
-imagesize = 512;
+imagesize = 256;
 % creates a Shepp-Logan phantom image (used often in medical image
 % processing) with intensities [0, 255]
-img = mat2gray(phantom(imagesize)) * 255; 
+img = phantom(imagesize) * 255; 
+img = double(rgb2gray(imread('../ex15-16/Lena.png')));
 
 % you may add noise here for experiments
 % noise = randn(imagesize, imagesize) * 0.05;
@@ -63,11 +64,12 @@ waveletcoeffs = mra2(img, ndec);
 %
 
 % weiss nicht ob das stimmt :-)
-thresh = 0.1;
-tmp = mat2gray(waveletcoeffs);
-waveletcoeffs(tmp < thresh) = min(waveletcoeffs(:));
+thresh = 200;
+waveletcoeffs(abs(waveletcoeffs) < thresh) = 0;
 
-compression = nnz(waveletcoeffs == min(waveletcoeffs(:))) / (size(tmp,1)*size(tmp,2));
+
+
+compression = nnz(waveletcoeffs) / (size(waveletcoeffs,1)*size(waveletcoeffs,2));
 %----------------------------------------------------
 
 % plot the complete decomposition result

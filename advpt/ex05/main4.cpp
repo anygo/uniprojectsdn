@@ -17,7 +17,7 @@
 #include <iostream>
 #include <iterator>
 
-template<class Iterator> Iterator find(Iterator start, Iterator end, iterator_traits<Iterator>::value_type val) {
+template<class Iterator> Iterator find(Iterator start, Iterator end, const typename Iterator::value_type& val) {
 	while(start != end) {
 		if (*start == val)
 				break;

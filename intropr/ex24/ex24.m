@@ -48,6 +48,8 @@ for i = 1:size(patterns, 2)
     projected_2d(:,i) = projected_1d(:,i) * e1;
 end
 
+projected_2d = projected_2d + repmat(mu, 1, size(projected_2d, 2));
+
 % plot projected 2d-vectors
 hold on;
 scatter(projected_2d(1, classes == 0), projected_2d(2, classes == 0), 'r.');

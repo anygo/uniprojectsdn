@@ -11,12 +11,12 @@ function exercise6()
     close all hidden;
     clc;
 
-    im = phantom(64);
+    im = phantom(128);
 %     im = zeros(64,64);
 %     im(8:16,8:16) = 1;
-    im = imread('test.jpg');
-    im = rgb2gray(im);
-    im = imresize(im, 0.3);
+%     im = imread('test.jpg');
+%     im = rgb2gray(im);
+%     im = imresize(im, 0.3);
 
     % Size of the input image
     [m,n] = size(im);
@@ -39,10 +39,10 @@ function exercise6()
     phi = startAngle;
     numberOfProjections = ceil(180/angleIncrement);
     
-    fltr_size = 11;
+    fltr_size = 5;
     %fltm = [1]; % no filter
-    %fltm = RamLak(fltr_size);
-    fltm = SheppLogan(fltr_size);
+    fltm = RamLak(fltr_size);
+    %fltm = SheppLogan(fltr_size);
     
     
 

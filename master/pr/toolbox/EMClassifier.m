@@ -20,6 +20,7 @@ function [test_targets, param_struct] = EM(train_patterns, train_targets, test_p
     disp('Using k-means for initial guess')
     for i = 1:Nclasses,
         % todo: initialize mixture weights, mean, and sigma using k_means
+        [mu, label] = my_k_means(train_patterns(:,train_targets == i-1), train_targets, Ngaussians(1,i));
     end
 
     % Do the EM: Estimate mixture weight, mean, and covariance for each class 
@@ -63,7 +64,7 @@ end
 
 
 % merged k_means and EM
-function [mu, label] = k_means(train_patterns, train_targets, k)
+function [mu, label] = my_k_means(train_patterns, train_targets, k)
 
     %Reduce the number of data points using the k-means algorithm
     %Inputs:
@@ -82,8 +83,7 @@ function [mu, label] = k_means(train_patterns, train_targets, k)
     label = zeros(1,Np);
 
     % Initialize the mu's
-    mu		= randn(dim, k);
-    mu		= sqrtm(cov(train_patterns',1)) * mu + mean(train_patterns')' * ones(1,k);
+    mu		= sqrtm(cov(train_patterns',1)) * randn(dim, k) + mean(train_patterns')' * ones(1,k);
     old_mu	= zeros(dim,k);
 
     switch k,
@@ -98,8 +98,8 @@ function [mu, label] = k_means(train_patterns, train_targets, k)
           old_mu = mu;
 
           % compute the distances of the train patterns to the means
-          for i = 1:k,
-             %dist(i,:) = ...
+          for i = 1:k
+             dist(i,:) = sum((train_patterns - repmat(mu(:,i), 1, size(train_patterns, 2))).^2)';
           end
 
           % assign the labels
@@ -107,7 +107,7 @@ function [mu, label] = k_means(train_patterns, train_targets, k)
 
           % update the means
           for i = 1:k,
-             %mu(:,i) = ...;
+             mu(:,i) = mean(train_patterns(:,label == i),2);
           end
         end
     end

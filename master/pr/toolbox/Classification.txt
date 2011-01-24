@@ -1,4 +1,4 @@
-EMClassifier@ @ @N
+EMClassifier@Ngaussians@2 3@S
 KernelSVM@width@0.1@S
 SVM@softMargin@0@S
 RosenblattsPerceptron@NumIter@500@S

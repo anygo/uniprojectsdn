@@ -64,7 +64,7 @@ waveletcoeffs = mra2(img, ndec);
 %
 
 % weiss nicht ob das stimmt :-)
-thresh = 200;
+thresh = 0.5;
 waveletcoeffs(abs(waveletcoeffs) < thresh) = 0;
 
 

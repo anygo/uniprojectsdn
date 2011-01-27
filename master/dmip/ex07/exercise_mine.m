@@ -70,11 +70,18 @@ Rz = [cos(tz) -sin(tz) 0; sin(tz) cos(tz) 0; 0 0 1];
 
 R1 = Rz*Ry*Rx;
 R2 = Rx*Ry*Rz;
+R3 = Ry*Rx*Rz;
 
 ty1 = asin(R1(1,3));
 tz1 = acos(R1(1,1)/cos(ty1));
 tx1 = asin(R1(2,3)/cos(ty1));
 
 ty2 = asin(R2(1,3));
-tz2 = acos(R2(1,1)/cos(ty1));
-tx2 = asin(R2(2,3)/cos(ty1));
+tz2 = acos(R2(1,1)/cos(ty2));
+tx2 = asin(R2(2,3)/cos(ty2));
+
+ty3 = asin(R3(1,3));
+tz3 = acos(R3(1,1)/cos(ty3));
+tx3 = asin(R3(2,3)/cos(ty3));
+
+a = 1;

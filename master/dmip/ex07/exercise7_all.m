@@ -123,7 +123,7 @@ function rotationstuff()
     
     % Rotation matrix calculated from R_x, R_y, R_z
     disp('Rotation calculated using R_x, R_y, R_z');
-    R3 = R_z*R_y*R_x
+    R3 = R_x*R_y*R_z
     det(R3)
 
     % Calculate the rotation matrix using the phi values
@@ -134,7 +134,7 @@ function rotationstuff()
 
     % This is the correct rotation matrix!
     disp('Rotation calculated using R_z, R_y, R_x');
-%    R5 =
+    R5 = R_z*R_y*R_x
     det(R5)
 end
 

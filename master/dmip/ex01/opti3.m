@@ -10,8 +10,8 @@ n = size(nonzeros(S),1);
 
 % compute k'th approximation; k < n
 k = n;
-B = S(1,1)*U(:,1)*V(:,1)'; % init
-for i = 2:k
+B = zeros(size(A));
+for i = 1:k
     B = B + S(i,i)*U(:,i)*V(:,i)'; % now just add
     subplot(1,3,1);
     colormap gray;

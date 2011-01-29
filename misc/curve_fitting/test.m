@@ -7,7 +7,7 @@ clc;
 
 %% polynomial curve fitting
 x = -15:0.5:15;
-polynomial_degree = 3;
+polynomial_degree = 10;
 
 % do the work
 y = zeros(size(x));

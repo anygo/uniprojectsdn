@@ -6,6 +6,11 @@ clc;
 %% (normalisiertes) histogramm erstellen
 I = imread('object.png');
 I = mat2gray(I);
+
+I = randn(256, 256);
+I(16:128,16:240) = I(16:128,16:240) + 5;
+I = mat2gray(I);
+
 bins = 128;
 
 [counts x] = imhist(I,bins);

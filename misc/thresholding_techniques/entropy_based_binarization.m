@@ -6,8 +6,8 @@ clear all;
 clc;
 
 % create foreground/background image
-im = randn(256, 256);
-im(16:128,16:240) = im(16:128,16:240) + 8;
+im = [randn(256, 256) randn(256, 100)+5];
+
 
 %im = imread('rabbit.jpg');
 im = mat2gray(im);

@@ -35,14 +35,19 @@ plot(abs(mean_kernel_fourier));
 title('-> ringing');
 
 % test image
-im = zeros(64,64);
+im = zeros(128,128);
 im(20:44,20:44) = 1;
 im(:,5) = 1;
 im(5,:) = 1;
 
+im(8,:) = 1;
+
+im(100,:) = 1;
+im(1:3:end, 2:3:end) = 1;
+
 % filter
-im_gauss = imfilter(im, fspecial('gaussian', [3 3], 0.6));
-im_mean = imfilter(im, fspecial('average', [3 3]));
+im_gauss = imfilter(im, fspecial('gaussian', [15 15], 3));
+im_mean = imfilter(im, fspecial('average', [15 15]));
 
 subplot(3,2,5);
 imagesc(im_gauss);

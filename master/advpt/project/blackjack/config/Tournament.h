@@ -46,7 +46,7 @@ const size_t playersPerGame( 6 );
 // This value specifies the number of rounds in each game of black jack, i.e., the number of
 // times cards are dealt.
 */
-const size_t roundsPerGame( 10000 );
+const size_t roundsPerGame( 100000 );
 //*************************************************************************************************
 
 } // namespace blackjack

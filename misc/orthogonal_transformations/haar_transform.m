@@ -1,4 +1,4 @@
-function haar_transformation()
+function haar_transform()
     close all;
     clear all;
     clc;

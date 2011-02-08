@@ -10,7 +10,7 @@ function haar_transform()
     x = 0:1/(N-1):1;
     f = sin(12.345*x) .* cos(67*x);
     f(1,N/2+1:end) = sin(100*x(1,N/2+1:end)) - cos(x(1,N/2+1:end).^2); 
-    f(1,N/5:N/3) = 0.75;
+    f(1,floor(N/5):floor(N/3)) = 0.75;
     f = 2*mat2gray(f)-1; % f now in [-1;1]
     subplot(2,2,1); plot(x,f); title('original signal f(x) \in [-1;1], x \in [0;1]'); axis([0 1 -1 1]);
     

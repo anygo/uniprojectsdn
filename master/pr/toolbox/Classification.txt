@@ -1,3 +1,4 @@
+Ada_Boost@params@[100,'Perceptron',10]@L
 EMClassifier@Ngaussians@2 3@S
 KernelSVM@width@0.1@S
 SVM@softMargin@0@S

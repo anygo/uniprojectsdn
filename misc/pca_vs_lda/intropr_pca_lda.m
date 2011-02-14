@@ -3,12 +3,14 @@ clear all
 close all
 clc
 
-load('pca_data.mat')
-%load('stripedData1.mat')
+%load('pca_data.mat')
+load('stripedData1.mat')
 %load('stripedData2.mat')
 
+patterns = patterns - repmat(mean(patterns,2), 1, size(patterns,2));
+
 % Compute Eigenvector Matrix straightaway via princomp command
-help=princomp(patterns');
+help=princomp(patterns')
 
 
 % Covariance matrix Q = sum_i(sum_j((fi-fj) * (fi-fj)'))
@@ -23,7 +25,7 @@ end
 [V,D]=eigs(Q);
 
 % Create transformation matrix.
-Phi=V';
+Phi=V'
 %Phi(2,:)=0;  % If you want to ignore the y dimension
 
 for k=1:size(patterns,2)

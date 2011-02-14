@@ -6,7 +6,7 @@
 #
 #==================================================================================================
 
-BINARIES = constness class_hierarchies smart_pointer
+BINARIES = constness class_hierarchies smart_pointer test_exam_ex9
 
 CXX = g++
 CXXFLAGS = -pedantic -ansi -g

@@ -4,7 +4,7 @@ function walsh_hadamard_transform()
     clc;
 
     % length of signal
-    N = 16;
+    N = 128;
     
     % create a 1D signal f of length N
     x = -0.5:1/(N-1):0.5;

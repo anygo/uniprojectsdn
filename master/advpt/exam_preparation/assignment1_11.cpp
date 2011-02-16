@@ -20,7 +20,7 @@ int main(int argc, char* argv[]) {
 		} 
 		std::cout << std::endl;
 
-		transform(v.begin(), v.end(), v.begin(), times_two);
+		std::transform(v.begin(), v.end(), v.begin(), times_two);
 		
 		for (Ints::const_iterator it = v.begin(); it != v.end(); ++it) {
 				std::cout << *it << " ";

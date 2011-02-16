@@ -14,7 +14,7 @@ int main(int argc, char* argv[]) {
 		
 		std::vector<std::string> v;
 		std::string tmp;
-		
+
 		while (std::cin >> tmp)
 				v.push_back(tmp);
 

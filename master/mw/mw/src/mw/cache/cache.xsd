@@ -1,0 +1,13 @@
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+	<!--DATA TYPES -->
+	<xsd:complexType name="MWHash">
+		<xsd:sequence>
+			<xsd:element name="list" type="xsd:string" minOccurs="0" maxOccurs="unbounded"/>
+			<xsd:element name="method" type="xsd:string"/>
+			<xsd:element name="exception" type="xsd:boolean"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	<!--Messages -->
+	<xsd:element name="MWCacheRequest" type="MWHash"/>	
+	<xsd:element name="MWCacheReply" type="MWHash"/>
+</xsd:schema>

@@ -1,12 +1,15 @@
+#include <iostream>
+using namespace std;
+
 class Base {
 public:
-	 virtual void Base::print( int i1, int i2 = 5 ) { cout << "Base" << i1 << ", " << i2 << endl; }
+	 virtual void print( int i1, int i2 = 5 ) { cout << "Base" << i1 << ", " << i2 << endl; }
 
 };
 
 class Derived : public Base {
 public:
-	void Derived::print( int i1, int i2 = 77) {cout << "Derived:" << i1 << ", " << i2 << endl; }
+	void print( int i1, int i2 = 77) {cout << "Derived:" << i1 << ", " << i2 << endl; }
 };
 
 int main()

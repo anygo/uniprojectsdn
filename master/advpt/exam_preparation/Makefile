@@ -6,7 +6,7 @@
 #
 #==================================================================================================
 
-BINARIES = constness class_hierarchies smart_pointer test_exam_ex9 assignment1_2 assignment1_10 assignment1_11 assignment1_12 assignment2_5 explicitness swap_trick iterator_test strangeness
+BINARIES = constness class_hierarchies smart_pointer test_exam_ex9 assignment1_2 assignment1_10 assignment1_11 assignment1_12 assignment2_5 explicitness swap_trick iterator_test strangeness singleton
 
 CXX = g++
 CXXFLAGS = -pedantic -ansi -g

@@ -45,6 +45,10 @@ int main(int argc, char* argv[]) {
 
 		SingletonGoogleDocs* gdocs = SingletonGoogleDocs::getInstance();
 		gdocs->doSomething();
+
+		// what will happen, if:
+		// delete gdocs;
+		// can not be done, because destructor is private
       
-      return 0;
+      	return 0;
 }

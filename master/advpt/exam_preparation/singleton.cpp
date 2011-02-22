@@ -45,5 +45,6 @@ int main(int argc, char* argv[]) {
 
 		SingletonGoogleDocs* gdocs = SingletonGoogleDocs::getInstance();
 		gdocs->doSomething();
-
+      
+      return 0;
 }

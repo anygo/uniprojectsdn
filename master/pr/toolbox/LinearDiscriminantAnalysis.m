@@ -36,7 +36,9 @@ cla;
 hold on;
 for i = 1:N
    x = Phi*train_patterns(:,i);
-   scatter(x(1,1), x(2,1));
+   scatter(x(2,1), x(1,1), 'r');
+   x = train_patterns(:,i);
+   scatter(x(2,1), x(1,1), 'go');
 end
 title('transformed trainingset');
 hold off;

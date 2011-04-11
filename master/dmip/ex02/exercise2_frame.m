@@ -190,7 +190,7 @@ title('Grid for sampling the distorted image to get the corrected image (XD->XU)
 % d=2: parabola
 % d>=2: continuous non-linear curve 
 % E.g. d=5: 4 extrema
-d = 5;
+d = 7;
 
 
 %   Number of Coefficients

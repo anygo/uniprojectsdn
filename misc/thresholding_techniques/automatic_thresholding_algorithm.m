@@ -5,7 +5,7 @@ clc;
 
 % create foreground/background image
 im = randn(256, 256);
-im(16:128,128:240) = im(16:128,128:240) + 5;
+im(16:128, 128:240) = im(16:128, 128:240) + 5;
 im = mat2gray(im);
 imagesc(im);
 colormap gray;

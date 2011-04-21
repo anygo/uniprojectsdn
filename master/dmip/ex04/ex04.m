@@ -45,7 +45,7 @@ subplot(2,3,3), imagesc(corrupted), title('corrupted');
 
 %% compute mean-values
 tic
-neighborhood = [35 35];
+neighborhood = [50 50];
 mu_overall = mean(corrupted(:));
 mu_per_pixel = imfilter(corrupted, fspecial('average', neighborhood), 'symmetric');
 

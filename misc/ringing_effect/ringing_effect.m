@@ -7,12 +7,12 @@ clc;
 % gauss filter vs. mean filter
 
 % create filters
-gauss_kernel = fspecial('gaussian', [1 25], 2);
-mean_kernel = ones(1, 25)/25;
+gauss_kernel = fspecial('gaussian', [1 64], 2);
+mean_kernel = ones(1, 64)/64;
 
 % zeropad it
-gauss_kernel = padarray(gauss_kernel, [0 25]);
-mean_kernel = padarray(mean_kernel, [0 25]);
+gauss_kernel = padarray(gauss_kernel, [0 32]);
+mean_kernel = padarray(mean_kernel, [0 32]);
 
 subplot(3,2,1);
 plot(gauss_kernel);
@@ -34,18 +34,16 @@ subplot(3,2,4);
 plot(abs(mean_kernel_fourier));
 title('-> ringing');
 
-% test image
+% create test image
 im = zeros(128,128);
 im(20:44,20:44) = 1;
 im(:,5) = 1;
 im(5,:) = 1;
-
 im(8,:) = 1;
-
 im(100,:) = 1;
 im(1:3:end, 2:3:end) = 1;
 
-% filter
+% 2D-filter
 im_gauss = imfilter(im, fspecial('gaussian', [15 15], 3));
 im_mean = imfilter(im, fspecial('average', [15 15]));
 

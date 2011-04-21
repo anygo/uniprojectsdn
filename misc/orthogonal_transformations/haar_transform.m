@@ -4,9 +4,9 @@ function haar_transform()
     clc;
 
     % length of signal (must be a "power of 2")
-    N = 128;
+    N = 256;
     
-    % create a 1D signal f of length N
+    % create a fancy 1D signal f of length N
     x = 0:1/(N-1):1;
     f = sin(12.345*x) .* cos(67*x);
     f(1,N/2+1:end) = sin(100*x(1,N/2+1:end)) - cos(x(1,N/2+1:end).^2); 
@@ -25,9 +25,9 @@ function haar_transform()
     
     % reconstruct (approximated) original signal
     f_rec = Har\c; % == inv(Har)*c
-    subplot(2,2,3); plot(x,f_rec); title('reconstructed signal (red curve = error \approx 0)'); axis([0 1 -1 1]);
+    subplot(2,2,3); plot(x,f_rec); title('reconstructed signal (red curve: error (\approx 0))'); axis([0 1 -1 1]);
     hold on;
-    plot(x,abs(f_rec-f'), 'r'); % error
+    plot(x, abs(f_rec-f'), 'r'); % error
     hold off;
 end
 
@@ -47,7 +47,7 @@ function Har = create_haar_matrix(M)
     function x = h(x,p,q)
         x_vec = 0:1/(size(x,2)-1):1;
 
-        x(1, ( x_vec >= (q-1)/2^p   ) & ( x_vec <= (q-0.5)/2^p) ) = 2^(p/2);
+        x(1, ( x_vec >= (q-1)/2^p   ) & ( x_vec <= (q-0.5)/2^p) ) =  2^(p/2);
         x(1, ( x_vec >= (q-0.5)/2^p ) & ( x_vec <= q/2^p)       ) = -2^(p/2);
         x = 1/sqrt(M) * x;
     end

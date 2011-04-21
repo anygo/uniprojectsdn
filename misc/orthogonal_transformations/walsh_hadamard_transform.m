@@ -33,6 +33,7 @@ function walsh_hadamard_transform()
     hold off;
 end
 
+% create Hadamard matrix using the kronecker product
 function K = kronecker_product(A, B)
     K = zeros(size(A) .* size(B));
     for r = 1:size(A,1)

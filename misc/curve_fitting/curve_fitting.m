@@ -1,13 +1,11 @@
-% having fun with polynomial curve fitting
-
 % cleanup
 close all;
 clear all;
 clc;
 
-%% polynomial curve fitting
-x = -15:0.5:15;
-polynomial_degree = 10;
+% polynomial curve fitting
+x = -25:0.5:25;
+polynomial_degree = 6;
 
 % do the work
 y = zeros(size(x));

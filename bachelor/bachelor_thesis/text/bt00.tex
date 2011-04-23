@@ -1,0 +1,167 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%  Studienarbeit Vorname Name Datum         
+%  "Titel"
+%  Lehrstuhl fuer Mustererkennung, FAU Erlangen-Nuernberg
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% ++ LME LateX Dokument 
+%    Die Verwendung der option "german" bindet german.sty ein.
+%    For english papers, use the "english" option and talk to your advisor.
+%\documentclass[german,bt]{lmedoc}
+\documentclass[english,bt]{lmedoc}
+\bibliographystyle{wmaainf}
+
+
+% ++ Umlaut Unterstuetzung
+%    Paket "inputenc" kann verwendet werden, um z.B. Umlaute oder das scharfe S
+%    direkt (als Nicht-ASCII-Zeichen) einzubinden. Dabei auf die korrekte
+%    Kodiermethode achten (z.B. Linux: latin1)! 
+%\usepackage[latin1]{inputenc}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{graphics}
+\usepackage[T1]{fontenc}
+\usepackage{float}
+\usepackage[hang,nooneline]{subfigure}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
+\usepackage{selinput}
+\SelectInputMappings{
+  adieresis={‰},
+  germandbls={ﬂ},
+  Euro={Ä}
+}
+\usepackage[pdftex,colorlinks=false,linkcolor=darkblue,pdfpagelayout=TwoPageRight,pdftitle={Determining the Camera Response Function},pdfauthor={Dominik Neumann}]{hyperref}
+
+
+
+ 
+\def\sectionautorefname{Section}             % I want to have capital first letter for autoref section!
+\def\subsectionautorefname{Subsection}       % I want to have capital first letter for autoref subsection!
+\def\subsubsectionautorefname{Subsubsection} % I want to have capital first letter for autoref subsubsection!
+\def\chapterautorefname{Chapter}             % I want to have capital first letter for autoref section!
+\def\subfigureautorefname{\figureautorefname} 	% Figure name also with subfloats
+\newcommand{\algorithmautorefname}{Algorithm}
+\newcommand{\theHalgorithm}{\arabic{algorithm}}
+
+
+
+% ++ es werden keine underfull hboxes als Fehler ausgegeben,
+%    da das ja nur heiﬂt, dass die Seite noch nicht ganz voll ist
+\hbadness=10000
+
+
+\includeonly{bt01, bt02, bt03, bt04, bt05, bt06, bt07, bt08, bt09, bt10, bt11, bt-lit, bt-lof, bt-lot}
+
+\pagenumbering{roman}
+
+\begin{document}
+\clearpage
+  \begin{deckblatt}
+    \Titel{Determining the Camera Response Function}
+    \Name{Neumann}
+    \Vorname{Dominik}
+    \Geburtsort{Amberg}
+    \Geburtsdatum{August $\text{8}^\text{th}$, 1987}
+    \Betreuer{Dipl.-Inf. Christian Riess, Dr. Elli Angelopoulou}
+    \Start{March $\text{1}^\text{st}$, 2010}
+    \Ende{August $\text{11}^\text{th}$, 2010}
+  \end{deckblatt}
+
+
+\cleardoublepage
+
+
+Ich versichere, dass ich die Arbeit ohne fremde Hilfe und ohne Benutzung
+anderer als der angegebenen Quellen angefertigt habe und dass die Arbeit
+in gleicher oder "ahnlicher Form noch keiner anderen Pr"ufungsbeh"orde
+vorgelegen hat und von dieser als Teil einer Pr"ufungsleistung
+angenommen wurde. Alle Ausf"uhrungen, die w"ortlich oder sinngem"a"s
+"ubernommen wurden, sind als solche gekennzeichnet.
+\\
+
+Die Richtlinien des Lehrstuhls f"ur Studien- und Diplomarbeiten
+habe ich gelesen und anerkannt, insbesondere die Regelung des
+Nutzungsrechts. \\[15mm]
+Erlangen, den 11. August 2010 \hspace{6.0cm} \\[10mm]
+
+\clearpage
+
+\begin{center}
+\bfseries
+Acknowledgments
+\normalfont
+\end{center}
+%
+Thank you to everyone who has supported me in creating this thesis. Especially to my advisor Christian Riess for the selfless support and his great efforts to explain things clearly and simply. Special thanks also to Isabella Haidl, Felix Lugauer and the people from ``Bildlabor'', Eva Eibenberger, Johannes Jordan, Elli Angelopoulou and to my family.
+
+\cleardoublepage
+
+
+\bfseries
+\begin{center}
+"Ubersicht
+\end{center}
+\normalfont
+Heutige Digitalkameras ‰ndern die gemessenen Daten nichtlinear ab, damit optisch ansprechendere Bilder entstehen. All diese nichtlinearen Ver"anderungen lassen sich zu einer einzigen Funktion zusammenfassen, der Camera Response Function (CRF). Einige Algorithmen aus dem Bereich des Rechnersehens ben"otigen allerdings Bilder, deren Intensit"atswerte m"oglichst linear zu der am Sensor gemessenen Beleuchtungsst"arke sind. In letzter Zeit wurden einige Ans"atze vorgestellt, die sich damit befassen, die CRF einer Kamera zu sch"atzen (und zu invertieren). Die meisten funktionieren allerdings nicht auf beliebigen Bildern, da sie als Eingabe auf mehrere Bilder von der selben Kamera unter bestimmten Aufnahmebedingungen angewiesen sind.
+
+Es werden zwei Ans"atze vorgestellt, die die CRF aus einem einzelnen Bild sch"atzen k"onnen. Der erste Ansatz basiert auf physikalischen Eigenschaften. Trotz sorgf"altigen Studiums konnten wir bei dieser Methode keine zufriedenstellenden Resultate erzielen. Jedoch schlagen wir einen Ansatz f"ur weitere Untersuchungen vor. Die zweite Methode baut auf maschinellem Lernen auf und lieferte gute Ergebnisse. Die Evaluation erfolgte mittels verschiedener Tests, darunter ein Stabilit"atstest. Die gesch"atzten CRFs von Bildern der selben Kamera wurden auf "Ahnlichkeit hin untersucht. Die Robustheit der Methode h"angt sehr stark von der Wahl von drei Parametern ab. Es hat sich gezeigt, dass die Ergebnisse erheblich verbessert werden k"onnen, wenn zus"atzliches Wissen "uber die Art der CRF oder die Qualit"at der Daten zur Verf"ugung steht.
+
+
+
+
+\bfseries
+\begin{center}
+Abstract
+\end{center}
+\normalfont
+Typical digital cameras usually add nonlinearities to the sensed data to make the image look more visually pleasing. These nonlinearities can be summarized as a single function, the camera response function (CRF).  However, many computer vision algorithms require images, where the intensities are approximately linearly related to scene radiance. Recently, several approaches to estimate (and invert) the CRF of a camera were proposed. Most of them require several images taken in constrained environments. Such methods can not be applied on arbitrary images. 
+
+In this thesis, two approaches are presented, which are explicitly designed to work on a single image. First, we followed a physics-based approach. Despite thorough studies, we could not achieve satisfying results. Nevertheless, an approach for further examination of this method is proposed. Second, we implemented a machine learning-based approach, which provided good results. A variety of tests was applied to evaluate it, including stability tests. For the same camera, the similarity of CRF estimates on different images is examined. The robustness is heavily dependent on the choice of three parameters. It turned out, that the results can be significantly improved by additional knowledge on the type of CRF in the camera and the quality of the data.
+
+
+
+\cleardoublepage
+
+\tableofcontents
+
+\cleardoublepage \pagenumbering{arabic}
+
+\include{bt01}   % Einfuehrung (\chapter{Einf"uhrung})
+\cleardoublepage
+\include{bt02}   % (\chapter{})
+\cleardoublepage
+\include{bt03}   % (\chapter{})
+\cleardoublepage
+\include{bt04}   % (\chapter{})
+\cleardoublepage
+\include{bt05}   % (\chapter{})
+\cleardoublepage
+\include{bt06}   % (\chapter{})
+\cleardoublepage
+%\include{bt07}   % Ausblick (\chapter{Ausblick} TEXT)
+%\cleardoublepage
+%\include{bt08}   % Zusammenfassung (\chapter{Zusammenfassung}  TEXT)
+%\cleardoublepage
+
+%\appendix
+%\cleardoublepage
+%\include{bt09}   % Glossar (\chapter{Glossar}  TEXT)
+%\cleardoublepage
+%\include{bt10}   % 
+%\cleardoublepage
+%\include{bt11}   % 
+%\cleardoublepage
+\phantomsection % hyperref fix
+\include{bt-lof} % Bilderverzeichnis
+\cleardoublepage
+\phantomsection % hyperref fix
+\include{bt-lot} % Tabellenverzeichnis
+\cleardoublepage
+\phantomsection % hyperref fix
+\include{bt-lit} % Literaturverzeichnis
+
+\end{document}

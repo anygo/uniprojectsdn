@@ -1,0 +1,17 @@
+Korbinian Riedhammer, korbinian.riedhammer@informatik.uni-erlangen.de
+
+Requires Java6
+
+Required libraries (don't forget to add them to the build environment!):
+
+--%<---------------------------------------------------------------------------
+Jama 
+[ http://math.nist.gov/javanumerics/jama/ ] (in libpack.zip)
+
+Linear algebra methods (matrices, svd, ...)
+
+--%<---------------------------------------------------------------------------
+jtransforms-2.2+ 
+[ http://piotr.wendykier.googlepages.com/jtransforms ] (in libpack.zip)
+
+Fast transformations (FFT, DCT, ...)

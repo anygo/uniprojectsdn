@@ -1,0 +1,53 @@
+set(this_module_name "radio_calib")
+set(this_unit_memberships "reflectance")
+set(this_extra_include_directories)
+set(this_build_library "vole_radio_calib")
+set(this_module_variable "VOLE_RADIO_CALIB")
+set(this_module_description "Radiometric Calibration")
+set(this_module_general_requirements "VOLE_OPENCV" "VOLE_BOOST" "VOLE_BOOST_PROGRAM_OPTIONS")
+
+VoleRequiredModules("color_processing")
+
+# add commands here (command name, command header file, command class name)
+VoleAddCommand("radcal" "command_radcal.h" "vole::RadCal")
+VoleAddCommand("geoinv" "command_geoinv.h" "vole::GeoInv")
+
+# add all "normal" classes here
+VoleCompileLibrary(
+	"RadCal/likelihood_function.cpp"
+	"RadCal/likelihood_function.h"
+	"RadCal/lmcurve.cpp"
+	"RadCal/lmcurve.h"
+	"RadCal/lmmin.cpp"
+	"RadCal/lmmin.h"
+	"RadCal/observation_set_formator.cpp"
+	"RadCal/observation_set_formator.h"
+	"RadCal/optimizer.cpp"
+	"RadCal/optimizer.h"
+	"RadCal/prior_model.cpp"
+	"RadCal/prior_model.h"
+	"RadCal/radcal_config.cpp"
+	"RadCal/radcal_config.h"
+	"GeoInv/classifier.cpp"
+	"GeoInv/classifier.h"
+	"GeoInv/crf_estimator.cpp"
+	"GeoInv/crf_estimator.h"
+	"GeoInv/definitions.h"
+	"GeoInv/geoinv_config.cpp"
+	"GeoInv/geoinv_config.h"
+	"GeoInv/lmcurve.cpp"
+	"GeoInv/lmcurve.h"
+	"GeoInv/lmmin.cpp"
+	"GeoInv/lmmin.h"
+	"GeoInv/lpip_detector.cpp"
+	"GeoInv/lpip_detector.h"
+	"GeoInv/trainer.cpp"
+	"GeoInv/trainer.h"
+)
+
+# add command-classes here (command header file, command class)
+VoleCompileIfShell(
+	"command_radcal.h" "command_radcal.cpp"
+	"command_geoinv.h" "command_geoinv.cpp"
+)
+

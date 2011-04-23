@@ -17,7 +17,7 @@ function walsh_hadamard_transform()
     H_cur = H_2;
     subplot(2,2,2); imagesc(H_2); colormap gray; title('Hadamard matrix H_2'); axis image; pause(0.1);
     for i = 2:log(N)/log(2)
-        H_cur = kronecker_product(H_cur, H_2);
+        H_cur = kronecker_product(H_2, H_cur);%, H_2);
         imagesc(H_cur); title(['Hadamard matrix H_{' num2str(2^i) '}']); axis image; pause(0.1);
     end
     

@@ -1,0 +1,89 @@
+stabilitytests/canon_eos_400d_digital_l100_k3_p3.txt 0.000202144
+stabilitytests/canon_eos_400d_digital_l1000_k3_p3.txt 0.00326802
+stabilitytests/canon_eos_400d_digital_l10000_k3_p3.txt 0.0060873
+stabilitytests/canon_eos_400d_digital_l100_k5_p5.txt 0.000222191
+stabilitytests/canon_eos_400d_digital_l1000_k5_p5.txt 0.00190189
+stabilitytests/canon_eos_400d_digital_l10000_k5_p5.txt 0.0037988
+stabilitytests/canon_eos_400d_digital_l100_k7_p7.txt 8.05054e-005
+stabilitytests/canon_eos_400d_digital_l1000_k7_p7.txt 0.00116112
+stabilitytests/canon_eos_400d_digital_l10000_k7_p7.txt 0.00298485
+
+stabilitytests/casio_ex-s600_l100_k3_p3.txt 0.00112397
+stabilitytests/casio_ex-s600_l1000_k3_p3.txt 0.00842596
+stabilitytests/casio_ex-s600_l10000_k3_p3.txt 0.0103376
+stabilitytests/casio_ex-s600_l100_k5_p5.txt 0.00123733
+stabilitytests/casio_ex-s600_l1000_k5_p5.txt 0.0051043
+stabilitytests/casio_ex-s600_l10000_k5_p5.txt 0.00784062
+stabilitytests/casio_ex-s600_l100_k7_p7.txt 0.00133531
+stabilitytests/casio_ex-s600_l1000_k7_p7.txt 0.00228716
+stabilitytests/casio_ex-s600_l10000_k7_p7.txt 0.00553835
+
+stabilitytests/fujifilm_finepix_s5600_l100_k3_p3.txt 0.000927927
+stabilitytests/fujifilm_finepix_s5600_l1000_k3_p3.txt 0.00701221
+stabilitytests/fujifilm_finepix_s5600_l10000_k3_p3.txt 0.0154346
+stabilitytests/fujifilm_finepix_s5600_l100_k5_p5.txt 0.0019212
+stabilitytests/fujifilm_finepix_s5600_l1000_k5_p5.txt 0.00567278
+stabilitytests/fujifilm_finepix_s5600_l10000_k5_p5.txt 0.00945067
+stabilitytests/fujifilm_finepix_s5600_l100_k7_p7.txt 0.00105814
+stabilitytests/fujifilm_finepix_s5600_l1000_k7_p7.txt 0.00294625
+stabilitytests/fujifilm_finepix_s5600_l10000_k7_p7.txt 0.00858077
+
+stabilitytests/kodak_dx7590_l100_k3_p3.txt 0.00246081
+stabilitytests/kodak_dx7590_l1000_k3_p3.txt 0.0108937
+stabilitytests/kodak_dx7590_l10000_k3_p3.txt 0.0162848
+stabilitytests/kodak_dx7590_l100_k5_p5.txt 0.00196864
+stabilitytests/kodak_dx7590_l1000_k5_p5.txt 0.00624231
+stabilitytests/kodak_dx7590_l10000_k5_p5.txt 0.00752391
+stabilitytests/kodak_dx7590_l100_k7_p7.txt 0.00049541
+stabilitytests/kodak_dx7590_l1000_k7_p7.txt 0.00193643
+stabilitytests/kodak_dx7590_l10000_k7_p7.txt 0.0054627
+
+stabilitytests/kodak_z740_l100_k3_p3.txt 0.00120126
+stabilitytests/kodak_z740_l1000_k3_p3.txt 0.00993048
+stabilitytests/kodak_z740_l10000_k3_p3.txt 0.0119481
+stabilitytests/kodak_z740_l100_k5_p5.txt 0.00121488
+stabilitytests/kodak_z740_l1000_k5_p5.txt 0.0078497
+stabilitytests/kodak_z740_l10000_k5_p5.txt 0.00954483
+stabilitytests/kodak_z740_l100_k7_p7.txt 0.000321603
+stabilitytests/kodak_z740_l1000_k7_p7.txt 0.00463118
+stabilitytests/kodak_z740_l10000_k7_p7.txt 0.00673219
+
+stabilitytests/nikon_d40_l100_k3_p3.txt 0.00126673
+stabilitytests/nikon_d40_l1000_k3_p3.txt 0.0102638
+stabilitytests/nikon_d40_l10000_k3_p3.txt 0.0157116
+stabilitytests/nikon_d40_l100_k5_p5.txt 0.00150326
+stabilitytests/nikon_d40_l1000_k5_p5.txt 0.00639137
+stabilitytests/nikon_d40_l10000_k5_p5.txt 0.00934193
+stabilitytests/nikon_d40_l100_k7_p7.txt 0.000478153
+stabilitytests/nikon_d40_l1000_k7_p7.txt 0.00306862
+stabilitytests/nikon_d40_l10000_k7_p7.txt 0.00641357
+
+stabilitytests/nikon_d80_l100_k3_p3.txt 0.000640675
+stabilitytests/nikon_d80_l1000_k3_p3.txt 0.0107796
+stabilitytests/nikon_d80_l10000_k3_p3.txt 0.0149397
+stabilitytests/nikon_d80_l100_k5_p5.txt 0.000941942
+stabilitytests/nikon_d80_l1000_k5_p5.txt 0.00627806
+stabilitytests/nikon_d80_l10000_k5_p5.txt 0.00857639
+stabilitytests/nikon_d80_l100_k7_p7.txt 0.000585781
+stabilitytests/nikon_d80_l1000_k7_p7.txt 0.00182125
+stabilitytests/nikon_d80_l10000_k7_p7.txt 0.00586053
+
+stabilitytests/sony_dsc-w300_l100_k3_p3.txt 0.0002936
+stabilitytests/sony_dsc-w300_l1000_k3_p3.txt 0.0050721
+stabilitytests/sony_dsc-w300_l10000_k3_p3.txt 0.0112044
+stabilitytests/sony_dsc-w300_l100_k5_p5.txt 0.000223034
+stabilitytests/sony_dsc-w300_l1000_k5_p5.txt 0.00360991
+stabilitytests/sony_dsc-w300_l10000_k5_p5.txt 0.00493578
+stabilitytests/sony_dsc-w300_l100_k7_p7.txt 0.000229562
+stabilitytests/sony_dsc-w300_l1000_k7_p7.txt 0.00127203
+stabilitytests/sony_dsc-w300_l10000_k7_p7.txt 0.00354833
+
+funt10033 0.001717
+funt100033 0.006429
+funt1000033 0.006179
+funt10055 0.000981
+funt100055 0.003006
+funt1000055 0.002466
+funt10077 0.000290
+funt100077 0.001440
+funt1000077 0.001910

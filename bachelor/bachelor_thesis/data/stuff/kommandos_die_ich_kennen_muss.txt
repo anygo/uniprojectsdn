@@ -1,0 +1,8 @@
+pdflatex bt00.tex
+bibtex bt00
+makeidx bt00.tex <- nur, falls Du ein Stichwortverzeichnis willst (willst Du eigentlich nicht)
+
+oldschool:
+latex bt00.tex
+dvips bt00.dvi
+dvipdf bt00.dvi

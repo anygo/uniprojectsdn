@@ -1,0 +1,82 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{prettythesis}[2010/02/09 v0.1 Pretty thesis package (Martin Gropp)]
+\RequirePackage[automark]{scrpage2}
+\RequirePackage{titlesec}
+\RequirePackage{ifxetex}
+
+% Pretty fonts!
+% If you use XeTeX you should always work with fontspec...
+\ifxetex
+  \usepackage{fontspec}
+  \usepackage{xunicode}
+  
+  % Widely available
+  %\defaultfontfeatures{Scale=MatchLowercase, Mapping=tex-text}
+  %\setmainfont{Times New Roman}
+  %\setromanfont{Times New Roman}
+  %\setsansfont{DejaVu Sans}
+  %\setmonofont{DejaVu Sans Mono}
+
+  % Non-free
+  \defaultfontfeatures{Scale=MatchLowercase, Mapping=tex-text, Numbers={OldStyle,Proportional}}  
+  \setmainfont{Bembo Std}
+  \setromanfont{Bembo Std}
+  \setsansfont{Myriad Pro}
+  \setmonofont{Prestige Elite Std}
+\else
+  \usepackage[utf8]{inputenc}
+\fi
+
+
+%\ifxetex
+  %\let\oldcite=\cite
+  %\renewcommand{\cite}[2][\undefined]{\begingroup\addfontfeature{Numbers=Lining}\ifdefined#1\oldcite[#1]{#2}\else\oldcite{#2}\fi\endgroup}
+%\fi
+
+
+% Pretty page headings!
+\setkomafont{pagehead}{\normalfont\sffamily\small}
+\setkomafont{pagenumber}{\normalfont\rmfamily}
+\pagestyle{scrheadings}
+\clearscrheadings
+\clearscrplain
+\setfootwidth{head}
+\ofoot{\pagemark}
+\ohead{\textcolor[gray]{0.5}{\headmark}}
+
+
+% Pretty titles!
+\titleformat{\section}%
+  {\normalfont\sffamily\Large\color[rgb]{0,0,0.33}}%
+  {\thesection}%
+  {1em}%
+  {}%
+
+\titleformat{\subsection}%
+  {\normalfont\sffamily\Large\color[rgb]{0,0,0.33}}%
+  {\thesubsection}%
+  {1em}%
+  {}%
+
+\titleformat{\subsubsection}%
+  {\normalfont\sffamily\normalsize\color[rgb]{0,0,0.33}}%
+  {\thesubsubsection}%
+  {1em}%
+  {}%
+
+
+% prettyquote environment
+% -- the text argument won't work in nested prettyquotes, but...
+\ifxetex
+  \newenvironment{fancyquote}{ %
+    \vspace{2ex}{\Huge “}\vspace{-6.5ex}\quote\begingroup\it}{ %
+    \endgroup\endquote\vspace{-4ex}\hfill{\Huge ”}\vspace{2ex} %
+  }
+\else
+  \newenvironment{fancyquote}{ %
+    \vspace{2ex}{\Huge\bf ``}\vspace{-6.5ex}\quote\begingroup\it}{ %
+    \endgroup\endquote\vspace{-4ex}\hfill{\Huge\bf ''}\vspace{2ex} %
+  }
+\fi
+
+\endinput

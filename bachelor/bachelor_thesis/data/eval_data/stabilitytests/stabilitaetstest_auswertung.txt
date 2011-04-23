@@ -1,0 +1,1080 @@
+stabilitytests/canon_eos_400d_digital_l100_k3_p3.txt
+images: 49
+blue mean min max stddev
+0.00031378 2.21372e-005 0.00218712 0.000231754
+green mean min max stddev
+0.000121682 1.24585e-005 0.000943135 7.63721e-005
+red mean min max stddev
+0.000170971 9.2558e-006 0.00146902 0.000143695
+all curves mean stddev
+0.000202144 0.000150607
+coverage mean min max
+0.179312 0.0714286 0.638298
+omega mean min max
+3046.35 516 21377
+
+stabilitytests/canon_eos_400d_digital_l1000_k3_p3.txt
+images: 49
+blue mean min max stddev
+0.00411722 2.40691e-005 0.0132207 0.00403038
+green mean min max stddev
+0.00275068 7.0916e-005 0.0134038 0.00237542
+red mean min max stddev
+0.00293614 5.06218e-005 0.023566 0.0024171
+all curves mean stddev
+0.00326802 0.00294097
+coverage mean min max
+0.182237 0.069869 0.615385
+omega mean min max
+3046.33 516 21374
+
+stabilitytests/canon_eos_400d_digital_l10000_k3_p3.txt
+images: 49
+blue mean min max stddev
+0.00887803 0.000930727 0.0620599 0.00702982
+green mean min max stddev
+0.00408707 0.00111643 0.0137349 0.00222434
+red mean min max stddev
+0.00529678 0.000464911 0.0632701 0.00361079
+all curves mean stddev
+0.0060873 0.00428831
+coverage mean min max
+0.181165 0.0705694 0.630588
+omega mean min max
+3046.33 516 21378
+
+stabilitytests/canon_eos_400d_digital_l100_k5_p5.txt
+images: 49
+blue mean min max stddev
+0.000152454 1.45756e-005 0.00668987 9.4795e-005
+green mean min max stddev
+9.77853e-005 1.75942e-005 0.000534216 5.74178e-005
+red mean min max stddev
+0.000416334 1.43271e-005 0.00113463 0.000636698
+all curves mean stddev
+0.000222191 0.00026297
+coverage mean min max
+0.178465 0.0675381 0.600462
+omega mean min max
+3046.22 516 21375
+
+stabilitytests/canon_eos_400d_digital_l1000_k5_p5.txt
+images: 49
+blue mean min max stddev
+0.00299535 4.14096e-005 0.00555185 0.00332664
+green mean min max stddev
+0.00125885 3.72598e-005 0.00533392 0.00111492
+red mean min max stddev
+0.00145147 5.13587e-005 0.0286829 0.00116692
+all curves mean stddev
+0.00190189 0.00186949
+coverage mean min max
+0.17955 0.0687023 0.593103
+omega mean min max
+3046.22 516 21374
+
+stabilitytests/canon_eos_400d_digital_l10000_k5_p5.txt
+images: 49
+blue mean min max stddev
+0.00529314 0.000432003 0.0137817 0.00372324
+green mean min max stddev
+0.00294453 0.000533623 0.0139804 0.00170839
+red mean min max stddev
+0.00315873 0.000349826 0.0310834 0.00197044
+all curves mean stddev
+0.0037988 0.00246736
+coverage mean min max
+0.180775 0.0722101 0.615385
+omega mean min max
+3046.49 516 21372
+
+stabilitytests/canon_eos_400d_digital_l100_k7_p7.txt
+images: 49
+blue mean min max stddev
+8.65585e-005 5.25369e-005 0.000362926 2.89536e-005
+green mean min max stddev
+7.6148e-005 5.34719e-005 0.000512317 1.78028e-005
+red mean min max stddev
+7.88097e-005 5.33234e-005 0.000605021 1.92079e-005
+all curves mean stddev
+8.05054e-005 2.19881e-005
+coverage mean min max
+0.181849 0.0663765 0.615385
+omega mean min max
+3046.45 516 21375
+
+stabilitytests/canon_eos_400d_digital_l1000_k7_p7.txt
+images: 49
+blue mean min max stddev
+0.00169072 3.11527e-005 0.00516718 0.00111738
+green mean min max stddev
+0.000979848 8.16731e-006 0.00661349 0.00105925
+red mean min max stddev
+0.000812808 5.85667e-005 0.00541653 0.000878179
+all curves mean stddev
+0.00116112 0.00101827
+coverage mean min max
+0.178067 0.0687023 0.604167
+omega mean min max
+3046.39 516 21376
+
+stabilitytests/canon_eos_400d_digital_l10000_k7_p7.txt
+images: 49
+blue mean min max stddev
+0.00410784 0.000296215 0.0115489 0.00259377
+green mean min max stddev
+0.00239523 0.000453397 0.0121284 0.00115207
+red mean min max stddev
+0.00245148 0.000621397 0.0230776 0.00121466
+all curves mean stddev
+0.00298485 0.0016535
+coverage mean min max
+0.178593 0.0687023 0.611628
+omega mean min max
+3046.53 516 21373
+
+stabilitytests/casio_ex-s600_l100_k3_p3.txt
+images: 11
+blue mean min max stddev
+0.00116195 0.000726069 0.00165015 0.000492042
+green mean min max stddev
+0.00116717 0.000642127 0.00297855 0.000425079
+red mean min max stddev
+0.00104278 0.000283266 0.0020932 0.000235405
+all curves mean stddev
+0.00112397 0.000384175
+coverage mean min max
+0.619755 0.33892 1.05674
+omega mean min max
+5064 167 14501
+
+stabilitytests/casio_ex-s600_l1000_k3_p3.txt
+images: 11
+blue mean min max stddev
+0.0121489 0.000401929 0.0183186 0.0115814
+green mean min max stddev
+0.0057372 0.00045298 0.0142642 0.0048251
+red mean min max stddev
+0.00739175 0.00116608 0.0285183 0.00672898
+all curves mean stddev
+0.00842596 0.00771182
+coverage mean min max
+0.633623 0.326568 1.10145
+omega mean min max
+5064.27 167 14507
+
+stabilitytests/casio_ex-s600_l10000_k3_p3.txt
+images: 11
+blue mean min max stddev
+0.0160204 0.00114786 0.0251673 0.00969377
+green mean min max stddev
+0.00535383 0.000899335 0.0103678 0.00203429
+red mean min max stddev
+0.00963862 0.00150848 0.0412616 0.00492528
+all curves mean stddev
+0.0103376 0.00555111
+coverage mean min max
+0.622172 0.321691 1.07143
+omega mean min max
+5064.45 167 14507
+
+stabilitytests/casio_ex-s600_l100_k5_p5.txt
+images: 11
+blue mean min max stddev
+0.00146218 0.000731841 0.00159563 0.000847466
+green mean min max stddev
+0.00111262 0.000711688 0.0019195 0.000190997
+red mean min max stddev
+0.00113718 0.000482708 0.00612324 0.000220142
+all curves mean stddev
+0.00123733 0.000419535
+coverage mean min max
+0.607945 0.289474 1.10145
+omega mean min max
+5065.09 167 14502
+
+stabilitytests/casio_ex-s600_l1000_k5_p5.txt
+images: 11
+blue mean min max stddev
+0.00850283 0.000424631 0.00951794 0.00714411
+green mean min max stddev
+0.0030144 0.000624722 0.00717521 0.00226953
+red mean min max stddev
+0.00379568 0.00136512 0.0264468 0.00312123
+all curves mean stddev
+0.0051043 0.00417829
+coverage mean min max
+0.613693 0.300885 1.04225
+omega mean min max
+5064.55 167 14505
+
+stabilitytests/casio_ex-s600_l10000_k5_p5.txt
+images: 11
+blue mean min max stddev
+0.0119419 0.00159695 0.0174474 0.00680921
+green mean min max stddev
+0.00443518 0.00118939 0.00617857 0.00159511
+red mean min max stddev
+0.00714479 0.00201455 0.0370718 0.00262452
+all curves mean stddev
+0.00784062 0.00367628
+coverage mean min max
+0.613223 0.289474 1.10145
+omega mean min max
+5064.82 167 14504
+
+stabilitytests/casio_ex-s600_l100_k7_p7.txt
+images: 11
+blue mean min max stddev
+0.00134169 0.0011974 0.00145275 0.000107738
+green mean min max stddev
+0.0013253 0.00117614 0.00143932 6.70884e-005
+red mean min max stddev
+0.00133894 0.00109934 0.00152349 7.70923e-005
+all curves mean stddev
+0.00133531 8.39728e-005
+coverage mean min max
+0.61947 0.245763 1.08633
+omega mean min max
+5064.64 167 14506
+
+stabilitytests/casio_ex-s600_l1000_k7_p7.txt
+images: 11
+blue mean min max stddev
+0.00252869 0.000476966 0.00685938 0.00179399
+green mean min max stddev
+0.00207463 0.000612151 0.00548767 0.00108017
+red mean min max stddev
+0.00225817 0.000116365 0.00740925 0.00151477
+all curves mean stddev
+0.00228716 0.00146298
+coverage mean min max
+0.618954 0.324324 1.13235
+omega mean min max
+5063.09 167 14501
+
+stabilitytests/casio_ex-s600_l10000_k7_p7.txt
+images: 11
+blue mean min max stddev
+0.00820966 0.000398124 0.0109264 0.00463963
+green mean min max stddev
+0.00353931 0.00119375 0.00643028 0.00144913
+red mean min max stddev
+0.00486609 0.00180639 0.0211939 0.00298789
+all curves mean stddev
+0.00553835 0.00302555
+coverage mean min max
+0.62046 0.300885 1.08633
+omega mean min max
+5064.64 167 14503
+
+stabilitytests/fujifilm_finepix_s5600_l100_k3_p3.txt
+images: 13
+blue mean min max stddev
+0.00101073 0.00026235 0.00200762 0.000388426
+green mean min max stddev
+0.000903294 0.000560317 0.00137748 0.000176235
+red mean min max stddev
+0.000869759 0.000300884 0.00169271 0.000296882
+all curves mean stddev
+0.000927927 0.000287181
+coverage mean min max
+0.423741 0.219378 0.608621
+omega mean min max
+3298.23 1934 4904
+
+stabilitytests/fujifilm_finepix_s5600_l1000_k3_p3.txt
+images: 13
+blue mean min max stddev
+0.00337162 0.00288486 0.0320346 0.00425269
+green mean min max stddev
+0.00772389 0.000987822 0.0186744 0.00516621
+red mean min max stddev
+0.00994111 0.000109657 0.0302033 0.00636217
+all curves mean stddev
+0.00701221 0.00526036
+coverage mean min max
+0.421873 0.216413 0.603093
+omega mean min max
+3297.46 1924 4904
+
+stabilitytests/fujifilm_finepix_s5600_l10000_k3_p3.txt
+images: 13
+blue mean min max stddev
+0.0175361 0.00177694 0.086657 0.0235509
+green mean min max stddev
+0.0162514 0.00261255 0.0430376 0.0126768
+red mean min max stddev
+0.0185162 0.000346681 0.0940764 0.0209664
+all curves mean stddev
+0.0174346 0.0190647
+coverage mean min max
+0.419799 0.214199 0.605852
+omega mean min max
+3298.92 1941 4904
+
+stabilitytests/fujifilm_finepix_s5600_l100_k5_p5.txt
+images: 13
+blue mean min max stddev
+0.00211547 0.000407221 0.00461751 0.00123416
+green mean min max stddev
+0.00200951 0.000400882 0.00619796 0.00157144
+red mean min max stddev
+0.00163863 0.000565477 0.00576392 0.0012204
+all curves mean stddev
+0.0019212 0.001342
+coverage mean min max
+0.419359 0.219378 0.594872
+omega mean min max
+3298.85 1939 4904
+
+stabilitytests/fujifilm_finepix_s5600_l1000_k5_p5.txt
+images: 13
+blue mean min max stddev
+0.00614831 0.000521409 0.0315956 0.00500865
+green mean min max stddev
+0.00503378 0.000773693 0.0118121 0.00351844
+red mean min max stddev
+0.00583626 7.12074e-005 0.0289959 0.00543098
+all curves mean stddev
+0.00567278 0.00465269
+coverage mean min max
+0.420883 0.214936 0.600343
+omega mean min max
+3298.31 1929 4904
+
+stabilitytests/fujifilm_finepix_s5600_l10000_k5_p5.txt
+images: 13
+blue mean min max stddev
+0.0128847 0.000508856 0.0374153 0.00965518
+green mean min max stddev
+0.0079346 0.000994023 0.0303575 0.00564841
+red mean min max stddev
+0.00753266 0.00133733 0.0679241 0.00583225
+all curves mean stddev
+0.00945067 0.00704528
+coverage mean min max
+0.424013 0.216413 0.608621
+omega mean min max
+3298.23 1925 4904
+
+stabilitytests/fujifilm_finepix_s5600_l100_k7_p7.txt
+images: 13
+blue mean min max stddev
+0.00106325 0.000806627 0.00184755 0.000289435
+green mean min max stddev
+0.00107066 0.000746795 0.00188599 0.000230595
+red mean min max stddev
+0.0010405 0.000757896 0.0019377 0.000231877
+all curves mean stddev
+0.00105814 0.000250636
+coverage mean min max
+0.423629 0.211993 0.614187
+omega mean min max
+3298.62 1933 4904
+
+stabilitytests/fujifilm_finepix_s5600_l1000_k7_p7.txt
+images: 13
+blue mean min max stddev
+0.00421249 0.000661535 0.00925032 0.00284925
+green mean min max stddev
+0.00223504 0.000895787 0.00832854 0.00119095
+red mean min max stddev
+0.00239123 0.000394062 0.0115498 0.00163857
+all curves mean stddev
+0.00294625 0.00189292
+coverage mean min max
+0.419683 0.213463 0.589438
+omega mean min max
+3298.92 1939 4904
+
+stabilitytests/fujifilm_finepix_s5600_l10000_k7_p7.txt
+images: 13
+blue mean min max stddev
+0.0132959 0.000218027 0.029409 0.00934746
+green mean min max stddev
+0.00585848 0.000284247 0.0254797 0.00463388
+red mean min max stddev
+0.00658789 0.00326372 0.0496295 0.0050665
+all curves mean stddev
+0.00858077 0.00634928
+coverage mean min max
+0.426835 0.217153 0.608621
+omega mean min max
+3297.85 1928 4904
+
+stabilitytests/kodak_dx7590_l100_k3_p3.txt
+images: 43
+blue mean min max stddev
+0.0018399 0.000101839 0.0302212 0.00189457
+green mean min max stddev
+0.00106945 1.59943e-005 0.00969907 0.00133226
+red mean min max stddev
+0.00447308 3.19565e-005 0.0288563 0.00556818
+all curves mean stddev
+0.00246081 0.00293167
+coverage mean min max
+0.15004 0.0510345 0.4
+omega mean min max
+931.884 66 3793
+
+stabilitytests/kodak_dx7590_l1000_k3_p3.txt
+images: 43
+blue mean min max stddev
+0.0118234 0.000725351 0.0422521 0.00643395
+green mean min max stddev
+0.00955401 0.000268408 0.0639978 0.00475883
+red mean min max stddev
+0.0113038 0.000898039 0.0449008 0.00597823
+all curves mean stddev
+0.0108937 0.00572367
+coverage mean min max
+0.152613 0.05 0.433735
+omega mean min max
+926.535 17 3788
+
+stabilitytests/kodak_dx7590_l10000_k3_p3.txt
+images: 42
+blue mean min max stddev
+0.0158687 0.00442508 0.158236 0.0131298
+green mean min max stddev
+0.0152361 0.00207419 0.0858104 0.013811
+red mean min max stddev
+0.0177495 0.00226143 0.0642219 0.0174305
+all curves mean stddev
+0.0162848 0.0147904
+coverage mean min max
+0.152898 0.0605701 0.422311
+omega mean min max
+947.333 66 3792
+
+stabilitytests/kodak_dx7590_l100_k5_p5.txt
+images: 43
+blue mean min max stddev
+0.00099115 0.000122941 0.0225587 0.000872684
+green mean min max stddev
+0.00120061 1.0304e-005 0.00809632 0.00136978
+red mean min max stddev
+0.00371417 3.07683e-005 0.00594685 0.00366403
+all curves mean stddev
+0.00196864 0.00196883
+coverage mean min max
+0.150516 0.05 0.433735
+omega mean min max
+925.186 17 3789
+
+stabilitytests/kodak_dx7590_l1000_k5_p5.txt
+images: 42
+blue mean min max stddev
+0.00618937 0.000301969 0.0490954 0.00486346
+green mean min max stddev
+0.00513643 0.000233766 0.0656092 0.00483522
+red mean min max stddev
+0.00740112 0.000150302 0.0315498 0.00664576
+all curves mean stddev
+0.00624231 0.00544815
+coverage mean min max
+0.152522 0.0578704 0.428
+omega mean min max
+947.595 66 3789
+
+stabilitytests/kodak_dx7590_l10000_k5_p5.txt
+images: 43
+blue mean min max stddev
+0.00786228 0.000959323 0.0286777 0.00585839
+green mean min max stddev
+0.00690505 0.00149651 0.0405968 0.00514042
+red mean min max stddev
+0.00780439 0.000547202 0.0455045 0.00571688
+all curves mean stddev
+0.00752391 0.00557189
+coverage mean min max
+0.150314 0.0517598 0.428
+omega mean min max
+931.86 66 3794
+
+stabilitytests/kodak_dx7590_l100_k7_p7.txt
+images: 42
+blue mean min max stddev
+0.000592413 3.26732e-005 0.00375772 0.000365941
+green mean min max stddev
+0.000269315 4.57808e-005 0.000852422 0.000140364
+red mean min max stddev
+0.000624502 3.98513e-005 0.00276497 0.000658221
+all curves mean stddev
+0.00049541 0.000388175
+coverage mean min max
+0.152459 0.0603248 0.422311
+omega mean min max
+947.214 66 3788
+
+stabilitytests/kodak_dx7590_l1000_k7_p7.txt
+images: 42
+blue mean min max stddev
+0.00195851 5.36897e-005 0.00998408 0.00138456
+green mean min max stddev
+0.0013905 0.000109787 0.01485 0.00122582
+red mean min max stddev
+0.00246027 0.000140373 0.00891564 0.00223155
+all curves mean stddev
+0.00193643 0.00161398
+coverage mean min max
+0.152369 0.0592851 0.411067
+omega mean min max
+947.429 66 3787
+
+stabilitytests/kodak_dx7590_l10000_k7_p7.txt
+images: 42
+blue mean min max stddev
+0.00588394 0.000858542 0.0241547 0.00398902
+green mean min max stddev
+0.00433869 0.000942777 0.0192998 0.00312193
+red mean min max stddev
+0.00616546 0.000927692 0.0263877 0.0038131
+all curves mean stddev
+0.0054627 0.00364135
+coverage mean min max
+0.152448 0.059312 0.405512
+omega mean min max
+947.214 66 3793
+
+stabilitytests/kodak_z740_l100_k3_p3.txt
+images: 44
+blue mean min max stddev
+0.00131418 6.21987e-005 0.0370089 0.00116237
+green mean min max stddev
+0.000634251 1.92184e-005 0.00189292 0.000484288
+red mean min max stddev
+0.00165536 3.90346e-005 0.00876608 0.00193942
+all curves mean stddev
+0.00120126 0.00119536
+coverage mean min max
+0.251487 0.0636682 0.7
+omega mean min max
+2974.36 79 11619
+
+stabilitytests/kodak_z740_l1000_k3_p3.txt
+images: 45
+blue mean min max stddev
+0.0116492 0.00165983 0.0416779 0.00620026
+green mean min max stddev
+0.00811469 0.00217854 0.0298508 0.00330333
+red mean min max stddev
+0.0100276 0.00101907 0.0457487 0.00561205
+all curves mean stddev
+0.00993048 0.00503855
+coverage mean min max
+0.249617 0.0542495 0.668224
+omega mean min max
+2910.09 79 11619
+
+stabilitytests/kodak_z740_l10000_k3_p3.txt
+images: 44
+blue mean min max stddev
+0.013677 0.00256037 0.071456 0.00942733
+green mean min max stddev
+0.00811395 0.0024077 0.0338264 0.00427641
+red mean min max stddev
+0.0140535 0.00205489 0.0763508 0.00897818
+all curves mean stddev
+0.0119481 0.00756064
+coverage mean min max
+0.254288 0.0624271 0.687943
+omega mean min max
+2974.43 79 11619
+
+stabilitytests/kodak_z740_l100_k5_p5.txt
+images: 45
+blue mean min max stddev
+0.00146886 2.54126e-005 0.00560589 0.0012613
+green mean min max stddev
+0.0012942 3.73491e-005 0.00625772 0.00108238
+red mean min max stddev
+0.000881568 6.88516e-005 0.00801761 0.000893733
+all curves mean stddev
+0.00121488 0.00107914
+coverage mean min max
+0.249207 0.0504505 0.7
+omega mean min max
+2910.49 79 11619
+
+stabilitytests/kodak_z740_l1000_k5_p5.txt
+images: 45
+blue mean min max stddev
+0.00846219 0.000446059 0.0557264 0.00562128
+green mean min max stddev
+0.00612033 0.000797365 0.0210165 0.0036951
+red mean min max stddev
+0.00896658 0.00095908 0.0382016 0.00635651
+all curves mean stddev
+0.0078497 0.0052243
+coverage mean min max
+0.247081 0.0504505 0.637615
+omega mean min max
+2910.2 79 11619
+
+stabilitytests/kodak_z740_l10000_k5_p5.txt
+images: 44
+blue mean min max stddev
+0.0102091 0.000959191 0.0860407 0.00506558
+green mean min max stddev
+0.00767595 0.00108768 0.0237266 0.00375352
+red mean min max stddev
+0.0107494 0.00221023 0.038585 0.00659835
+all curves mean stddev
+0.00954483 0.00513915
+coverage mean min max
+0.252986 0.0642899 0.691943
+omega mean min max
+2974.41 79 11619
+
+stabilitytests/kodak_z740_l100_k7_p7.txt
+images: 44
+blue mean min max stddev
+0.000355981 1.53623e-005 0.00155847 0.000302074
+green mean min max stddev
+0.000302765 6.83234e-005 0.00129403 0.000212006
+red mean min max stddev
+0.000306062 5.45798e-005 0.0023079 0.000250061
+all curves mean stddev
+0.000321603 0.000254714
+coverage mean min max
+0.254584 0.0611888 0.672131
+omega mean min max
+2974.64 79 11619
+
+stabilitytests/kodak_z740_l1000_k7_p7.txt
+images: 45
+blue mean min max stddev
+0.00508256 0.000233983 0.031256 0.00362983
+green mean min max stddev
+0.00358439 8.50606e-005 0.0176001 0.00300878
+red mean min max stddev
+0.00522659 4.07976e-005 0.0228812 0.00411928
+all curves mean stddev
+0.00463118 0.00358596
+coverage mean min max
+0.247704 0.0523466 0.7
+omega mean min max
+2910.4 79 11619
+
+stabilitytests/kodak_z740_l10000_k7_p7.txt
+images: 45
+blue mean min max stddev
+0.00747337 0.00123388 0.0361294 0.0041952
+green mean min max stddev
+0.00560466 0.000866371 0.0170845 0.00295406
+red mean min max stddev
+0.00711856 0.00154643 0.0264181 0.00381153
+all curves mean stddev
+0.00673219 0.0036536
+coverage mean min max
+0.2504 0.0523466 0.704057
+omega mean min max
+2910.27 79 11619
+
+stabilitytests/nikon_d40_l100_k3_p3.txt
+images: 19
+blue mean min max stddev
+0.00171778 0.000421521 0.00664008 0.00167019
+green mean min max stddev
+0.000472411 7.68115e-005 0.00187433 0.00029271
+red mean min max stddev
+0.00160999 8.83412e-005 0.00957409 0.00103079
+all curves mean stddev
+0.00126673 0.000997896
+coverage mean min max
+0.105575 0.0582329 0.203877
+omega mean min max
+2697.63 763 6120
+
+stabilitytests/nikon_d40_l1000_k3_p3.txt
+images: 20
+blue mean min max stddev
+0.0066365 0.000620112 0.0714974 0.00415418
+green mean min max stddev
+0.00714604 0.000416054 0.0328182 0.00349041
+red mean min max stddev
+0.0170089 0.000565389 0.0199416 0.0104245
+all curves mean stddev
+0.0102638 0.00602304
+coverage mean min max
+0.101702 0.0546032 0.199068
+omega mean min max
+2629.5 763 6120
+
+stabilitytests/nikon_d40_l10000_k3_p3.txt
+images: 20
+blue mean min max stddev
+0.0121928 0.00444926 0.064935 0.00589718
+green mean min max stddev
+0.00904613 0.00308866 0.0544714 0.00496607
+red mean min max stddev
+0.0258958 0.00320321 0.0472958 0.0168659
+all curves mean stddev
+0.0157116 0.00924304
+coverage mean min max
+0.101332 0.0506009 0.201468
+omega mean min max
+2628.25 763 6115
+
+stabilitytests/nikon_d40_l100_k5_p5.txt
+images: 19
+blue mean min max stddev
+0.00149192 0.000554375 0.00572691 0.00158489
+green mean min max stddev
+0.000834882 5.34891e-005 0.00320185 0.000571065
+red mean min max stddev
+0.00218297 7.51315e-005 0.0100427 0.000946485
+all curves mean stddev
+0.00150326 0.00103415
+coverage mean min max
+0.105614 0.0635721 0.20227
+omega mean min max
+2698.37 763 6106
+
+stabilitytests/nikon_d40_l1000_k5_p5.txt
+images: 20
+blue mean min max stddev
+0.0055227 0.000939782 0.0371255 0.00368631
+green mean min max stddev
+0.00472594 0.000208736 0.0207575 0.00323978
+red mean min max stddev
+0.00892547 0.000658814 0.0250406 0.00537537
+all curves mean stddev
+0.00639137 0.00410049
+coverage mean min max
+0.102002 0.0519316 0.195883
+omega mean min max
+2628.7 763 6105
+
+stabilitytests/nikon_d40_l10000_k5_p5.txt
+images: 19
+blue mean min max stddev
+0.00918755 0.00232986 0.0374541 0.00518333
+green mean min max stddev
+0.00782519 0.00248739 0.0318548 0.00429097
+red mean min max stddev
+0.011013 0.00166876 0.0261785 0.00519752
+all curves mean stddev
+0.00934193 0.00489061
+coverage mean min max
+0.106106 0.0592965 0.199867
+omega mean min max
+2696.58 763 6115
+
+stabilitytests/nikon_d40_l100_k7_p7.txt
+images: 19
+blue mean min max stddev
+0.000582359 0.000245785 0.00139438 0.000192485
+green mean min max stddev
+0.00035248 0.000231263 0.000670658 8.72624e-005
+red mean min max stddev
+0.00049962 0.00031521 0.00215367 0.000159917
+all curves mean stddev
+0.000478153 0.000146555
+coverage mean min max
+0.104967 0.0550551 0.199867
+omega mean min max
+2696.89 763 6113
+
+stabilitytests/nikon_d40_l1000_k7_p7.txt
+images: 20
+blue mean min max stddev
+0.00328917 0.000999102 0.016302 0.00248075
+green mean min max stddev
+0.00190897 0.000344016 0.00827666 0.00134135
+red mean min max stddev
+0.00400771 0.000276047 0.0213457 0.00253096
+all curves mean stddev
+0.00306862 0.00211769
+coverage mean min max
+0.101234 0.0525982 0.19509
+omega mean min max
+2627.55 763 6117
+
+stabilitytests/nikon_d40_l10000_k7_p7.txt
+images: 19
+blue mean min max stddev
+0.00562025 0.00212618 0.0442873 0.00443657
+green mean min max stddev
+0.00500782 0.00124825 0.0219995 0.00363235
+red mean min max stddev
+0.00861263 0.000880656 0.0228646 0.00640689
+all curves mean stddev
+0.00641357 0.00482527
+coverage mean min max
+0.106277 0.0635721 0.200667
+omega mean min max
+2697.32 763 6113
+
+stabilitytests/nikon_d80_l100_k3_p3.txt
+images: 18
+blue mean min max stddev
+0.000758559 0.000117475 0.00166456 0.000452626
+green mean min max stddev
+0.000445451 7.95912e-005 0.00107907 0.000123048
+red mean min max stddev
+0.000718014 0.00012684 0.0023362 0.000401063
+all curves mean stddev
+0.000640675 0.000325579
+coverage mean min max
+0.114123 0.0506051 0.202339
+omega mean min max
+2174.56 128 6773
+
+stabilitytests/nikon_d80_l1000_k3_p3.txt
+images: 17
+blue mean min max stddev
+0.0111796 0.00052775 0.0424927 0.00526778
+green mean min max stddev
+0.00881764 0.000623992 0.0242778 0.0056118
+red mean min max stddev
+0.0123416 0.00262732 0.0205913 0.00618638
+all curves mean stddev
+0.0107796 0.00568865
+coverage mean min max
+0.11939 0.0556414 0.212963
+omega mean min max
+2293.41 128 6776
+
+stabilitytests/nikon_d80_l10000_k3_p3.txt
+images: 17
+blue mean min max stddev
+0.0167167 0.00211104 0.0442072 0.00878208
+green mean min max stddev
+0.0139785 0.00138185 0.0603046 0.00891737
+red mean min max stddev
+0.0141238 0.000587762 0.0578385 0.00876503
+all curves mean stddev
+0.0149397 0.00882149
+coverage mean min max
+0.118895 0.0507692 0.209412
+omega mean min max
+2292.94 128 6771
+
+stabilitytests/nikon_d80_l100_k5_p5.txt
+images: 18
+blue mean min max stddev
+0.0010526 0.000113869 0.00499502 0.000829783
+green mean min max stddev
+0.000667728 0.00022144 0.00298216 0.000398859
+red mean min max stddev
+0.0011055 7.71262e-005 0.00496835 0.000862367
+all curves mean stddev
+0.000941942 0.000697003
+coverage mean min max
+0.114583 0.0507692 0.195349
+omega mean min max
+2173.94 128 6773
+
+stabilitytests/nikon_d80_l1000_k5_p5.txt
+images: 18
+blue mean min max stddev
+0.00800512 0.000416951 0.0241158 0.00428617
+green mean min max stddev
+0.00453801 0.000337188 0.0105342 0.00190962
+red mean min max stddev
+0.00629105 0.000229433 0.0249337 0.00371727
+all curves mean stddev
+0.00627806 0.00330435
+coverage mean min max
+0.115256 0.0506051 0.207991
+omega mean min max
+2175.17 128 6774
+
+stabilitytests/nikon_d80_l10000_k5_p5.txt
+images: 18
+blue mean min max stddev
+0.0104312 0.00155771 0.0266711 0.00607628
+green mean min max stddev
+0.00627752 0.00164825 0.0246142 0.00386722
+red mean min max stddev
+0.00902045 0.00182653 0.0251336 0.00465022
+all curves mean stddev
+0.00857639 0.00486457
+coverage mean min max
+0.115469 0.0506051 0.207373
+omega mean min max
+2174.5 128 6774
+
+stabilitytests/nikon_d80_l100_k7_p7.txt
+images: 18
+blue mean min max stddev
+0.000627374 0.000283441 0.00103003 0.000179159
+green mean min max stddev
+0.000558965 0.000368054 0.00126917 0.000125435
+red mean min max stddev
+0.000571003 0.000233865 0.00166671 0.000125604
+all curves mean stddev
+0.000585781 0.000143399
+coverage mean min max
+0.114713 0.0506051 0.202339
+omega mean min max
+2173.61 128 6769
+
+stabilitytests/nikon_d80_l1000_k7_p7.txt
+images: 18
+blue mean min max stddev
+0.00263865 0.000278372 0.0058649 0.00177316
+green mean min max stddev
+0.00104119 0.000228225 0.0025941 0.000490672
+red mean min max stddev
+0.00178391 0.000405493 0.00807512 0.00114339
+all curves mean stddev
+0.00182125 0.00113574
+coverage mean min max
+0.115302 0.0529217 0.207373
+omega mean min max
+2174.06 128 6774
+
+stabilitytests/nikon_d80_l10000_k7_p7.txt
+images: 17
+blue mean min max stddev
+0.00655105 0.00185799 0.0143582 0.00332022
+green mean min max stddev
+0.00485585 0.00124786 0.0156134 0.00267957
+red mean min max stddev
+0.00617469 0.00169967 0.0160793 0.00254515
+all curves mean stddev
+0.00586053 0.00284831
+coverage mean min max
+0.118696 0.0523883 0.198135
+omega mean min max
+2292.88 128 6774
+
+stabilitytests/sony_dsc-w300_l100_k3_p3.txt
+images: 27
+blue mean min max stddev
+0.000378674 5.0315e-005 0.000500576 0.000208009
+green mean min max stddev
+0.000223705 3.8459e-005 0.000771694 9.12435e-005
+red mean min max stddev
+0.000278422 3.72957e-005 0.00103658 9.41436e-005
+all curves mean stddev
+0.0002936 0.000131132
+coverage mean min max
+0.2044 0.075928 0.446345
+omega mean min max
+4312.89 772 14751
+
+stabilitytests/sony_dsc-w300_l1000_k3_p3.txt
+images: 27
+blue mean min max stddev
+0.00662781 0.000117807 0.0227873 0.00453464
+green mean min max stddev
+0.00425597 0.000295911 0.0197036 0.0034641
+red mean min max stddev
+0.00433254 0.000621883 0.0235494 0.00355668
+all curves mean stddev
+0.0050721 0.00385181
+coverage mean min max
+0.204829 0.075928 0.437403
+omega mean min max
+4312.78 772 14751
+
+stabilitytests/sony_dsc-w300_l10000_k3_p3.txt
+images: 27
+blue mean min max stddev
+0.0151278 0.00206365 0.0409928 0.00813178
+green mean min max stddev
+0.00699778 0.00198193 0.0207352 0.00283403
+red mean min max stddev
+0.0114878 0.00173354 0.0357832 0.0072747
+all curves mean stddev
+0.0112044 0.00608017
+coverage mean min max
+0.206187 0.0729108 0.453125
+omega mean min max
+4312.7 772 14751
+
+stabilitytests/sony_dsc-w300_l100_k5_p5.txt
+images: 27
+blue mean min max stddev
+0.000242442 8.39043e-005 0.000354085 0.000102252
+green mean min max stddev
+0.000203498 8.86281e-005 0.00038438 5.61566e-005
+red mean min max stddev
+0.000223161 4.64839e-005 0.000549271 5.16906e-005
+all curves mean stddev
+0.000223034 7.00329e-005
+coverage mean min max
+0.203773 0.0711086 0.439628
+omega mean min max
+4312.89 772 14751
+
+stabilitytests/sony_dsc-w300_l1000_k5_p5.txt
+images: 27
+blue mean min max stddev
+0.00627933 0.000147809 0.00745429 0.0049296
+green mean min max stddev
+0.00229798 0.000250126 0.00937215 0.00177813
+red mean min max stddev
+0.00225243 0.000603279 0.0261498 0.00170759
+all curves mean stddev
+0.00360991 0.00280511
+coverage mean min max
+0.203653 0.0753232 0.437403
+omega mean min max
+4312.89 772 14751
+
+stabilitytests/sony_dsc-w300_l10000_k5_p5.txt
+images: 27
+blue mean min max stddev
+0.00637825 0.000513354 0.0151461 0.00332427
+green mean min max stddev
+0.00425818 0.00049108 0.0142881 0.00222319
+red mean min max stddev
+0.00417091 0.00101245 0.0145957 0.0021427
+all curves mean stddev
+0.00493578 0.00256339
+coverage mean min max
+0.204054 0.0723094 0.437403
+omega mean min max
+4312.89 772 14751
+
+stabilitytests/sony_dsc-w300_l100_k7_p7.txt
+images: 27
+blue mean min max stddev
+0.000227536 0.000209875 0.000260837 1.34196e-005
+green mean min max stddev
+0.00022382 0.000182277 0.000274541 1.49511e-005
+red mean min max stddev
+0.000237331 0.0002038 0.000244662 1.42174e-005
+all curves mean stddev
+0.000229562 1.41961e-005
+coverage mean min max
+0.20417 0.0717087 0.453125
+omega mean min max
+4312.63 772 14751
+
+stabilitytests/sony_dsc-w300_l1000_k7_p7.txt
+images: 27
+blue mean min max stddev
+0.00189042 1.53277e-005 0.00403438 0.00133794
+green mean min max stddev
+0.00104188 8.21981e-005 0.00370619 0.000789429
+red mean min max stddev
+0.000883794 0.000141858 0.00509594 0.000549918
+all curves mean stddev
+0.00127203 0.000892428
+coverage mean min max
+0.204123 0.0747191 0.453125
+omega mean min max
+4312.96 772 14751
+
+stabilitytests/sony_dsc-w300_l10000_k7_p7.txt
+images: 27
+blue mean min max stddev
+0.00455884 0.000101415 0.00649349 0.00222918
+green mean min max stddev
+0.00310242 0.000153461 0.00703978 0.00117571
+red mean min max stddev
+0.00298372 0.000433514 0.0126397 0.00123568
+all curves mean stddev
+0.00354833 0.00154686
+coverage mean min max
+0.20502 0.075928 0.448598
+omega mean min max
+4313 772 14751
+

@@ -1,0 +1,880 @@
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.000022 & 0.000012 & 0.000009 &   \\\hline
+      $e_\text{max}$ & 0.002187 & 0.000943 & 0.001469 &   \\\hline
+      $\mu$          & 0.000171 & 0.000122 & 0.000314 & \textbf{0.000202} \\\hline
+      $\sigma$       & 0.000144 & 0.000076 & 0.000232 & 0.000151 \\\hline
+    \end{tabular}
+  \caption{Canon EOS 400D Rebel XTi -- $\kappa$ = 3; $\nu$ = 3; $\lambda$ = 100}
+  \label{tab:Canon EOS 400D Rebel XTi33100}
+\end{table}
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.000024 & 0.000071 & 0.000051 &   \\\hline
+      $e_\text{max}$ & 0.013221 & 0.013404 & 0.023566 &   \\\hline
+      $\mu$          & 0.002936 & 0.002751 & 0.004117 & \textbf{0.003268} \\\hline
+      $\sigma$       & 0.002417 & 0.002375 & 0.004030 & 0.002941 \\\hline
+    \end{tabular}
+  \caption{Canon EOS 400D Rebel XTi -- $\kappa$ = 3; $\nu$ = 3; $\lambda$ = 1000}
+  \label{tab:Canon EOS 400D Rebel XTi331000}
+\end{table}
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.000931 & 0.001116 & 0.000465 &   \\\hline
+      $e_\text{max}$ & 0.062060 & 0.013735 & 0.063270 &   \\\hline
+      $\mu$          & 0.005297 & 0.004087 & 0.008878 & \textbf{0.006087} \\\hline
+      $\sigma$       & 0.003611 & 0.002224 & 0.007030 & 0.004288 \\\hline
+    \end{tabular}
+  \caption{Canon EOS 400D Rebel XTi -- $\kappa$ = 3; $\nu$ = 3; $\lambda$ = 10000}
+  \label{tab:Canon EOS 400D Rebel XTi3310000}
+\end{table}
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.000015 & 0.000018 & 0.000014 &   \\\hline
+      $e_\text{max}$ & 0.006690 & 0.000534 & 0.001135 &   \\\hline
+      $\mu$          & 0.000416 & 0.000098 & 0.000152 & \textbf{0.000222} \\\hline
+      $\sigma$       & 0.000637 & 0.000057 & 0.000095 & 0.000263 \\\hline
+    \end{tabular}
+  \caption{Canon EOS 400D Rebel XTi -- $\kappa$ = 5; $\nu$ = 5; $\lambda$ = 100}
+  \label{tab:Canon EOS 400D Rebel XTi55100}
+\end{table}
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.000041 & 0.000037 & 0.000051 &   \\\hline
+      $e_\text{max}$ & 0.005552 & 0.005334 & 0.028683 &   \\\hline
+      $\mu$          & 0.001451 & 0.001259 & 0.002995 & \textbf{0.001902} \\\hline
+      $\sigma$       & 0.001167 & 0.001115 & 0.003327 & 0.001869 \\\hline
+    \end{tabular}
+  \caption{Canon EOS 400D Rebel XTi -- $\kappa$ = 5; $\nu$ = 5; $\lambda$ = 1000}
+  \label{tab:Canon EOS 400D Rebel XTi551000}
+\end{table}
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.000432 & 0.000534 & 0.000350 &   \\\hline
+      $e_\text{max}$ & 0.013782 & 0.013980 & 0.031083 &   \\\hline
+      $\mu$          & 0.003159 & 0.002945 & 0.005293 & \textbf{0.003799} \\\hline
+      $\sigma$       & 0.001970 & 0.001708 & 0.003723 & 0.002467 \\\hline
+    \end{tabular}
+  \caption{Canon EOS 400D Rebel XTi -- $\kappa$ = 5; $\nu$ = 5; $\lambda$ = 10000}
+  \label{tab:Canon EOS 400D Rebel XTi5510000}
+\end{table}
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.000053 & 0.000053 & 0.000053 &   \\\hline
+      $e_\text{max}$ & 0.000363 & 0.000512 & 0.000605 &   \\\hline
+      $\mu$          & 0.000079 & 0.000076 & 0.000087 & \textbf{0.000081} \\\hline
+      $\sigma$       & 0.000019 & 0.000018 & 0.000029 & 0.000022 \\\hline
+    \end{tabular}
+  \caption{Canon EOS 400D Rebel XTi -- $\kappa$ = 7; $\nu$ = 7; $\lambda$ = 100}
+  \label{tab:Canon EOS 400D Rebel XTi77100}
+\end{table}
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.000031 & 0.000008 & 0.000059 &   \\\hline
+      $e_\text{max}$ & 0.005167 & 0.006613 & 0.005417 &   \\\hline
+      $\mu$          & 0.000813 & 0.000980 & 0.001691 & \textbf{0.001161} \\\hline
+      $\sigma$       & 0.000878 & 0.001059 & 0.001117 & 0.001018 \\\hline
+    \end{tabular}
+  \caption{Canon EOS 400D Rebel XTi -- $\kappa$ = 7; $\nu$ = 7; $\lambda$ = 1000}
+  \label{tab:Canon EOS 400D Rebel XTi771000}
+\end{table}
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.000296 & 0.000453 & 0.000621 &   \\\hline
+      $e_\text{max}$ & 0.011549 & 0.012128 & 0.023078 &   \\\hline
+      $\mu$          & 0.002451 & 0.002395 & 0.004108 & \textbf{0.002985} \\\hline
+      $\sigma$       & 0.001215 & 0.001152 & 0.002594 & 0.001653 \\\hline
+    \end{tabular}
+  \caption{Canon EOS 400D Rebel XTi -- $\kappa$ = 7; $\nu$ = 7; $\lambda$ = 10000}
+  \label{tab:Canon EOS 400D Rebel XTi7710000}
+\end{table}
+
+\clearpage
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.000726 & 0.000642 & 0.000283 &   \\\hline
+      $e_\text{max}$ & 0.001650 & 0.002979 & 0.002093 &   \\\hline
+      $\mu$          & 0.001043 & 0.001167 & 0.001162 & \textbf{0.001124} \\\hline
+      $\sigma$       & 0.000235 & 0.000425 & 0.000492 & 0.000384 \\\hline
+    \end{tabular}
+  \caption{Casio Exilim EX-S600 -- $\kappa$ = 3; $\nu$ = 3; $\lambda$ = 100}
+  \label{tab:Casio Exilim EX-S60033100}
+\end{table}
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.000402 & 0.000453 & 0.001166 &   \\\hline
+      $e_\text{max}$ & 0.018319 & 0.014264 & 0.028518 &   \\\hline
+      $\mu$          & 0.007392 & 0.005737 & 0.012149 & \textbf{0.008426} \\\hline
+      $\sigma$       & 0.006729 & 0.004825 & 0.011581 & 0.007712 \\\hline
+    \end{tabular}
+  \caption{Casio Exilim EX-S600 -- $\kappa$ = 3; $\nu$ = 3; $\lambda$ = 1000}
+  \label{tab:Casio Exilim EX-S600331000}
+\end{table}
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.001148 & 0.000899 & 0.001508 &   \\\hline
+      $e_\text{max}$ & 0.025167 & 0.010368 & 0.041262 &   \\\hline
+      $\mu$          & 0.009639 & 0.005354 & 0.016020 & \textbf{0.010338} \\\hline
+      $\sigma$       & 0.004925 & 0.002034 & 0.009694 & 0.005551 \\\hline
+    \end{tabular}
+  \caption{Casio Exilim EX-S600 -- $\kappa$ = 3; $\nu$ = 3; $\lambda$ = 10000}
+  \label{tab:Casio Exilim EX-S6003310000}
+\end{table}
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.000732 & 0.000712 & 0.000483 &   \\\hline
+      $e_\text{max}$ & 0.001596 & 0.001920 & 0.006123 &   \\\hline
+      $\mu$          & 0.001137 & 0.001113 & 0.001462 & \textbf{0.001237} \\\hline
+      $\sigma$       & 0.000220 & 0.000191 & 0.000847 & 0.000420 \\\hline
+    \end{tabular}
+  \caption{Casio Exilim EX-S600 -- $\kappa$ = 5; $\nu$ = 5; $\lambda$ = 100}
+  \label{tab:Casio Exilim EX-S60055100}
+\end{table}
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.000425 & 0.000625 & 0.001365 &   \\\hline
+      $e_\text{max}$ & 0.009518 & 0.007175 & 0.026447 &   \\\hline
+      $\mu$          & 0.003796 & 0.003014 & 0.008503 & \textbf{0.005104} \\\hline
+      $\sigma$       & 0.003121 & 0.002270 & 0.007144 & 0.004178 \\\hline
+    \end{tabular}
+  \caption{Casio Exilim EX-S600 -- $\kappa$ = 5; $\nu$ = 5; $\lambda$ = 1000}
+  \label{tab:Casio Exilim EX-S600551000}
+\end{table}
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.001597 & 0.001189 & 0.002015 &   \\\hline
+      $e_\text{max}$ & 0.017447 & 0.006179 & 0.037072 &   \\\hline
+      $\mu$          & 0.007145 & 0.004435 & 0.011942 & \textbf{0.007841} \\\hline
+      $\sigma$       & 0.002625 & 0.001595 & 0.006809 & 0.003676 \\\hline
+    \end{tabular}
+  \caption{Casio Exilim EX-S600 -- $\kappa$ = 5; $\nu$ = 5; $\lambda$ = 10000}
+  \label{tab:Casio Exilim EX-S6005510000}
+\end{table}
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.001197 & 0.001176 & 0.001099 &   \\\hline
+      $e_\text{max}$ & 0.001453 & 0.001439 & 0.001523 &   \\\hline
+      $\mu$          & 0.001339 & 0.001325 & 0.001342 & \textbf{0.001335} \\\hline
+      $\sigma$       & 0.000077 & 0.000067 & 0.000108 & 0.000084 \\\hline
+    \end{tabular}
+  \caption{Casio Exilim EX-S600 -- $\kappa$ = 7; $\nu$ = 7; $\lambda$ = 100}
+  \label{tab:Casio Exilim EX-S60077100}
+\end{table}
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.000477 & 0.000612 & 0.000116 &   \\\hline
+      $e_\text{max}$ & 0.006859 & 0.005488 & 0.007409 &   \\\hline
+      $\mu$          & 0.002258 & 0.002075 & 0.002529 & \textbf{0.002287} \\\hline
+      $\sigma$       & 0.001515 & 0.001080 & 0.001794 & 0.001463 \\\hline
+    \end{tabular}
+  \caption{Casio Exilim EX-S600 -- $\kappa$ = 7; $\nu$ = 7; $\lambda$ = 1000}
+  \label{tab:Casio Exilim EX-S600771000}
+\end{table}
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.000398 & 0.001194 & 0.001806 &   \\\hline
+      $e_\text{max}$ & 0.010926 & 0.006430 & 0.021194 &   \\\hline
+      $\mu$          & 0.004866 & 0.003539 & 0.008210 & \textbf{0.005538} \\\hline
+      $\sigma$       & 0.002988 & 0.001449 & 0.004640 & 0.003026 \\\hline
+    \end{tabular}
+  \caption{Casio Exilim EX-S600 -- $\kappa$ = 7; $\nu$ = 7; $\lambda$ = 10000}
+  \label{tab:Casio Exilim EX-S6007710000}
+\end{table}
+
+\clearpage
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.000262 & 0.000560 & 0.000301 &   \\\hline
+      $e_\text{max}$ & 0.002008 & 0.001377 & 0.001693 &   \\\hline
+      $\mu$          & 0.000870 & 0.000903 & 0.001011 & \textbf{0.000928} \\\hline
+      $\sigma$       & 0.000297 & 0.000176 & 0.000388 & 0.000287 \\\hline
+    \end{tabular}
+  \caption{FujiFilm FinePix S5600 -- $\kappa$ = 3; $\nu$ = 3; $\lambda$ = 100}
+  \label{tab:FujiFilm FinePix S560033100}
+\end{table}
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.002885 & 0.000988 & 0.000110 &   \\\hline
+      $e_\text{max}$ & 0.032035 & 0.018674 & 0.030203 &   \\\hline
+      $\mu$          & 0.009941 & 0.007724 & 0.003372 & \textbf{0.007012} \\\hline
+      $\sigma$       & 0.006362 & 0.005166 & 0.004253 & 0.005260 \\\hline
+    \end{tabular}
+  \caption{FujiFilm FinePix S5600 -- $\kappa$ = 3; $\nu$ = 3; $\lambda$ = 1000}
+  \label{tab:FujiFilm FinePix S5600331000}
+\end{table}
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.001777 & 0.002613 & 0.000347 &   \\\hline
+      $e_\text{max}$ & 0.086657 & 0.043038 & 0.094076 &   \\\hline
+      $\mu$          & 0.018516 & 0.016251 & 0.017536 & \textbf{0.017435} \\\hline
+      $\sigma$       & 0.020966 & 0.012677 & 0.023551 & 0.019065 \\\hline
+    \end{tabular}
+  \caption{FujiFilm FinePix S5600 -- $\kappa$ = 3; $\nu$ = 3; $\lambda$ = 10000}
+  \label{tab:FujiFilm FinePix S56003310000}
+\end{table}
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.000407 & 0.000401 & 0.000565 &   \\\hline
+      $e_\text{max}$ & 0.004618 & 0.006198 & 0.005764 &   \\\hline
+      $\mu$          & 0.001639 & 0.002010 & 0.002115 & \textbf{0.001921} \\\hline
+      $\sigma$       & 0.001220 & 0.001571 & 0.001234 & 0.001342 \\\hline
+    \end{tabular}
+  \caption{FujiFilm FinePix S5600 -- $\kappa$ = 5; $\nu$ = 5; $\lambda$ = 100}
+  \label{tab:FujiFilm FinePix S560055100}
+\end{table}
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.000521 & 0.000774 & 0.000071 &   \\\hline
+      $e_\text{max}$ & 0.031596 & 0.011812 & 0.028996 &   \\\hline
+      $\mu$          & 0.005836 & 0.005034 & 0.006148 & \textbf{0.005673} \\\hline
+      $\sigma$       & 0.005431 & 0.003518 & 0.005009 & 0.004653 \\\hline
+    \end{tabular}
+  \caption{FujiFilm FinePix S5600 -- $\kappa$ = 5; $\nu$ = 5; $\lambda$ = 1000}
+  \label{tab:FujiFilm FinePix S5600551000}
+\end{table}
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.000509 & 0.000994 & 0.001337 &   \\\hline
+      $e_\text{max}$ & 0.037415 & 0.030358 & 0.067924 &   \\\hline
+      $\mu$          & 0.007533 & 0.007935 & 0.012885 & \textbf{0.009451} \\\hline
+      $\sigma$       & 0.005832 & 0.005648 & 0.009655 & 0.007045 \\\hline
+    \end{tabular}
+  \caption{FujiFilm FinePix S5600 -- $\kappa$ = 5; $\nu$ = 5; $\lambda$ = 10000}
+  \label{tab:FujiFilm FinePix S56005510000}
+\end{table}
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.000807 & 0.000747 & 0.000758 &   \\\hline
+      $e_\text{max}$ & 0.001848 & 0.001886 & 0.001938 &   \\\hline
+      $\mu$          & 0.001040 & 0.001071 & 0.001063 & \textbf{0.001058} \\\hline
+      $\sigma$       & 0.000232 & 0.000231 & 0.000289 & 0.000251 \\\hline
+    \end{tabular}
+  \caption{FujiFilm FinePix S5600 -- $\kappa$ = 7; $\nu$ = 7; $\lambda$ = 100}
+  \label{tab:FujiFilm FinePix S560077100}
+\end{table}
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.000662 & 0.000896 & 0.000394 &   \\\hline
+      $e_\text{max}$ & 0.009250 & 0.008329 & 0.011550 &   \\\hline
+      $\mu$          & 0.002391 & 0.002235 & 0.004212 & \textbf{0.002946} \\\hline
+      $\sigma$       & 0.001639 & 0.001191 & 0.002849 & 0.001893 \\\hline
+    \end{tabular}
+  \caption{FujiFilm FinePix S5600 -- $\kappa$ = 7; $\nu$ = 7; $\lambda$ = 1000}
+  \label{tab:FujiFilm FinePix S5600771000}
+\end{table}
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.000218 & 0.000284 & 0.003264 &   \\\hline
+      $e_\text{max}$ & 0.029409 & 0.025480 & 0.049629 &   \\\hline
+      $\mu$          & 0.006588 & 0.005858 & 0.013296 & \textbf{0.008581} \\\hline
+      $\sigma$       & 0.005066 & 0.004634 & 0.009347 & 0.006349 \\\hline
+    \end{tabular}
+  \caption{FujiFilm FinePix S5600 -- $\kappa$ = 7; $\nu$ = 7; $\lambda$ = 10000}
+  \label{tab:FujiFilm FinePix S56007710000}
+\end{table}
+
+\clearpage
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.000102 & 0.000016 & 0.000032 &   \\\hline
+      $e_\text{max}$ & 0.030221 & 0.009699 & 0.028856 &   \\\hline
+      $\mu$          & 0.004473 & 0.001069 & 0.001840 & \textbf{0.002461} \\\hline
+      $\sigma$       & 0.005568 & 0.001332 & 0.001895 & 0.002932 \\\hline
+    \end{tabular}
+  \caption{Kodak DX7590 -- $\kappa$ = 3; $\nu$ = 3; $\lambda$ = 100}
+  \label{tab:Kodak DX759033100}
+\end{table}
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.000725 & 0.000268 & 0.000898 &   \\\hline
+      $e_\text{max}$ & 0.042252 & 0.063998 & 0.044901 &   \\\hline
+      $\mu$          & 0.011304 & 0.009554 & 0.011823 & \textbf{0.010894} \\\hline
+      $\sigma$       & 0.005978 & 0.004759 & 0.006434 & 0.005724 \\\hline
+    \end{tabular}
+  \caption{Kodak DX7590 -- $\kappa$ = 3; $\nu$ = 3; $\lambda$ = 1000}
+  \label{tab:Kodak DX7590331000}
+\end{table}
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.004425 & 0.002074 & 0.002261 &   \\\hline
+      $e_\text{max}$ & 0.158236 & 0.085810 & 0.064222 &   \\\hline
+      $\mu$          & 0.017749 & 0.015236 & 0.015869 & \textbf{0.016285} \\\hline
+      $\sigma$       & 0.017430 & 0.013811 & 0.013130 & 0.014790 \\\hline
+    \end{tabular}
+  \caption{Kodak DX7590 -- $\kappa$ = 3; $\nu$ = 3; $\lambda$ = 10000}
+  \label{tab:Kodak DX75903310000}
+\end{table}
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.000123 & 0.000010 & 0.000031 &   \\\hline
+      $e_\text{max}$ & 0.022559 & 0.008096 & 0.005947 &   \\\hline
+      $\mu$          & 0.003714 & 0.001201 & 0.000991 & \textbf{0.001969} \\\hline
+      $\sigma$       & 0.003664 & 0.001370 & 0.000873 & 0.001969 \\\hline
+    \end{tabular}
+  \caption{Kodak DX7590 -- $\kappa$ = 5; $\nu$ = 5; $\lambda$ = 100}
+  \label{tab:Kodak DX759055100}
+\end{table}
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.000302 & 0.000234 & 0.000150 &   \\\hline
+      $e_\text{max}$ & 0.049095 & 0.065609 & 0.031550 &   \\\hline
+      $\mu$          & 0.007401 & 0.005136 & 0.006189 & \textbf{0.006242} \\\hline
+      $\sigma$       & 0.006646 & 0.004835 & 0.004863 & 0.005448 \\\hline
+    \end{tabular}
+  \caption{Kodak DX7590 -- $\kappa$ = 5; $\nu$ = 5; $\lambda$ = 1000}
+  \label{tab:Kodak DX7590551000}
+\end{table}
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.000959 & 0.001497 & 0.000547 &   \\\hline
+      $e_\text{max}$ & 0.028678 & 0.040597 & 0.045504 &   \\\hline
+      $\mu$          & 0.007804 & 0.006905 & 0.007862 & \textbf{0.007524} \\\hline
+      $\sigma$       & 0.005717 & 0.005140 & 0.005858 & 0.005572 \\\hline
+    \end{tabular}
+  \caption{Kodak DX7590 -- $\kappa$ = 5; $\nu$ = 5; $\lambda$ = 10000}
+  \label{tab:Kodak DX75905510000}
+\end{table}
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.000033 & 0.000046 & 0.000040 &   \\\hline
+      $e_\text{max}$ & 0.003758 & 0.000852 & 0.002765 &   \\\hline
+      $\mu$          & 0.000625 & 0.000269 & 0.000592 & \textbf{0.000495} \\\hline
+      $\sigma$       & 0.000658 & 0.000140 & 0.000366 & 0.000388 \\\hline
+    \end{tabular}
+  \caption{Kodak DX7590 -- $\kappa$ = 7; $\nu$ = 7; $\lambda$ = 100}
+  \label{tab:Kodak DX759077100}
+\end{table}
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.000054 & 0.000110 & 0.000140 &   \\\hline
+      $e_\text{max}$ & 0.009984 & 0.014850 & 0.008916 &   \\\hline
+      $\mu$          & 0.002460 & 0.001390 & 0.001959 & \textbf{0.001936} \\\hline
+      $\sigma$       & 0.002232 & 0.001226 & 0.001385 & 0.001614 \\\hline
+    \end{tabular}
+  \caption{Kodak DX7590 -- $\kappa$ = 7; $\nu$ = 7; $\lambda$ = 1000}
+  \label{tab:Kodak DX7590771000}
+\end{table}
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.000859 & 0.000943 & 0.000928 &   \\\hline
+      $e_\text{max}$ & 0.024155 & 0.019300 & 0.026388 &   \\\hline
+      $\mu$          & 0.006165 & 0.004339 & 0.005884 & \textbf{0.005463} \\\hline
+      $\sigma$       & 0.003813 & 0.003122 & 0.003989 & 0.003641 \\\hline
+    \end{tabular}
+  \caption{Kodak DX7590 -- $\kappa$ = 7; $\nu$ = 7; $\lambda$ = 10000}
+  \label{tab:Kodak DX75907710000}
+\end{table}
+
+\clearpage
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.000062 & 0.000019 & 0.000039 &   \\\hline
+      $e_\text{max}$ & 0.037009 & 0.001893 & 0.008766 &   \\\hline
+      $\mu$          & 0.001655 & 0.000634 & 0.001314 & \textbf{0.001201} \\\hline
+      $\sigma$       & 0.001939 & 0.000484 & 0.001162 & 0.001195 \\\hline
+    \end{tabular}
+  \caption{Kodak Z740 -- $\kappa$ = 3; $\nu$ = 3; $\lambda$ = 100}
+  \label{tab:Kodak Z74033100}
+\end{table}
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.001660 & 0.002179 & 0.001019 &   \\\hline
+      $e_\text{max}$ & 0.041678 & 0.029851 & 0.045749 &   \\\hline
+      $\mu$          & 0.010028 & 0.008115 & 0.011649 & \textbf{0.009930} \\\hline
+      $\sigma$       & 0.005612 & 0.003303 & 0.006200 & 0.005039 \\\hline
+    \end{tabular}
+  \caption{Kodak Z740 -- $\kappa$ = 3; $\nu$ = 3; $\lambda$ = 1000}
+  \label{tab:Kodak Z740331000}
+\end{table}
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.002560 & 0.002408 & 0.002055 &   \\\hline
+      $e_\text{max}$ & 0.071456 & 0.033826 & 0.076351 &   \\\hline
+      $\mu$          & 0.014053 & 0.008114 & 0.013677 & \textbf{0.011948} \\\hline
+      $\sigma$       & 0.008978 & 0.004276 & 0.009427 & 0.007561 \\\hline
+    \end{tabular}
+  \caption{Kodak Z740 -- $\kappa$ = 3; $\nu$ = 3; $\lambda$ = 10000}
+  \label{tab:Kodak Z7403310000}
+\end{table}
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.000025 & 0.000037 & 0.000069 &   \\\hline
+      $e_\text{max}$ & 0.005606 & 0.006258 & 0.008018 &   \\\hline
+      $\mu$          & 0.000882 & 0.001294 & 0.001469 & \textbf{0.001215} \\\hline
+      $\sigma$       & 0.000894 & 0.001082 & 0.001261 & 0.001079 \\\hline
+    \end{tabular}
+  \caption{Kodak Z740 -- $\kappa$ = 5; $\nu$ = 5; $\lambda$ = 100}
+  \label{tab:Kodak Z74055100}
+\end{table}
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.000446 & 0.000797 & 0.000959 &   \\\hline
+      $e_\text{max}$ & 0.055726 & 0.021017 & 0.038202 &   \\\hline
+      $\mu$          & 0.008967 & 0.006120 & 0.008462 & \textbf{0.007850} \\\hline
+      $\sigma$       & 0.006357 & 0.003695 & 0.005621 & 0.005224 \\\hline
+    \end{tabular}
+  \caption{Kodak Z740 -- $\kappa$ = 5; $\nu$ = 5; $\lambda$ = 1000}
+  \label{tab:Kodak Z740551000}
+\end{table}
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.000959 & 0.001088 & 0.002210 &   \\\hline
+      $e_\text{max}$ & 0.086041 & 0.023727 & 0.038585 &   \\\hline
+      $\mu$          & 0.010749 & 0.007676 & 0.010209 & \textbf{0.009545} \\\hline
+      $\sigma$       & 0.006598 & 0.003754 & 0.005066 & 0.005139 \\\hline
+    \end{tabular}
+  \caption{Kodak Z740 -- $\kappa$ = 5; $\nu$ = 5; $\lambda$ = 10000}
+  \label{tab:Kodak Z7405510000}
+\end{table}
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.000015 & 0.000068 & 0.000055 &   \\\hline
+      $e_\text{max}$ & 0.001558 & 0.001294 & 0.002308 &   \\\hline
+      $\mu$          & 0.000306 & 0.000303 & 0.000356 & \textbf{0.000322} \\\hline
+      $\sigma$       & 0.000250 & 0.000212 & 0.000302 & 0.000255 \\\hline
+    \end{tabular}
+  \caption{Kodak Z740 -- $\kappa$ = 7; $\nu$ = 7; $\lambda$ = 100}
+  \label{tab:Kodak Z74077100}
+\end{table}
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.000234 & 0.000085 & 0.000041 &   \\\hline
+      $e_\text{max}$ & 0.031256 & 0.017600 & 0.022881 &   \\\hline
+      $\mu$          & 0.005227 & 0.003584 & 0.005083 & \textbf{0.004631} \\\hline
+      $\sigma$       & 0.004119 & 0.003009 & 0.003630 & 0.003586 \\\hline
+    \end{tabular}
+  \caption{Kodak Z740 -- $\kappa$ = 7; $\nu$ = 7; $\lambda$ = 1000}
+  \label{tab:Kodak Z740771000}
+\end{table}
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.001234 & 0.000866 & 0.001546 &   \\\hline
+      $e_\text{max}$ & 0.036129 & 0.017084 & 0.026418 &   \\\hline
+      $\mu$          & 0.007119 & 0.005605 & 0.007473 & \textbf{0.006732} \\\hline
+      $\sigma$       & 0.003812 & 0.002954 & 0.004195 & 0.003654 \\\hline
+    \end{tabular}
+  \caption{Kodak Z740 -- $\kappa$ = 7; $\nu$ = 7; $\lambda$ = 10000}
+  \label{tab:Kodak Z7407710000}
+\end{table}
+
+\clearpage
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.000422 & 0.000077 & 0.000088 &   \\\hline
+      $e_\text{max}$ & 0.006640 & 0.001874 & 0.009574 &   \\\hline
+      $\mu$          & 0.001610 & 0.000472 & 0.001718 & \textbf{0.001267} \\\hline
+      $\sigma$       & 0.001031 & 0.000293 & 0.001670 & 0.000998 \\\hline
+    \end{tabular}
+  \caption{Nikon D40 -- $\kappa$ = 3; $\nu$ = 3; $\lambda$ = 100}
+  \label{tab:Nikon D4033100}
+\end{table}
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.000620 & 0.000416 & 0.000565 &   \\\hline
+      $e_\text{max}$ & 0.071497 & 0.032818 & 0.019942 &   \\\hline
+      $\mu$          & 0.017009 & 0.007146 & 0.006637 & \textbf{0.010264} \\\hline
+      $\sigma$       & 0.010425 & 0.003490 & 0.004154 & 0.006023 \\\hline
+    \end{tabular}
+  \caption{Nikon D40 -- $\kappa$ = 3; $\nu$ = 3; $\lambda$ = 1000}
+  \label{tab:Nikon D40331000}
+\end{table}
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.004449 & 0.003089 & 0.003203 &   \\\hline
+      $e_\text{max}$ & 0.064935 & 0.054471 & 0.047296 &   \\\hline
+      $\mu$          & 0.025896 & 0.009046 & 0.012193 & \textbf{0.015712} \\\hline
+      $\sigma$       & 0.016866 & 0.004966 & 0.005897 & 0.009243 \\\hline
+    \end{tabular}
+  \caption{Nikon D40 -- $\kappa$ = 3; $\nu$ = 3; $\lambda$ = 10000}
+  \label{tab:Nikon D403310000}
+\end{table}
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.000554 & 0.000053 & 0.000075 &   \\\hline
+      $e_\text{max}$ & 0.005727 & 0.003202 & 0.010043 &   \\\hline
+      $\mu$          & 0.002183 & 0.000835 & 0.001492 & \textbf{0.001503} \\\hline
+      $\sigma$       & 0.000946 & 0.000571 & 0.001585 & 0.001034 \\\hline
+    \end{tabular}
+  \caption{Nikon D40 -- $\kappa$ = 5; $\nu$ = 5; $\lambda$ = 100}
+  \label{tab:Nikon D4055100}
+\end{table}
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.000940 & 0.000209 & 0.000659 &   \\\hline
+      $e_\text{max}$ & 0.037125 & 0.020758 & 0.025041 &   \\\hline
+      $\mu$          & 0.008925 & 0.004726 & 0.005523 & \textbf{0.006391} \\\hline
+      $\sigma$       & 0.005375 & 0.003240 & 0.003686 & 0.004100 \\\hline
+    \end{tabular}
+  \caption{Nikon D40 -- $\kappa$ = 5; $\nu$ = 5; $\lambda$ = 1000}
+  \label{tab:Nikon D40551000}
+\end{table}
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.002330 & 0.002487 & 0.001669 &   \\\hline
+      $e_\text{max}$ & 0.037454 & 0.031855 & 0.026179 &   \\\hline
+      $\mu$          & 0.011013 & 0.007825 & 0.009188 & \textbf{0.009342} \\\hline
+      $\sigma$       & 0.005198 & 0.004291 & 0.005183 & 0.004891 \\\hline
+    \end{tabular}
+  \caption{Nikon D40 -- $\kappa$ = 5; $\nu$ = 5; $\lambda$ = 10000}
+  \label{tab:Nikon D405510000}
+\end{table}
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.000246 & 0.000231 & 0.000315 &   \\\hline
+      $e_\text{max}$ & 0.001394 & 0.000671 & 0.002154 &   \\\hline
+      $\mu$          & 0.000500 & 0.000352 & 0.000582 & \textbf{0.000478} \\\hline
+      $\sigma$       & 0.000160 & 0.000087 & 0.000192 & 0.000147 \\\hline
+    \end{tabular}
+  \caption{Nikon D40 -- $\kappa$ = 7; $\nu$ = 7; $\lambda$ = 100}
+  \label{tab:Nikon D4077100}
+\end{table}
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.000999 & 0.000344 & 0.000276 &   \\\hline
+      $e_\text{max}$ & 0.016302 & 0.008277 & 0.021346 &   \\\hline
+      $\mu$          & 0.004008 & 0.001909 & 0.003289 & \textbf{0.003069} \\\hline
+      $\sigma$       & 0.002531 & 0.001341 & 0.002481 & 0.002118 \\\hline
+    \end{tabular}
+  \caption{Nikon D40 -- $\kappa$ = 7; $\nu$ = 7; $\lambda$ = 1000}
+  \label{tab:Nikon D40771000}
+\end{table}
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.002126 & 0.001248 & 0.000881 &   \\\hline
+      $e_\text{max}$ & 0.044287 & 0.022000 & 0.022865 &   \\\hline
+      $\mu$          & 0.008613 & 0.005008 & 0.005620 & \textbf{0.006414} \\\hline
+      $\sigma$       & 0.006407 & 0.003632 & 0.004437 & 0.004825 \\\hline
+    \end{tabular}
+  \caption{Nikon D40 -- $\kappa$ = 7; $\nu$ = 7; $\lambda$ = 10000}
+  \label{tab:Nikon D407710000}
+\end{table}
+
+\clearpage
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.000117 & 0.000080 & 0.000127 &   \\\hline
+      $e_\text{max}$ & 0.001665 & 0.001079 & 0.002336 &   \\\hline
+      $\mu$          & 0.000718 & 0.000445 & 0.000759 & \textbf{0.000641} \\\hline
+      $\sigma$       & 0.000401 & 0.000123 & 0.000453 & 0.000326 \\\hline
+    \end{tabular}
+  \caption{Nikon D80 -- $\kappa$ = 3; $\nu$ = 3; $\lambda$ = 100}
+  \label{tab:Nikon D8033100}
+\end{table}
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.000528 & 0.000624 & 0.002627 &   \\\hline
+      $e_\text{max}$ & 0.042493 & 0.024278 & 0.020591 &   \\\hline
+      $\mu$          & 0.012342 & 0.008818 & 0.011180 & \textbf{0.010780} \\\hline
+      $\sigma$       & 0.006186 & 0.005612 & 0.005268 & 0.005689 \\\hline
+    \end{tabular}
+  \caption{Nikon D80 -- $\kappa$ = 3; $\nu$ = 3; $\lambda$ = 1000}
+  \label{tab:Nikon D80331000}
+\end{table}
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.002111 & 0.001382 & 0.000588 &   \\\hline
+      $e_\text{max}$ & 0.044207 & 0.060305 & 0.057838 &   \\\hline
+      $\mu$          & 0.014124 & 0.013978 & 0.016717 & \textbf{0.014940} \\\hline
+      $\sigma$       & 0.008765 & 0.008917 & 0.008782 & 0.008821 \\\hline
+    \end{tabular}
+  \caption{Nikon D80 -- $\kappa$ = 3; $\nu$ = 3; $\lambda$ = 10000}
+  \label{tab:Nikon D803310000}
+\end{table}
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.000114 & 0.000221 & 0.000077 &   \\\hline
+      $e_\text{max}$ & 0.004995 & 0.002982 & 0.004968 &   \\\hline
+      $\mu$          & 0.001105 & 0.000668 & 0.001053 & \textbf{0.000942} \\\hline
+      $\sigma$       & 0.000862 & 0.000399 & 0.000830 & 0.000697 \\\hline
+    \end{tabular}
+  \caption{Nikon D80 -- $\kappa$ = 5; $\nu$ = 5; $\lambda$ = 100}
+  \label{tab:Nikon D8055100}
+\end{table}
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.000417 & 0.000337 & 0.000229 &   \\\hline
+      $e_\text{max}$ & 0.024116 & 0.010534 & 0.024934 &   \\\hline
+      $\mu$          & 0.006291 & 0.004538 & 0.008005 & \textbf{0.006278} \\\hline
+      $\sigma$       & 0.003717 & 0.001910 & 0.004286 & 0.003304 \\\hline
+    \end{tabular}
+  \caption{Nikon D80 -- $\kappa$ = 5; $\nu$ = 5; $\lambda$ = 1000}
+  \label{tab:Nikon D80551000}
+\end{table}
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.001558 & 0.001648 & 0.001827 &   \\\hline
+      $e_\text{max}$ & 0.026671 & 0.024614 & 0.025134 &   \\\hline
+      $\mu$          & 0.009020 & 0.006278 & 0.010431 & \textbf{0.008576} \\\hline
+      $\sigma$       & 0.004650 & 0.003867 & 0.006076 & 0.004865 \\\hline
+    \end{tabular}
+  \caption{Nikon D80 -- $\kappa$ = 5; $\nu$ = 5; $\lambda$ = 10000}
+  \label{tab:Nikon D805510000}
+\end{table}
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.000283 & 0.000368 & 0.000234 &   \\\hline
+      $e_\text{max}$ & 0.001030 & 0.001269 & 0.001667 &   \\\hline
+      $\mu$          & 0.000571 & 0.000559 & 0.000627 & \textbf{0.000586} \\\hline
+      $\sigma$       & 0.000126 & 0.000125 & 0.000179 & 0.000143 \\\hline
+    \end{tabular}
+  \caption{Nikon D80 -- $\kappa$ = 7; $\nu$ = 7; $\lambda$ = 100}
+  \label{tab:Nikon D8077100}
+\end{table}
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.000278 & 0.000228 & 0.000405 &   \\\hline
+      $e_\text{max}$ & 0.005865 & 0.002594 & 0.008075 &   \\\hline
+      $\mu$          & 0.001784 & 0.001041 & 0.002639 & \textbf{0.001821} \\\hline
+      $\sigma$       & 0.001143 & 0.000491 & 0.001773 & 0.001136 \\\hline
+    \end{tabular}
+  \caption{Nikon D80 -- $\kappa$ = 7; $\nu$ = 7; $\lambda$ = 1000}
+  \label{tab:Nikon D80771000}
+\end{table}
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.001858 & 0.001248 & 0.001700 &   \\\hline
+      $e_\text{max}$ & 0.014358 & 0.015613 & 0.016079 &   \\\hline
+      $\mu$          & 0.006175 & 0.004856 & 0.006551 & \textbf{0.005861} \\\hline
+      $\sigma$       & 0.002545 & 0.002680 & 0.003320 & 0.002848 \\\hline
+    \end{tabular}
+  \caption{Nikon D80 -- $\kappa$ = 7; $\nu$ = 7; $\lambda$ = 10000}
+  \label{tab:Nikon D807710000}
+\end{table}
+
+\clearpage
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.000050 & 0.000038 & 0.000037 &   \\\hline
+      $e_\text{max}$ & 0.000501 & 0.000772 & 0.001037 &   \\\hline
+      $\mu$          & 0.000278 & 0.000224 & 0.000379 & \textbf{0.000294} \\\hline
+      $\sigma$       & 0.000094 & 0.000091 & 0.000208 & 0.000131 \\\hline
+    \end{tabular}
+  \caption{Sony CyberShot DSC-W300 -- $\kappa$ = 3; $\nu$ = 3; $\lambda$ = 100}
+  \label{tab:Sony CyberShot DSC-W30033100}
+\end{table}
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.000118 & 0.000296 & 0.000622 &   \\\hline
+      $e_\text{max}$ & 0.022787 & 0.019704 & 0.023549 &   \\\hline
+      $\mu$          & 0.004333 & 0.004256 & 0.006628 & \textbf{0.005072} \\\hline
+      $\sigma$       & 0.003557 & 0.003464 & 0.004535 & 0.003852 \\\hline
+    \end{tabular}
+  \caption{Sony CyberShot DSC-W300 -- $\kappa$ = 3; $\nu$ = 3; $\lambda$ = 1000}
+  \label{tab:Sony CyberShot DSC-W300331000}
+\end{table}
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.002064 & 0.001982 & 0.001734 &   \\\hline
+      $e_\text{max}$ & 0.040993 & 0.020735 & 0.035783 &   \\\hline
+      $\mu$          & 0.011488 & 0.006998 & 0.015128 & \textbf{0.011204} \\\hline
+      $\sigma$       & 0.007275 & 0.002834 & 0.008132 & 0.006080 \\\hline
+    \end{tabular}
+  \caption{Sony CyberShot DSC-W300 -- $\kappa$ = 3; $\nu$ = 3; $\lambda$ = 10000}
+  \label{tab:Sony CyberShot DSC-W3003310000}
+\end{table}
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.000084 & 0.000089 & 0.000046 &   \\\hline
+      $e_\text{max}$ & 0.000354 & 0.000384 & 0.000549 &   \\\hline
+      $\mu$          & 0.000223 & 0.000203 & 0.000242 & \textbf{0.000223} \\\hline
+      $\sigma$       & 0.000052 & 0.000056 & 0.000102 & 0.000070 \\\hline
+    \end{tabular}
+  \caption{Sony CyberShot DSC-W300 -- $\kappa$ = 5; $\nu$ = 5; $\lambda$ = 100}
+  \label{tab:Sony CyberShot DSC-W30055100}
+\end{table}
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.000148 & 0.000250 & 0.000603 &   \\\hline
+      $e_\text{max}$ & 0.007454 & 0.009372 & 0.026150 &   \\\hline
+      $\mu$          & 0.002252 & 0.002298 & 0.006279 & \textbf{0.003610} \\\hline
+      $\sigma$       & 0.001708 & 0.001778 & 0.004930 & 0.002805 \\\hline
+    \end{tabular}
+  \caption{Sony CyberShot DSC-W300 -- $\kappa$ = 5; $\nu$ = 5; $\lambda$ = 1000}
+  \label{tab:Sony CyberShot DSC-W300551000}
+\end{table}
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.000513 & 0.000491 & 0.001012 &   \\\hline
+      $e_\text{max}$ & 0.015146 & 0.014288 & 0.014596 &   \\\hline
+      $\mu$          & 0.004171 & 0.004258 & 0.006378 & \textbf{0.004936} \\\hline
+      $\sigma$       & 0.002143 & 0.002223 & 0.003324 & 0.002563 \\\hline
+    \end{tabular}
+  \caption{Sony CyberShot DSC-W300 -- $\kappa$ = 5; $\nu$ = 5; $\lambda$ = 10000}
+  \label{tab:Sony CyberShot DSC-W3005510000}
+\end{table}
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.000210 & 0.000182 & 0.000204 &   \\\hline
+      $e_\text{max}$ & 0.000261 & 0.000275 & 0.000245 &   \\\hline
+      $\mu$          & 0.000237 & 0.000224 & 0.000228 & \textbf{0.000230} \\\hline
+      $\sigma$       & 0.000014 & 0.000015 & 0.000013 & 0.000014 \\\hline
+    \end{tabular}
+  \caption{Sony CyberShot DSC-W300 -- $\kappa$ = 7; $\nu$ = 7; $\lambda$ = 100}
+  \label{tab:Sony CyberShot DSC-W30077100}
+\end{table}
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.000015 & 0.000082 & 0.000142 &   \\\hline
+      $e_\text{max}$ & 0.004034 & 0.003706 & 0.005096 &   \\\hline
+      $\mu$          & 0.000884 & 0.001042 & 0.001890 & \textbf{0.001272} \\\hline
+      $\sigma$       & 0.000550 & 0.000789 & 0.001338 & 0.000892 \\\hline
+    \end{tabular}
+  \caption{Sony CyberShot DSC-W300 -- $\kappa$ = 7; $\nu$ = 7; $\lambda$ = 1000}
+  \label{tab:Sony CyberShot DSC-W300771000}
+\end{table}
+\begin{table}
+  \centering
+    \begin{tabular}{|c||c|c|c|c|}\hline
+		   & \textbf{Red} & \textbf{Green} & \textbf{Blue} & \textbf{$\sum$} \\\hline\hline
+      $e_\text{min}$ & 0.000101 & 0.000153 & 0.000434 &   \\\hline
+      $e_\text{max}$ & 0.006493 & 0.007040 & 0.012640 &   \\\hline
+      $\mu$          & 0.002984 & 0.003102 & 0.004559 & \textbf{0.003548} \\\hline
+      $\sigma$       & 0.001236 & 0.001176 & 0.002229 & 0.001547 \\\hline
+    \end{tabular}
+  \caption{Sony CyberShot DSC-W300 -- $\kappa$ = 7; $\nu$ = 7; $\lambda$ = 10000}
+  \label{tab:Sony CyberShot DSC-W3007710000}
+\end{table}
+
+\clearpage

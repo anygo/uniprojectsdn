@@ -32,4 +32,5 @@ void TextFinder::on_lineEdit_textChanged(QString searchString)
     ui->lineEdit->setPalette(p);
 
 
+
 }

@@ -77,14 +77,14 @@ else
 end
 
 % Size of the image
-% [m,n] = ???;
+[m,n] = size(im);
 
 % Maximum gray value of the image
 max(max(im))
 
 % Create evaluation grid positions
 msh = floor(maskSize/2);
-% [Y,X] = ???;
+[Y,X] = meshgrid(1:11, 1:11);
 
 gaussMaskSi = (1./(2*pi*(sigma.^2))).*exp(-0.5.*(X.^2+Y.^2)./(sigma.^2));
 min(min(gaussMaskSi))
@@ -93,9 +93,9 @@ DoGMask = -(X./(2.*pi.*(sigma.^4))).*exp(-0.5.*(X.^2+Y.^2)./(sigma.^2));
 min(min(DoGMask))
 max(max(DoGMask))
 % Derivative in x direction
-% fx = ???;
+fx = imfilter(im, fspecial('sobel')');
 % Derivative in y direction
-% fy = ???;
+fy = imfilter(im, fspecial('sobel'));
 
 % Create figure using grayscales
 figure(1);

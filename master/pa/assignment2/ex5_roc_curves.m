@@ -1,4 +1,4 @@
-function ex5()
+function ex5_roc_curves()
     % cleanup
     clear all;
     close all;
@@ -54,7 +54,7 @@ function points = generate_roc_curve(scores, targets, n_points)
     end
 end
 
-% computes tp and fprate for a given threshold
+% computes tprate and fprate for a given threshold
 function [tprate, fprate] = compute_tp_and_fp_rate(scores, targets, threshold)
     ground_truth_positives = sum(targets == 1);
     ground_truth_negatives = sum(targets == 0);

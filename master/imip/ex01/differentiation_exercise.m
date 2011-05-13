@@ -28,25 +28,28 @@ ylabel('f(x)')
 axis([-10 70 -10 30])
 
 % Compute and plot the first derivative
-dx = conv(x, [1 -1], 'valid');
+%dx = conv(x, [1 -1], 'valid');
+dx = gradient(x);
 subplot(2,3,2);
 plot(dx);
 title('First derivative')
 xlabel('x')
-ylabel('f´(x)')
+ylabel('fï¿½(x)')
 axis([-10 70 -0.8 1.8])
 
 % Compute and plot the second derivative
-ddx = conv(dx, [1 -1], 'valid');
+%ddx = conv(dx, [1 -1], 'valid');
+ddx = gradient(dx);
 subplot(2,3,3);
 plot(ddx);
 title('Second derivative')
 xlabel('x')
-ylabel('f´´(x)')
+ylabel('fï¿½ï¿½(x)')
 axis([-10 70 -0.8 0.8])
 
 % Add Gaussian noise with \mu=0 and \sigma=0.9
-xN = x + 0.1*randn(size(x));
+%xN = x + 0.1*randn(size(x));
+xN = x + imnoise(x, 'gaussian', 0, 0.9);
 
 % Plot the noisy signal
 subplot(2,3,4);
@@ -57,19 +60,19 @@ ylabel('f(x)')
 axis([-10 70 -10 30])
 
 % Compute and plot the first derivative of the noisy signal
-dx = conv(xN, [1 -1], 'valid');
+dx = gradient(xN);
 subplot(2,3,5);
 plot(dx);
 title('First derivative')
 xlabel('x')
-ylabel('f´(x)')
+ylabel('fï¿½(x)')
 axis([-10 70 -0.8 1.8])
 
 % Compute and plot the second derivative of the noisy signal
-ddx = conv(dx, [1 -1], 'valid');
+ddx = gradient(dx);
 subplot(2,3,6);
 plot(ddx);
 title('Second derivative')
 xlabel('x')
-ylabel('f´´(x)')
+ylabel('fï¿½ï¿½(x)')
 axis([-10 70 -0.8 0.8])

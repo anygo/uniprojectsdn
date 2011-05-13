@@ -9,6 +9,7 @@
 
 close all;
 clear all;
+clc;
 
 % 0: Rectangle
 % 1: Fingerprint2
@@ -84,7 +85,7 @@ max(max(im))
 
 % Create evaluation grid positions
 msh = floor(maskSize/2);
-[Y,X] = meshgrid(1:11, 1:11);
+[Y,X] = ndgrid(-msh:msh, -msh:msh);
 
 gaussMaskSi = (1./(2*pi*(sigma.^2))).*exp(-0.5.*(X.^2+Y.^2)./(sigma.^2));
 min(min(gaussMaskSi))
@@ -93,9 +94,9 @@ DoGMask = -(X./(2.*pi.*(sigma.^4))).*exp(-0.5.*(X.^2+Y.^2)./(sigma.^2));
 min(min(DoGMask))
 max(max(DoGMask))
 % Derivative in x direction
-fx = imfilter(im, fspecial('sobel')');
+fx = imfilter(im, DoGMask);
 % Derivative in y direction
-fy = imfilter(im, fspecial('sobel'));
+fy = imfilter(im, DoGMask');
 
 % Create figure using grayscales
 figure(1);
@@ -118,17 +119,17 @@ xlabel('x');
 ylabel('y');
 
 % Matrix elements we will later use to build the tensor matrix
-% Jxx = ???;
-% Jyy = ???;
-% Jxy = ???;
+Jxx = fx .* fx;
+Jyy = fy .* fy;
+Jxy = fx .* fy;
 
 gaussMaskrho = (1./(2*pi*(rho.^2))).*exp(-0.5.*(X.^2+Y.^2)./(rho.^2));
 
 % Perform the Gaussian regularization
 % Spatial averaging of the tensor elements J
-% Qxx = ???;               
-% Qyy = ???;               
-% Qxy = ???;      
+Qxx = imfilter(Jxx, gaussMaskrho);               
+Qyy = imfilter(Jyy, gaussMaskrho);               
+Qxy = imfilter(Jxy, gaussMaskrho);      
 
 % Initializations
 

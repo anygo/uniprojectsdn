@@ -17,7 +17,7 @@ clc;
 % 3: Fingerprint3
 % 4: straight line for testing gradient, edge orientation, ...
 
-fall = 2;
+fall = 1;
 
 if(fall == 0)
     %im = zeros(200,200);
@@ -94,9 +94,9 @@ DoGMask = -(X./(2.*pi.*(sigma.^4))).*exp(-0.5.*(X.^2+Y.^2)./(sigma.^2));
 min(min(DoGMask))
 max(max(DoGMask))
 % Derivative in x direction
-fx = imfilter(im, DoGMask);
+fx = conv2(im, DoGMask);
 % Derivative in y direction
-fy = imfilter(im, DoGMask');
+fy = conv2(im, DoGMask');
 
 % Create figure using grayscales
 figure(1);
@@ -153,49 +153,43 @@ e2 = zeros(m,n);
 for s=1:m
     for t=1:n
         % Build the structure tensor matrix (variable: part(4x4)) iteratively
-%         ???;
-%         ???;
-%         ???;
-%         ???;
+        part(1,1) = Qxx(msh+s, msh+t);
+        part(1,2) = Qxy(msh+s, msh+t);
+        part(2,1) = Qxy(msh+s, msh+t);
+        part(2,2) = Qyy(msh+s, msh+t);
              
         % Compute eigenvalues as a diagonal matrix D and
         % eigenvectors in a matrix V (both in increasing order!) of the
         % structure tensor
-%         ???;
+        [V D] = eig(part);
      
         e1(s,t) = D(2,2);
         e2(s,t) = D(1,1);
         
-        if(D(2,2) > 0)
-            s
-            t
-            V
-            D
-        end
         
         % Discriminate the different cases: homogeneous region, edge, corner         
-%         if(???)
-%             %disp('homogeneous region');
-%             homo(s,t) = 1;
-%         elseif(???)
-%             %disp('edge');
-%             edg(s,t) = 1;
-%         elseif(???)
-%             %disp('corner');
-%             cor(s,t) = 1;
-%         end
+        if(e1(s,t) < thres && e2(s,t) < thres)
+            %disp('homogeneous region');
+            homo(s,t) = 1;
+        elseif(e1(s,t) > e2(s,t) && e2(s,t) < thres)
+            %disp('edge');
+            edg(s,t) = 1;
+        elseif(e1(s,t) >= e2(s,t) && e2(s,t) >= thres)
+            %disp('corner');
+            cor(s,t) = 1;
+        end
        
         % angle between y-axis and edge orientation!
         % x = [0; 1]; 
         % angle between x-axis and edge orientation!
         x = [1; 0];
         % Access eigenvector corresponding to the lowest eigenvalue
-%         ???;
+        ev = V(:,1);
         % Computation of the angle between the eigenvector of the smallest
         % eigenvalue and the x-axis (1,0)
-%         ???;
-%         ???;
-%         angle(s,t) = ???;
+        denominator = norm(x)*norm(ev);
+        nominator = x' * ev;
+        angle(s,t) = acosd(nominator / denominator);
     end
 end
 

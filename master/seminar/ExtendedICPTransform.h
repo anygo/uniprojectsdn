@@ -1,6 +1,8 @@
 #ifndef ExtendedICPTransform_H__
 #define	ExtendedICPTransform_H__
 
+#include <StitchingWidget.h>
+
 #include <vtkLandmarkTransform.h>
 #include <vtkSmartPointer.h>
 #include <vtkPolyData.h>
@@ -27,22 +29,32 @@ public:
 	inline int GetMaxLandmarks() { return m_MaxIter; }
 	inline void SetMaxMeanDist(double dist) { m_MaxMeanDist = dist; }
 	inline int GetMaxMeanDist() { return m_MaxMeanDist; }
+	inline void SetMetric(int metric) { m_Metric = metric; }
+	inline int GetMetric() { return m_Metric; }
 
 	inline int GetNumIter() { return m_NumIter; }
-	inline int GetMeanDist() { return m_MeanDist; }
+	inline double GetMeanDist() { return m_MeanDist; }
 	inline vtkLandmarkTransform* GetLandmarkTransform() { return m_LandmarkTransform; }
+
+	enum ICP_METRIC {
+		LOG_ABSOLUTE_DISTANCE,
+		ABSOLUTE_DISTANCE,
+		SQUARED_DISTANCE
+	};
 
 protected:
 	ExtendedICPTransform();
 	~ExtendedICPTransform();
 
 	void InternalUpdate();
+	unsigned long int GetMTime();
 
 	vtkSmartPointer<vtkPolyData> m_Source;
 	vtkSmartPointer<vtkPolyData> m_Target;
 	int m_MaxIter;
 	int m_MaxLandmarks;
 	double m_MaxMeanDist;
+	int m_Metric;
 	
 
 	int m_NumIter;

@@ -49,14 +49,10 @@ StitchingPlugin::StitchingPlugin()
 	m_Widget->m_VisualizationWidget3D->AddActor(m_DataActor3D);
 
 	// initialize member objects
-	m_PolyData =			vtkSmartPointer<vtkPolyData>::New();
 	m_Data =				vtkSmartPointer<vtkPolyData>::New();
 	m_TheWorld =			vtkSmartPointer<vtkPolyData>::New();
 	m_PreviousFrame =		vtkSmartPointer<vtkPolyData>::New();
 	m_PreviousTransform =	vtkSmartPointer<vtkMatrix4x4>::New();
-	m_RImageVTKData =		vtkSmartPointer<ritk::RImageVTKData>::New();
-
-	m_RImageVTKData->SetPolyDataType(ritk::RImageVTKData::POINTCLOUD);
 }
 StitchingPlugin::~StitchingPlugin()
 {
@@ -89,14 +85,6 @@ StitchingPlugin::ProcessEvent(ritk::Event::Pointer EventP)
 			return;
 		}
 		m_CurrentFrame = NewFrameEventP->RImage;
-
-		// Here comes your code. Access range data with CurrentFrame.
-		// ...
-		m_RGBImage = m_CurrentFrame->GetRGBImage();
-		m_RangeImage = m_CurrentFrame->GetRangeImage();
-
-		m_RImageVTKData->GeneratePolyData(m_CurrentFrame);
-		m_PolyData =  m_RImageVTKData->GetPolyData();
 
 		// run autostitching for each frame if checkbox is checked
 		if (m_Widget->m_CheckBoxAutoStitch->isChecked())
@@ -143,41 +131,8 @@ StitchingPlugin::LoadCleanStitch()
 void
 StitchingPlugin::LoadFrame(bool update)
 {
-	m_Data = vtkSmartPointer<vtkPolyData>::New();
-	m_Data->DeepCopy(m_PolyData);	
-	m_Data->BuildLinks();
-
-	// get the min and max value from the current frame
-	typedef itk::ImageRegionConstIterator<ritk::NewFrameEvent::RImageType::RangeImageType> IteratorType;
-	IteratorType it(m_RangeImage,m_RangeImage->GetRequestedRegion());
-	double range[2];
-	range[0] = 1e16;
-	range[1] = -1e16;
-	for (it.GoToBegin(); !it.IsAtEnd(); ++it)
-	{
-		if (it.Value() < range[0])
-			range[0] = it.Value();
-		if (it.Value() > range[1])
-			range[1] = it.Value();
-	}
-
-	m_DataActor3D->SetData(m_Data, m_CurrentFrame);
-	m_DataActor3D->SetRGBInterval(range[0],range[1]);
-
-	// this will hold the scalar values (colors)
-	vtkSmartPointer<vtkDataArray> colors =
-		vtkSmartPointer<vtkUnsignedCharArray>::New();
-	colors->SetNumberOfComponents(4);
-	typedef itk::ImageRegionConstIterator<RImageType::RGBImageType> RGBIteratorType;
-	RGBIteratorType itRGB(m_RGBImage,m_RGBImage->GetRequestedRegion());
-	for (itRGB.GoToBegin(); !itRGB.IsAtEnd(); ++itRGB)
-	{
-		colors->InsertNextTuple4(itRGB.Value()[0], itRGB.Value()[1], itRGB.Value()[2], 255.0);
-	}
-
-	m_Data->GetPointData()->SetScalars(colors);
-
-	m_DataActor3D->SetData(m_Data, m_CurrentFrame);
+	m_DataActor3D->SetData(m_CurrentFrame);
+	m_Data->ShallowCopy(m_DataActor3D->GetData());
 
 	// remove invalid points
 	ExtractPointcloud();
@@ -241,7 +196,7 @@ StitchingPlugin::Clip(vtkPolyData *toBeClipped)
 	double bounds[6];
 	toBeClipped->GetBounds(bounds);
 
-	// modify x, y and z bounds
+	// modify x, y (and z) bounds
 	bounds[0] = bounds[0] + m_Widget->m_DoubleSpinBoxClipPercentage->value()*(bounds[1] - bounds[0]);
 	bounds[1] = bounds[1] - m_Widget->m_DoubleSpinBoxClipPercentage->value()*(bounds[1] - bounds[0]);
 	bounds[2] = bounds[2] + m_Widget->m_DoubleSpinBoxClipPercentage->value()*(bounds[3] - bounds[2]);
@@ -354,25 +309,46 @@ StitchingPlugin::StitchToWorld(bool update)
 	voi->DeepCopy(m_Data);
 	Clip(voi);
 
+	// start with previous transform // MAYBE WE HAVE A PROBLEM HERE :-(
+	/*vtkSmartPointer<vtkTransform> prevTrans =
+		vtkSmartPointer<vtkTransform>::New();
+	prevTrans->SetMatrix(m_PreviousTransform);
+	prevTrans->Modified();
+
+	vtkSmartPointer<vtkTransformPolyDataFilter> previousTransformFilter =
+		vtkSmartPointer<vtkTransformPolyDataFilter>::New();
+
+	previousTransformFilter->SetInput(voi);
+	previousTransformFilter->SetTransform(prevTrans);
+	previousTransformFilter->Modified();
+	previousTransformFilter->Update();
+	voi->DeepCopy(previousTransformFilter->GetOutput());*/
+
 	icp->SetSource(voi);
 	icp->SetTarget(m_PreviousFrame);
 	icp->GetLandmarkTransform()->SetModeToRigidBody();
-	icp->GetMatrix()->DeepCopy(m_PreviousTransform);
 	icp->SetMaxMeanDist(m_Widget->m_DoubleSpinBoxMaxRMS->value());
 	icp->SetMaxLandmarks(m_Widget->m_SpinBoxMaxLandmarks->value());
 	icp->SetMaxIter(m_Widget->m_SpinBoxMaxIterations->value());
+	int metric;
+	switch (m_Widget->m_ComboBoxMetric->currentIndex())
+	{
+	case 0: metric = ExtendedICPTransform::LOG_ABSOLUTE_DISTANCE; break;
+	case 1: metric = ExtendedICPTransform::ABSOLUTE_DISTANCE; break;
+	case 2: metric = ExtendedICPTransform::SQUARED_DISTANCE; break;
+	}
+	icp->SetMetric(metric);
 	icp->Modified();
 	icp->Update();
 
-	// show some debug stuff
-	m_Widget->m_lcdNumberICPIterations->display(icp->GetNumIter());
-	m_Widget->m_lcdNumberICPError->display(icp->GetMeanDist());
-	
 	// get the resulting transformation matrix (this matrix takes the source
 	// points to the target points)
 	vtkSmartPointer<vtkMatrix4x4> m = icp->GetMatrix();
 	m_PreviousTransform->DeepCopy(m);
-	//std::cout << "ICP transform: " << *m << std::endl;
+	std::cout << "ICP transform: " << *m << std::endl;
+
+	m_Widget->m_lcdNumberICPIterations->display(icp->GetNumIter());
+	m_Widget->m_lcdNumberICPError->display(icp->GetMeanDist());
 
 	// do the transform
 	vtkSmartPointer<vtkTransformPolyDataFilter> icpTransformFilter =

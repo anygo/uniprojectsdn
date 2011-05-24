@@ -116,7 +116,8 @@ StitchingPlugin::ProcessEvent(ritk::Event::Pointer EventP)
 	}
 }
 //----------------------------------------------------------------------------
-void StitchingPlugin::LoadCleanStitch()
+void
+StitchingPlugin::LoadCleanStitch()
 {
 	QTime t = QTime::currentTime();
 
@@ -357,17 +358,15 @@ StitchingPlugin::StitchToWorld(bool update)
 	icp->SetTarget(m_PreviousFrame);
 	icp->GetLandmarkTransform()->SetModeToRigidBody();
 	icp->GetMatrix()->DeepCopy(m_PreviousTransform);
-	icp->CheckMeanDistanceOn();
-	icp->SetMeanDistanceModeToAbsoluteValue();
-	icp->SetMaximumMeanDistance(m_Widget->m_DoubleSpinBoxMaxRMS->value());
-	icp->SetMaximumNumberOfLandmarks(m_Widget->m_SpinBoxMaxLandmarks->value());
-	icp->SetMaximumNumberOfIterations(m_Widget->m_SpinBoxMaxIterations->value());
+	icp->SetMaxMeanDist(m_Widget->m_DoubleSpinBoxMaxRMS->value());
+	icp->SetMaxLandmarks(m_Widget->m_SpinBoxMaxLandmarks->value());
+	icp->SetMaxIter(m_Widget->m_SpinBoxMaxIterations->value());
 	icp->Modified();
 	icp->Update();
 
 	// show some debug stuff
-	m_Widget->m_lcdNumberICPIterations->display(icp->GetNumberOfIterations());
-	m_Widget->m_lcdNumberICPError->display(icp->GetMeanDistance());
+	m_Widget->m_lcdNumberICPIterations->display(icp->GetNumIter());
+	m_Widget->m_lcdNumberICPError->display(icp->GetMeanDist());
 	
 	// get the resulting transformation matrix (this matrix takes the source
 	// points to the target points)

@@ -9,8 +9,6 @@
 #include "vtkTransform.h"
 #include "vtkSmartPointer.h"
 #include "vtkPolyData.h"
-#include "vtkDoubleArray.h"
-#include "vtkPointData.h"
 
 #include <complex>
 
@@ -46,6 +44,41 @@ ExtendedICPTransform::MakeTransform()
 {
 	return ExtendedICPTransform::New();
 }
+unsigned long int
+ExtendedICPTransform::GetMTime()
+{
+	unsigned long result = this->vtkLinearTransform::GetMTime();
+	unsigned long mtime;
+
+	if (m_Source)
+	{
+		mtime = m_Source->GetMTime(); 
+		if (mtime > result)
+		{
+			result = mtime;
+		}
+	}
+
+	if (m_Target)
+	{
+		mtime = m_Target->GetMTime(); 
+		if (mtime > result)
+		{
+			result = mtime;
+		}
+	}
+
+	if (m_LandmarkTransform)
+	{
+		mtime = m_LandmarkTransform->GetMTime();
+		if (mtime > result)
+		{
+			result = mtime;
+		}
+	}
+
+	return result;
+}
 //----------------------------------------------------------------------------
 void
 ExtendedICPTransform::SetSource(vtkPolyData *source)
@@ -61,7 +94,8 @@ ExtendedICPTransform::SetTarget(vtkPolyData *target)
 	Modified();
 }
 //----------------------------------------------------------------------------
-void ExtendedICPTransform::PrintSelf(ostream& os, vtkIndent indent)
+void
+ExtendedICPTransform::PrintSelf(ostream& os, vtkIndent indent)
 {
 	os << indent << "PrintSelf() not implemented";
 }
@@ -85,27 +119,18 @@ ExtendedICPTransform::InternalUpdate()
 
 	vtkIdType nb_points = m_Source->GetNumberOfPoints() / step;
 
-	// allocate some points and color arrays
+	// Allocate some points.
 	vtkSmartPointer<vtkPoints> points1 =
 		vtkSmartPointer<vtkPoints>::New();
 	points1->SetNumberOfPoints(nb_points);
-	vtkSmartPointer<vtkDoubleArray> colors1 =
-		vtkSmartPointer<vtkDoubleArray>::New();		
-	colors1->SetNumberOfComponents(4);
 
 	vtkSmartPointer<vtkPoints> closestp =
 		vtkSmartPointer<vtkPoints>::New();
 	closestp->SetNumberOfPoints(nb_points);
-	vtkSmartPointer<vtkDoubleArray> colorsClosest =
-		vtkSmartPointer<vtkDoubleArray>::New();		
-	colorsClosest->SetNumberOfComponents(4);
 
 	vtkSmartPointer<vtkPoints> points2 =
 		vtkSmartPointer<vtkPoints>::New();
 	points2->SetNumberOfPoints(nb_points);
-	vtkSmartPointer<vtkDoubleArray> colors2 =
-		vtkSmartPointer<vtkDoubleArray>::New();		
-	colors2->SetNumberOfComponents(4);
 
 	// fill with initial positions (sample dataset using step)
 	vtkSmartPointer<vtkTransform> accumulate =
@@ -119,25 +144,17 @@ ExtendedICPTransform::InternalUpdate()
 	for (i = 0, j = 0; i < nb_points; i++, j += step)
 	{
 		points1->SetPoint(i, m_Source->GetPoint(j));
-		colors1->InsertTuple(i, m_Source->GetPointData()->GetScalars()->GetTuple(i));
 	}
 
 	// go
 	vtkSmartPointer<vtkPoints> temp;
-	vtkSmartPointer<vtkDoubleArray> tempcolor;
-	vtkSmartPointer<vtkPoints> a;
-	a->ShallowCopy(points1);
-	vtkSmartPointer<vtkDoubleArray> acolor;
-	vtkSmartPointer<vtkPoints> b;
-	b->ShallowCopy(points2);
-	vtkSmartPointer<vtkDoubleArray> bcolor;
+	vtkSmartPointer<vtkPoints> a = points1;
+	vtkSmartPointer<vtkPoints> b = points2;
 	vtkIdType cell_id;
 	int sub_id;
 	double dist2;
 	double outPoint[3];
 	double totaldist;
-
-	std::cout << "1" << std::endl;
 
 	m_NumIter = 0;
 
@@ -146,23 +163,7 @@ ExtendedICPTransform::InternalUpdate()
 		// fill points with the closest points to each vertex in input
 		for(i = 0; i < nb_points; i++)
 		{
-			double x[6];
-			double *tmp;
-			
-			std::cout << "2" << std::endl;
-			// extract x, y and z coords
-			tmp = a->GetPoint(i);
-			std::cout << "3" << std::endl;
-			x[0] = tmp[0]; x[1] = tmp[1]; x[2] = tmp[2];
-
-			// extract R, G and B (color)
-			tmp = acolor->GetTuple(i);
-			std::cout << "4" << std::endl;
-			x[3] = tmp[0]; x[4] = tmp[1]; x[5] = tmp[2];
-
-			std::cout << "5" << std::endl;
-			locator->FindClosestPoint(x, outPoint, cell_id, sub_id, dist2);
-			std::cout << "6" << std::endl;
+			locator->FindClosestPoint(a->GetPoint(i), outPoint, cell_id, sub_id, dist2);
 			closestp->SetPoint(i, outPoint);
 		}
 
@@ -189,12 +190,21 @@ ExtendedICPTransform::InternalUpdate()
 			m_LandmarkTransform->InternalTransformPoint(p1, p2);
 			b->SetPoint(i, p2);
 
-			double absDist = std::abs(p1[0] - p2[0]) + std::abs(p1[1] - p2[1]) + std::abs(p1[2] - p2[2]);
-			totaldist += std::log(absDist);
+			switch (m_Metric)
+			{
+			case ExtendedICPTransform::ABSOLUTE_DISTANCE:
+				totaldist += std::abs(p1[0] - p2[0]) + std::abs(p1[1] - p2[1]) + std::abs(p1[2] - p2[2]); break;
+			case ExtendedICPTransform::LOG_ABSOLUTE_DISTANCE:
+				totaldist += std::log(std::abs(p1[0] - p2[0]) + std::abs(p1[1] - p2[1]) + std::abs(p1[2] - p2[2]) + 1.0); break;
+			case ExtendedICPTransform::SQUARED_DISTANCE:
+				totaldist += vtkMath::Distance2BetweenPoints(p1, p2);
+			}
+
 		}
 
 		m_MeanDist = totaldist / (double)nb_points;
-
+		std::cout << "Iteration " << m_NumIter << ":\t mean distance = " << m_MeanDist << std::endl;
+			
 		if (m_MeanDist <= m_MaxMeanDist)
 		{
 			break;

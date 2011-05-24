@@ -55,11 +55,7 @@ protected:
 
 	// our members
 	vtkSmartPointer<ritk::RImageActorPipeline>							m_DataActor3D;
-	ritk::NewFrameEvent::RImageType::RangeImageType::ConstPointer		m_RangeImage;
-	ritk::NewFrameEvent::RImageType::RGBImageType::ConstPointer			m_RGBImage;
 	ritk::NewFrameEvent::RImageConstPointer								m_CurrentFrame;
-	vtkSmartPointer<ritk::RImageVTKData>								m_RImageVTKData;
-	vtkSmartPointer<vtkPolyData>										m_PolyData;
 	vtkSmartPointer<vtkPolyData>										m_Data;
 	vtkSmartPointer<vtkPolyData>										m_TheWorld;
 	vtkSmartPointer<vtkPolyData>										m_PreviousFrame;

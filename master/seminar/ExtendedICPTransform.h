@@ -42,15 +42,28 @@ public:
 		SQUARED_DISTANCE
 	};
 
+	typedef struct Point6D {
+		double x, y, z;
+		double r, g, b;
+	} Point6D;
+
 protected:
 	ExtendedICPTransform();
 	~ExtendedICPTransform();
 
 	void InternalUpdate();
 	unsigned long int GetMTime();
+	void vtkPolyDataToPoint6DArray();
+	void vtkPolyDataToPoint6DArray(vtkSmartPointer<vtkPoints> poly, Point6D *point);
+	int* FindClosestPoints(Point6D *source, Point6D* target);
+	int FindClosestPoint(Point6D source, Point6D* target);
 
 	vtkSmartPointer<vtkPolyData> m_Source;
 	vtkSmartPointer<vtkPolyData> m_Target;
+
+	Point6D * m_SourcePoints;
+	Point6D * m_TargetPoints;
+
 	int m_MaxIter;
 	int m_MaxLandmarks;
 	double m_MaxMeanDist;

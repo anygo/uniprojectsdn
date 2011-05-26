@@ -43,23 +43,24 @@ protected slots:
 	void Delaunay2D();
 	void SaveVTKData();
 	void InitializeWorld();
+	void ChangeVisualizationProperties();
 
 
 protected:
 	StitchingWidget *m_Widget;
 
 	// our functions
-	void ExtractPointcloud();
+	void ExtractValidPoints();
 	void Clip(vtkPolyData *toBeClipped);
 	void Clean(vtkPolyData *toBeCleaned);
 
 	// our members
-	vtkSmartPointer<ritk::RImageActorPipeline>							m_DataActor3D;
-	ritk::NewFrameEvent::RImageConstPointer								m_CurrentFrame;
-	vtkSmartPointer<vtkPolyData>										m_Data;
-	vtkSmartPointer<vtkPolyData>										m_TheWorld;
-	vtkSmartPointer<vtkPolyData>										m_PreviousFrame;
-	vtkSmartPointer<vtkMatrix4x4>										m_PreviousTransform;
+	vtkSmartPointer<ritk::RImageActorPipeline>	m_DataActor3D;
+	ritk::NewFrameEvent::RImageConstPointer		m_CurrentFrame;
+	vtkSmartPointer<vtkPolyData>				m_Data;
+	vtkSmartPointer<vtkPolyData>				m_TheWorld;
+	vtkSmartPointer<vtkPolyData>				m_PreviousFrame;
+	vtkSmartPointer<vtkMatrix4x4>				m_PreviousTransformMatrix;
 
 };
 

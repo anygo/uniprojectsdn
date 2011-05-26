@@ -203,7 +203,7 @@ ExtendedICPTransform::InternalUpdate()
 		}
 
 		m_MeanDist = totaldist / (double)nb_points;
-		std::cout << "Iteration " << m_NumIter << ":\t mean distance = " << m_MeanDist << std::endl;
+		std::cout << "\rIteration " << m_NumIter << ":\t mean distance = " << m_MeanDist << "           ";
 			
 		if (m_MeanDist <= m_MaxMeanDist)
 		{
@@ -215,6 +215,8 @@ ExtendedICPTransform::InternalUpdate()
 		a = b;
 		b = temp;
 	} 
+
+	std::cout << std::endl;
 
 	// now recover accumulated result
 	this->Matrix->DeepCopy(accumulate->GetMatrix());

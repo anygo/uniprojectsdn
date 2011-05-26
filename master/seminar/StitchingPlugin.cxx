@@ -22,6 +22,8 @@
 #include <vtkAppendPolyData.h>
 #include <vtkBox.h>
 #include <vtkClipPolyData.h>
+#include <vtkProperty.h>
+#include <vtkRendererCollection.h>
 
 #include <ExtendedICPTransform.h>
 
@@ -34,14 +36,15 @@ StitchingPlugin::StitchingPlugin()
 	connect(this, SIGNAL(UpdateGUI()), m_Widget->m_VisualizationWidget3D,	SLOT(UpdateGUI()));
 
 	// set signals (from buttons, etc) and slots (in this file)
-	connect(m_Widget->m_PushButtonLoadFrame,			SIGNAL(clicked()), this, SLOT(LoadFrame()));
-	connect(m_Widget->m_PushButtonCleanFrame,			SIGNAL(clicked()), this, SLOT(CleanFrame()));
-	connect(m_Widget->m_PushButtonLoadCleanStitch,		SIGNAL(clicked()), this, SLOT(LoadCleanStitch()));
-	connect(m_Widget->m_PushButtonCleanWorld,			SIGNAL(clicked()), this, SLOT(CleanWorld()));
-	connect(m_Widget->m_PushButtonDelaunay2D,			SIGNAL(clicked()), this, SLOT(Delaunay2D()));
-	connect(m_Widget->m_PushButtonSaveVTKData,			SIGNAL(clicked()), this, SLOT(SaveVTKData()));
-	connect(m_Widget->m_PushButtonInitializeWorld,		SIGNAL(clicked()), this, SLOT(InitializeWorld()));
-	connect(m_Widget->m_PushButtonStitchToWorld,		SIGNAL(clicked()), this, SLOT(StitchToWorld()));
+	connect(m_Widget->m_PushButtonLoadFrame,			SIGNAL(clicked()),			this, SLOT(LoadFrame()));
+	connect(m_Widget->m_PushButtonCleanFrame,			SIGNAL(clicked()),			this, SLOT(CleanFrame()));
+	connect(m_Widget->m_PushButtonLoadCleanStitch,		SIGNAL(clicked()),			this, SLOT(LoadCleanStitch()));
+	connect(m_Widget->m_PushButtonCleanWorld,			SIGNAL(clicked()),			this, SLOT(CleanWorld()));
+	connect(m_Widget->m_PushButtonDelaunay2D,			SIGNAL(clicked()),			this, SLOT(Delaunay2D()));
+	connect(m_Widget->m_PushButtonSaveVTKData,			SIGNAL(clicked()),			this, SLOT(SaveVTKData()));
+	connect(m_Widget->m_PushButtonInitializeWorld,		SIGNAL(clicked()),			this, SLOT(InitializeWorld()));
+	connect(m_Widget->m_PushButtonStitchToWorld,		SIGNAL(clicked()),			this, SLOT(StitchToWorld()));
+	connect(m_Widget->m_HorizontalSliderPointSize,		SIGNAL(valueChanged(int)),	this, SLOT(ChangeVisualizationProperties()));
 		
 	// add data actor
 	m_DataActor3D = vtkSmartPointer<ritk::RImageActorPipeline>::New();	
@@ -49,10 +52,10 @@ StitchingPlugin::StitchingPlugin()
 	m_Widget->m_VisualizationWidget3D->AddActor(m_DataActor3D);
 
 	// initialize member objects
-	m_Data =				vtkSmartPointer<vtkPolyData>::New();
-	m_TheWorld =			vtkSmartPointer<vtkPolyData>::New();
-	m_PreviousFrame =		vtkSmartPointer<vtkPolyData>::New();
-	m_PreviousTransform =	vtkSmartPointer<vtkMatrix4x4>::New();
+	m_Data =					vtkSmartPointer<vtkPolyData>::New();
+	m_TheWorld =				vtkSmartPointer<vtkPolyData>::New();
+	m_PreviousFrame =			vtkSmartPointer<vtkPolyData>::New();
+	m_PreviousTransformMatrix =	vtkSmartPointer<vtkMatrix4x4>::New();
 }
 StitchingPlugin::~StitchingPlugin()
 {
@@ -69,6 +72,15 @@ QWidget*
 StitchingPlugin::GetPluginGUI()
 {
 	return m_Widget;
+}
+//----------------------------------------------------------------------------
+void
+StitchingPlugin::ChangeVisualizationProperties()
+{
+	m_DataActor3D->GetProperty()->SetPointSize(m_Widget->m_HorizontalSliderPointSize->value());
+	//m_Widget->m_VisualizationWidget3D->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->SetBackground(0.2, 0.3, 0.9);
+
+	emit UpdateGUI();
 }
 //----------------------------------------------------------------------------
 void
@@ -125,7 +137,6 @@ StitchingPlugin::LoadCleanStitch()
 	m_DataActor3D->SetData(m_TheWorld, false);
 
 	emit UpdateGUI();
-	m_Widget->m_VisualizationWidget3D->UpdateGUI();
 }
 //----------------------------------------------------------------------------
 void
@@ -135,7 +146,7 @@ StitchingPlugin::LoadFrame(bool update)
 	m_Data->ShallowCopy(m_DataActor3D->GetData());
 
 	// remove invalid points
-	ExtractPointcloud();
+	ExtractValidPoints();
 
 	if (update)
 	{
@@ -149,7 +160,7 @@ StitchingPlugin::LoadFrame(bool update)
 }
 //----------------------------------------------------------------------------
 void
-StitchingPlugin::ExtractPointcloud()
+StitchingPlugin::ExtractValidPoints()
 {
 	vtkSmartPointer<vtkPoints> points =
 		vtkSmartPointer<vtkPoints>::New();
@@ -223,7 +234,6 @@ StitchingPlugin::CleanFrame(bool update)
 		m_DataActor3D->SetData(m_Data, false);
 
 		emit UpdateGUI();
-		m_Widget->m_VisualizationWidget3D->UpdateGUI();
 	}
 }
 void
@@ -237,7 +247,6 @@ StitchingPlugin::CleanWorld()
 	m_Widget->m_lcdNumberPointsInWorld->display(m_TheWorld->GetNumberOfPoints());
 
 	emit UpdateGUI();
-	m_Widget->m_VisualizationWidget3D->UpdateGUI();
 }
 void
 StitchingPlugin::Clean(vtkPolyData *toBeCleaned)
@@ -270,7 +279,6 @@ StitchingPlugin::Delaunay2D()
 	m_DataActor3D->SetData(m_TheWorld, false);
 
 	emit UpdateGUI();
-	m_Widget->m_VisualizationWidget3D->UpdateGUI();
 }
 //----------------------------------------------------------------------------
 void
@@ -279,7 +287,7 @@ StitchingPlugin::InitializeWorld()
 	// copy data
 	m_TheWorld->DeepCopy(m_Data);
 	m_PreviousFrame->DeepCopy(m_Data);
-	m_PreviousTransform->Identity();
+	m_PreviousTransformMatrix->Identity();
 
 	// enable buttons
 	m_Widget->m_PushButtonStitchToWorld->setEnabled(true);
@@ -294,7 +302,6 @@ StitchingPlugin::InitializeWorld()
 	m_Widget->m_lcdNumberPointsInWorld->display(m_TheWorld->GetNumberOfPoints());
 
 	emit UpdateGUI();
-	m_Widget->m_VisualizationWidget3D->UpdateGUI();
 }
 //----------------------------------------------------------------------------
 void
@@ -304,25 +311,28 @@ StitchingPlugin::StitchToWorld(bool update)
 	vtkSmartPointer<ExtendedICPTransform> icp = 
 		vtkSmartPointer<ExtendedICPTransform>::New();
 
+	if (m_Widget->m_CheckBoxUsePreviousTransformation->isChecked())
+	{
+		// start with previous transform
+		vtkSmartPointer<vtkTransform> prevTrans =
+			vtkSmartPointer<vtkTransform>::New();
+		prevTrans->SetMatrix(m_PreviousTransformMatrix);
+		prevTrans->Modified();
+
+		vtkSmartPointer<vtkTransformPolyDataFilter> previousTransformFilter =
+			vtkSmartPointer<vtkTransformPolyDataFilter>::New();
+
+		previousTransformFilter->SetInput(m_Data);
+		previousTransformFilter->SetTransform(prevTrans);
+		previousTransformFilter->Modified();
+		previousTransformFilter->Update();
+		m_Data->DeepCopy(previousTransformFilter->GetOutput());
+	}
+
 	vtkSmartPointer<vtkPolyData> voi = 
 		vtkSmartPointer<vtkPolyData>::New();
 	voi->DeepCopy(m_Data);
 	Clip(voi);
-
-	// start with previous transform // MAYBE WE HAVE A PROBLEM HERE :-(
-	/*vtkSmartPointer<vtkTransform> prevTrans =
-		vtkSmartPointer<vtkTransform>::New();
-	prevTrans->SetMatrix(m_PreviousTransform);
-	prevTrans->Modified();
-
-	vtkSmartPointer<vtkTransformPolyDataFilter> previousTransformFilter =
-		vtkSmartPointer<vtkTransformPolyDataFilter>::New();
-
-	previousTransformFilter->SetInput(voi);
-	previousTransformFilter->SetTransform(prevTrans);
-	previousTransformFilter->Modified();
-	previousTransformFilter->Update();
-	voi->DeepCopy(previousTransformFilter->GetOutput());*/
 
 	icp->SetSource(voi);
 	icp->SetTarget(m_PreviousFrame);
@@ -344,8 +354,8 @@ StitchingPlugin::StitchToWorld(bool update)
 	// get the resulting transformation matrix (this matrix takes the source
 	// points to the target points)
 	vtkSmartPointer<vtkMatrix4x4> m = icp->GetMatrix();
-	m_PreviousTransform->DeepCopy(m);
-	std::cout << "ICP transform: " << *m << std::endl;
+	m_PreviousTransformMatrix->DeepCopy(m);
+	//std::cout << "ICP transform: " << *m << std::endl;
 
 	m_Widget->m_lcdNumberICPIterations->display(icp->GetNumIter());
 	m_Widget->m_lcdNumberICPError->display(icp->GetMeanDist());
@@ -388,7 +398,6 @@ StitchingPlugin::StitchToWorld(bool update)
 		m_DataActor3D->SetData(m_TheWorld, false);
 
 		emit UpdateGUI();
-		m_Widget->m_VisualizationWidget3D->UpdateGUI();
 	}
 }
 //----------------------------------------------------------------------------

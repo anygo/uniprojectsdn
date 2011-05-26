@@ -101,8 +101,55 @@ ExtendedICPTransform::PrintSelf(ostream& os, vtkIndent indent)
 }
 //----------------------------------------------------------------------------
 void
+ExtendedICPTransform::vtkPolyDataToPoint6DArray(vtkSmartPointer<vtkPoints> poly, Point6D *point)
+{
+	for (int i = 0; i < m_MaxLandmarks; ++i)
+	{
+		point[i].x = poly->GetPoint(static_cast<vtkIdType>(i))[0];
+		point[i].y = poly->GetPoint(static_cast<vtkIdType>(i))[1];
+		point[i].z = poly->GetPoint(static_cast<vtkIdType>(i))[2];
+	}
+}
+void
+ExtendedICPTransform::vtkPolyDataToPoint6DArray()
+{
+
+	int stepSource = 1;
+	int stepTarget = 1;
+
+	if (m_Source->GetNumberOfPoints() > m_MaxLandmarks)
+	{
+		stepSource = m_Source->GetNumberOfPoints() / m_MaxLandmarks;
+	}
+	if (m_Target->GetNumberOfPoints() > m_MaxLandmarks)
+	{
+		stepTarget = m_Target->GetNumberOfPoints() / m_MaxLandmarks;
+	}
+
+	m_SourcePoints = new Point6D[m_MaxLandmarks];
+	m_TargetPoints = new Point6D[m_MaxLandmarks];
+
+	for (int i = 0, j = 0; i < m_MaxLandmarks; ++i, j += stepSource)
+	{
+		m_SourcePoints[i].x = m_Source->GetPoint(static_cast<vtkIdType>(j))[0];
+		m_SourcePoints[i].y = m_Source->GetPoint(static_cast<vtkIdType>(j))[1];
+		m_SourcePoints[i].z = m_Source->GetPoint(static_cast<vtkIdType>(j))[2];
+	}
+
+	for (int i = 0, j = 0; i < m_MaxLandmarks; ++i, j += stepTarget)
+	{
+		m_TargetPoints[i].x = m_Target->GetPoint(static_cast<vtkIdType>(j))[0];
+		m_TargetPoints[i].y = m_Target->GetPoint(static_cast<vtkIdType>(j))[1];
+		m_TargetPoints[i].z = m_Target->GetPoint(static_cast<vtkIdType>(j))[2];
+	}
+}
+//----------------------------------------------------------------------------
+void
 ExtendedICPTransform::InternalUpdate() 
 {
+	// transform vtkPolyData in our own structures
+	vtkPolyDataToPoint6DArray();
+
 	// create locator
 	vtkSmartPointer<vtkCellLocator> locator =
 		vtkSmartPointer<vtkCellLocator>::New();
@@ -110,62 +157,47 @@ ExtendedICPTransform::InternalUpdate()
 	locator->SetNumberOfCellsPerBucket(1);
 	locator->BuildLocator();
 
-	// create two sets of points to handle iteration
-	int step = 1;
-	if (m_Source->GetNumberOfPoints() > m_MaxLandmarks)
-	{
-		step = m_Source->GetNumberOfPoints() / m_MaxLandmarks;
-	}
-
-	vtkIdType nb_points = m_Source->GetNumberOfPoints() / step;
-
 	// Allocate some points.
 	vtkSmartPointer<vtkPoints> points1 =
 		vtkSmartPointer<vtkPoints>::New();
-	points1->SetNumberOfPoints(nb_points);
+	points1->SetNumberOfPoints(m_MaxLandmarks);
 
 	vtkSmartPointer<vtkPoints> closestp =
 		vtkSmartPointer<vtkPoints>::New();
-	closestp->SetNumberOfPoints(nb_points);
+	closestp->SetNumberOfPoints(m_MaxLandmarks);
 
 	vtkSmartPointer<vtkPoints> points2 =
 		vtkSmartPointer<vtkPoints>::New();
-	points2->SetNumberOfPoints(nb_points);
+	points2->SetNumberOfPoints(m_MaxLandmarks);
 
-	// fill with initial positions (sample dataset using step)
 	vtkSmartPointer<vtkTransform> accumulate =
 		vtkTransform::New();
 	accumulate->PostMultiply();
 
-	vtkIdType i;
-	int j;
 	double p1[3], p2[3];
 
-	for (i = 0, j = 0; i < nb_points; i++, j += step)
+	for (int i = 0; i < m_MaxLandmarks; i++)
 	{
-		points1->SetPoint(i, m_Source->GetPoint(j));
+		points1->SetPoint(static_cast<vtkIdType>(i), m_SourcePoints[i].x, m_SourcePoints[i].y, m_SourcePoints[i].z);
 	}
 
 	// go
 	vtkSmartPointer<vtkPoints> temp;
 	vtkSmartPointer<vtkPoints> a = points1;
 	vtkSmartPointer<vtkPoints> b = points2;
-	vtkIdType cell_id;
-	int sub_id;
-	double dist2;
-	double outPoint[3];
+
 	double totaldist;
 
 	m_NumIter = 0;
 
 	while (true)
 	{
-		// fill points with the closest points to each vertex in input
-		for(i = 0; i < nb_points; i++)
+		int* indices = FindClosestPoints(m_SourcePoints, m_TargetPoints);
+		for(int i = 0; i < m_MaxLandmarks; ++i)
 		{
-			locator->FindClosestPoint(a->GetPoint(i), outPoint, cell_id, sub_id, dist2);
-			closestp->SetPoint(i, outPoint);
+			closestp->SetPoint(i, m_TargetPoints[indices[i]].x, m_TargetPoints[indices[i]].y, m_TargetPoints[indices[i]].z );
 		}
+		delete [] indices;
 
 		// build the landmark transform
 		m_LandmarkTransform->SetSourceLandmarks(a);
@@ -184,7 +216,7 @@ ExtendedICPTransform::InternalUpdate()
 		// move mesh and compute mean distance
 		totaldist = 0.0;
 
-		for(i = 0; i < nb_points; i++)
+		for(int i = 0; i < m_MaxLandmarks; i++)
 		{
 			a->GetPoint(i, p1);
 			m_LandmarkTransform->InternalTransformPoint(p1, p2);
@@ -202,7 +234,7 @@ ExtendedICPTransform::InternalUpdate()
 
 		}
 
-		m_MeanDist = totaldist / (double)nb_points;
+		m_MeanDist = totaldist / (double)m_MaxLandmarks;
 		std::cout << "\rIteration " << m_NumIter << ":\t mean distance = " << m_MeanDist << "           ";
 			
 		if (m_MeanDist <= m_MaxMeanDist)
@@ -214,10 +246,43 @@ ExtendedICPTransform::InternalUpdate()
 		temp = a;
 		a = b;
 		b = temp;
+
+		vtkPolyDataToPoint6DArray( a, m_SourcePoints );
 	} 
 
 	std::cout << std::endl;
 
 	// now recover accumulated result
 	this->Matrix->DeepCopy(accumulate->GetMatrix());
+}
+//----------------------------------------------------------------------------
+int*
+ExtendedICPTransform::FindClosestPoints(Point6D* source, Point6D* target) 
+{
+	int* indices = new int[m_MaxLandmarks];
+	for (int i = 0; i < m_MaxLandmarks; ++i)
+	{
+		indices[i] = FindClosestPoint(source[i], target);
+	}
+
+	return indices;
+}
+int
+ExtendedICPTransform::FindClosestPoint(Point6D source, Point6D* target)
+{
+	double minDist = VTK_DOUBLE_MAX;
+	int idx = -1;
+
+	for (int i = 0; i < m_MaxLandmarks; ++i)
+	{
+		double dist_tmp = (source.x - target[i].x)*(source.x - target[i].x) + (source.y - target[i].y)*(source.y - target[i].y) + (source.z - target[i].z)*(source.z - target[i].z);
+		dist_tmp = sqrt(dist_tmp);
+		if (dist_tmp < minDist)
+		{
+			minDist = dist_tmp;
+			idx = i;
+		}
+	}
+
+	return idx;
 }

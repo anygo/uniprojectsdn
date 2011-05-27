@@ -26,8 +26,8 @@ public:
 	// set and get methods
 	inline void SetMaxIter(int iter) { m_MaxIter = iter; }
 	inline int GetMaxIter() { return m_MaxIter; }
-	inline void SetMaxLandmarks(int landmarks) { m_MaxLandmarks = landmarks; }
-	inline int GetMaxLandmarks() { return m_MaxIter; }
+	inline void SetNumLandmarks(int landmarks) { m_NumLandmarks = landmarks; }
+	inline int GetNumLandmarks() { return m_MaxIter; }
 	inline void SetMaxMeanDist(double dist) { m_MaxMeanDist = dist; }
 	inline int GetMaxMeanDist() { return m_MaxMeanDist; }
 	inline void SetMetric(int metric) { m_Metric = metric; }
@@ -53,7 +53,7 @@ protected:
 	Point6D * m_TargetPoints;
 
 	int m_MaxIter;
-	int m_MaxLandmarks;
+	int m_NumLandmarks;
 	double m_MaxMeanDist;
 	int m_Metric;
 	

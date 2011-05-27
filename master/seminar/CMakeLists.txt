@@ -17,6 +17,9 @@ IF(VTK_FOUND)
 ELSE()
 	MESSAGE("VTK not found, but needed.")
 ENDIF(VTK_FOUND)
+
+
+
 SET(VTK_LIBRARIES
 	vtkCOmmon
 	vtkWidgets
@@ -41,6 +44,33 @@ ELSE()
 	MESSAGE("RITK not found, but needed.")
 ENDIF(RITK_FOUND)
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #-----------------------------------------------------------------------------
 
 SET(Stitching_HDRS
@@ -60,6 +90,14 @@ SET(Stitching_SRCS
 	ExtendedICPTransform.cxx
 	ClosestPointFinderBruteForceCPU.cxx
 )
+
+
+
+
+
+
+
+
 
 #-----------------------------------------------------------------------------
 
@@ -97,14 +135,35 @@ ADD_DEFINITIONS(-DQT_SHARED)
 # Include directories for the plugin
 INCLUDE_DIRECTORIES(${Stitching_INCLUDE_DIRS} ${RITK_INCLUDE_DIRS})
 ADD_LIBRARY(${Stitching_LIBRARY} SHARED ${Stitching_SRCS} ${Stitching_HDRS} ${MOC_SRCS} ${UI_HDRS})
+
+
+
+
+
+
+
+
+
 TARGET_LINK_LIBRARIES(${Stitching_LIBRARY} 
+
 	debug ${RITK_Common_LIBRARY_DEBUG}
 	debug ${RITK_Core_LIBRARY_DEBUG}
+
 	debug ${RITK_Visualization_LIBRARY_DEBUG}
+
 	optimized ${RITK_Common_LIBRARY}
 	optimized ${RITK_Core_LIBRARY}
+
 	optimized ${RITK_Visualization_LIBRARY}
+
 	${ITK_LIBRARIES} ${QT_LIBRARIES} ${VTK_LIBRARIES}
+
+
+
+
+
+
+
 	)
 
 SET_TARGET_PROPERTIES(${Stitching_LIBRARY} PROPERTIES 

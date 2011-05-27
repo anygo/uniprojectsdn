@@ -339,7 +339,7 @@ StitchingPlugin::StitchToWorld(bool update)
 	icp->SetTarget(m_PreviousFrame);
 	icp->GetLandmarkTransform()->SetModeToRigidBody();
 	icp->SetMaxMeanDist(m_Widget->m_DoubleSpinBoxMaxRMS->value());
-	icp->SetMaxLandmarks(m_Widget->m_SpinBoxMaxLandmarks->value());
+	icp->SetNumLandmarks(m_Widget->m_SpinBoxMaxLandmarks->value());
 	icp->SetMaxIter(m_Widget->m_SpinBoxMaxIterations->value());
 	int metric;
 	switch (m_Widget->m_ComboBoxMetric->currentIndex())

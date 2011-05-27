@@ -28,6 +28,7 @@
 #include <ExtendedICPTransform.h>
 
 
+
 StitchingPlugin::StitchingPlugin()
 {
 	// create the widget
@@ -343,9 +344,9 @@ StitchingPlugin::StitchToWorld(bool update)
 	int metric;
 	switch (m_Widget->m_ComboBoxMetric->currentIndex())
 	{
-	case 0: metric = ExtendedICPTransform::LOG_ABSOLUTE_DISTANCE; break;
-	case 1: metric = ExtendedICPTransform::ABSOLUTE_DISTANCE; break;
-	case 2: metric = ExtendedICPTransform::SQUARED_DISTANCE; break;
+	case 0: metric = LOG_ABSOLUTE_DISTANCE; break;
+	case 1: metric = ABSOLUTE_DISTANCE; break;
+	case 2: metric = SQUARED_DISTANCE; break;
 	}
 	icp->SetMetric(metric);
 	icp->Modified();

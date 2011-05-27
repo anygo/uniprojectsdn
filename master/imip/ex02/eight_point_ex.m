@@ -18,7 +18,7 @@
 % NOTE: Complete the '???' lines!  
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function eight_point()
+function eight_point_ex()
 % Computes the Fundamental matrix and applies additionally 
 % data balancing to the input points. Afterwards, the epipolar
 % line in the right image is computed out of the selected point
@@ -35,8 +35,8 @@ clear all;
 ISO_SCALING = 1; 
 
 % Initialize the 2 transformations T1 & T2
-% T1 = ???;
-% T2 = ???;
+T1 = eye(3);
+T2 = eye(3);
 
 % Load the point correspondences of the two images:
 load left_image_points;
@@ -46,13 +46,13 @@ load right_image_points;
 [a b] = size(left_image_points);
 
 % Number of corresponding points for the images
-% numberOfPoints = ???;
+numberOfPoints = a;
 
 % Copy the saved points into a working structure (array, ...)
-% points(:,1,1) = ???;
-% points(:,1,2) = ???;
-% points(:,2,1) = ???;
-% points(:,2,2) = ???;
+points(:,1,1) = left_image_points(:, 1);
+points(:,1,2) = left_image_points(:, 2);
+points(:,2,1) = right_image_points(:, 1);
+points(:,2,2) = right_image_points(:, 2);
 
 % If balancing should be applied
 if(ISO_SCALING)
@@ -61,7 +61,7 @@ if(ISO_SCALING)
    % i=2 => right image
    for i=1:2
       % Create a 3x"Number of Point correspondences" zero matrix
-      % pts = ???;
+      pts = zeros(3, numberOfPoints);
       % x-coordinate of the i-th image
       pts(1,:) = points(:,i,1);
       
@@ -80,7 +80,7 @@ if(ISO_SCALING)
       % sum along the second dimension of m =
       % translation of the image points
       % t: translation of the image points
-      %t = ???;     
+      t = mean(m, 2);     
       
       % Centered points; mc is a 2x"Number of Point correspondences" matrix
       % mc: mean centered points
@@ -90,16 +90,16 @@ if(ISO_SCALING)
       % dc is a 1x"Number of Point correspondences" vector
       % dc: distance to center
       % Formula: (x,y).^2 - (0,0).^2
-      % dc = ???;    
+      dc = sqrt(sum(mc.^2));    
       
       % Average distance (davg) to the origin
       davg = (1/numberOfPoints)*sum(dc); 
       
       % Scale factor (s), so that the average distance is sqrt(2)
-      % s = ???;     
+      s = sqrt(2)/davg;     
       
       % Transformation matrix (T)
-      % T = ???;  
+      T = [eye(2)*s, -s*t; 0 0 1];  
       
       % Save the transformation matrix for each image to denormalize the
       % data
@@ -127,6 +127,8 @@ if(ISO_SCALING)
     end
 end
 
+A = zeros(numberOfPoints, 9);
+
 % Compute the Measurement matrix A
 for i=1:numberOfPoints
     x1 = points(i,1,1);
@@ -134,7 +136,7 @@ for i=1:numberOfPoints
     x2 = points(i,2,1);
     y2 = points(i,2,2);
     
-    % A(i,:) = [???];
+    A(i,:) = [x1*x2 y1*x2 x2 x1*y2 y1*y2 y2 x1 y1 1];
 end
 
 disp('cond(A)')
@@ -144,7 +146,7 @@ cond(A)
 [U D V] = svd(A);
 
 % Find Fundamental Matrix F: see nullspace
-% f = ???;
+f = V(:, 9);
 
 % ||f|| = 1; f is only defined up to scale; f = 0 should be not the
 % solution!
@@ -153,9 +155,9 @@ nf = norm(f)
 
 % if f has not length 1
 for i=1:9
-    % ???
+    f(i) = f(i)/nf;
 end
-% F = ???;
+F = reshape(f, 3, 3);
 
 % Check rank criterion: rank(F) = 2
 [FU FD FV]= svd(F);

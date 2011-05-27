@@ -54,6 +54,8 @@ protected:
 	void Clip(vtkPolyData *toBeClipped);
 	void Clean(vtkPolyData *toBeCleaned);
 
+	int m_FramesProcessed;
+
 	// our members
 	vtkSmartPointer<ritk::RImageActorPipeline>	m_DataActor3D;
 	ritk::NewFrameEvent::RImageConstPointer		m_CurrentFrame;

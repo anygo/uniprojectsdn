@@ -4,8 +4,7 @@
 #include "ClosestPointFinder.h"
 
 
-class ClosestPointFinderBruteForceCPU :
-	public ClosestPointFinder
+class ClosestPointFinderBruteForceCPU : public ClosestPointFinder
 {
 
 public:

@@ -183,12 +183,21 @@
                 </widget>
                </item>
                <item>
-                <widget class="QCheckBox" name="m_CheckBoxAutoStitch">
+                <widget class="QSpinBox" name="m_SpinBoxFrameStep">
                  <property name="enabled">
                   <bool>false</bool>
                  </property>
-                 <property name="text">
-                  <string>AutoStitch each Frame</string>
+                 <property name="minimum">
+                  <number>0</number>
+                 </property>
+                 <property name="maximum">
+                  <number>1000</number>
+                 </property>
+                 <property name="singleStep">
+                  <number>5</number>
+                 </property>
+                 <property name="value">
+                  <number>0</number>
                  </property>
                 </widget>
                </item>
@@ -289,6 +298,9 @@
              </item>
              <item row="3" column="1">
               <widget class="QComboBox" name="m_ComboBoxMetric">
+               <property name="currentIndex">
+                <number>2</number>
+               </property>
                <item>
                 <property name="text">
                  <string>log(abs. dist.)</string>
@@ -1026,7 +1038,6 @@
   <tabstop>m_PushButtonCleanFrame</tabstop>
   <tabstop>m_PushButtonStitchToWorld</tabstop>
   <tabstop>m_PushButtonInitializeWorld</tabstop>
-  <tabstop>m_CheckBoxAutoStitch</tabstop>
   <tabstop>tabWidget</tabstop>
   <tabstop>m_HorizontalSliderPointSize</tabstop>
   <tabstop>m_DoubleSpinBoxCleanTolerance</tabstop>

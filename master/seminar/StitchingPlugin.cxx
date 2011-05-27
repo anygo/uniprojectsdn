@@ -57,6 +57,7 @@ StitchingPlugin::StitchingPlugin()
 	m_TheWorld =				vtkSmartPointer<vtkPolyData>::New();
 	m_PreviousFrame =			vtkSmartPointer<vtkPolyData>::New();
 	m_PreviousTransformMatrix =	vtkSmartPointer<vtkMatrix4x4>::New();
+	m_FramesProcessed = 0;
 }
 StitchingPlugin::~StitchingPlugin()
 {
@@ -100,7 +101,8 @@ StitchingPlugin::ProcessEvent(ritk::Event::Pointer EventP)
 		m_CurrentFrame = NewFrameEventP->RImage;
 
 		// run autostitching for each frame if checkbox is checked
-		if (m_Widget->m_CheckBoxAutoStitch->isChecked())
+		//if (m_Widget->m_CheckBoxAutoStitch->isChecked() && ++m_FramesProcessed % 10 == 0)
+		if (m_Widget->m_SpinBoxFrameStep->value() != 0 && ++m_FramesProcessed % m_Widget->m_SpinBoxFrameStep->value() == 0)
 		{
 			LoadCleanStitch();
 		}
@@ -295,7 +297,8 @@ StitchingPlugin::InitializeWorld()
 	m_Widget->m_PushButtonCleanWorld->setEnabled(true);
 	m_Widget->m_PushButtonDelaunay2D->setEnabled(true);
 	m_Widget->m_PushButtonLoadCleanStitch->setEnabled(true);
-	m_Widget->m_CheckBoxAutoStitch->setEnabled(true);
+	//m_Widget->m_CheckBoxAutoStitch->setEnabled(true);
+	m_Widget->m_SpinBoxFrameStep->setEnabled(true);
 
 	m_DataActor3D->SetData(m_TheWorld, false);
 

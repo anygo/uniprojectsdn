@@ -1,6 +1,8 @@
 #include "ExtendedICPTransform.h"
 
-#include "vtkCellLocator.h"
+#include "ClosestPointFinderBruteForceCPU.h"
+//#include "CudaTest.cu"
+
 #include "vtkDataSet.h"
 #include "vtkLandmarkTransform.h"
 #include "vtkMath.h"
@@ -147,15 +149,18 @@ ExtendedICPTransform::vtkPolyDataToPoint6DArray()
 void
 ExtendedICPTransform::InternalUpdate() 
 {
+	// Test Cuda
+	//cudaTest();
+
 	// transform vtkPolyData in our own structures
 	vtkPolyDataToPoint6DArray();
 
-	// create locator
-	vtkSmartPointer<vtkCellLocator> locator =
-		vtkSmartPointer<vtkCellLocator>::New();
-	locator->SetDataSet(m_Target);
-	locator->SetNumberOfCellsPerBucket(1);
-	locator->BuildLocator();
+	// create own locator
+	ClosestPointFinderBruteForceCPU cp_locator(m_MaxLandmarks);
+	// set target points once
+	cp_locator.SetTarget(m_TargetPoints);
+	// set used distance metric
+	cp_locator.SetMetric(m_Metric);
 
 	// Allocate some points.
 	vtkSmartPointer<vtkPoints> points1 =
@@ -192,12 +197,13 @@ ExtendedICPTransform::InternalUpdate()
 
 	while (true)
 	{
-		int* indices = FindClosestPoints(m_SourcePoints, m_TargetPoints);
+		// Set locators source points and perfom nearest neighbor search
+		int* indices = cp_locator.FindClosestPoints( m_SourcePoints ); // FindClosestPoints(m_SourcePoints, m_TargetPoints);
 		for(int i = 0; i < m_MaxLandmarks; ++i)
 		{
-			closestp->SetPoint(i, m_TargetPoints[indices[i]].x, m_TargetPoints[indices[i]].y, m_TargetPoints[indices[i]].z );
+			int index = indices[i];
+			closestp->SetPoint(i, m_TargetPoints[index].x, m_TargetPoints[index].y, m_TargetPoints[index].z );
 		}
-		delete [] indices;
 
 		// build the landmark transform
 		m_LandmarkTransform->SetSourceLandmarks(a);
@@ -224,11 +230,11 @@ ExtendedICPTransform::InternalUpdate()
 
 			switch (m_Metric)
 			{
-			case ExtendedICPTransform::ABSOLUTE_DISTANCE:
+			case ABSOLUTE_DISTANCE:
 				totaldist += std::abs(p1[0] - p2[0]) + std::abs(p1[1] - p2[1]) + std::abs(p1[2] - p2[2]); break;
-			case ExtendedICPTransform::LOG_ABSOLUTE_DISTANCE:
+			case LOG_ABSOLUTE_DISTANCE:
 				totaldist += std::log(std::abs(p1[0] - p2[0]) + std::abs(p1[1] - p2[1]) + std::abs(p1[2] - p2[2]) + 1.0); break;
-			case ExtendedICPTransform::SQUARED_DISTANCE:
+			case SQUARED_DISTANCE:
 				totaldist += vtkMath::Distance2BetweenPoints(p1, p2);
 			}
 
@@ -256,33 +262,3 @@ ExtendedICPTransform::InternalUpdate()
 	this->Matrix->DeepCopy(accumulate->GetMatrix());
 }
 //----------------------------------------------------------------------------
-int*
-ExtendedICPTransform::FindClosestPoints(Point6D* source, Point6D* target) 
-{
-	int* indices = new int[m_MaxLandmarks];
-	for (int i = 0; i < m_MaxLandmarks; ++i)
-	{
-		indices[i] = FindClosestPoint(source[i], target);
-	}
-
-	return indices;
-}
-int
-ExtendedICPTransform::FindClosestPoint(Point6D source, Point6D* target)
-{
-	double minDist = VTK_DOUBLE_MAX;
-	int idx = -1;
-
-	for (int i = 0; i < m_MaxLandmarks; ++i)
-	{
-		double dist_tmp = (source.x - target[i].x)*(source.x - target[i].x) + (source.y - target[i].y)*(source.y - target[i].y) + (source.z - target[i].z)*(source.z - target[i].z);
-		dist_tmp = sqrt(dist_tmp);
-		if (dist_tmp < minDist)
-		{
-			minDist = dist_tmp;
-			idx = i;
-		}
-	}
-
-	return idx;
-}

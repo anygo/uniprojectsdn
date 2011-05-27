@@ -47,7 +47,10 @@ SET(Stitching_HDRS
 	StitchingPluginFactory.h
 	StitchingPlugin.h
 	StitchingWidget.h
+	defs.h
 	ExtendedICPTransform.h
+	ClosestPointFinder.h
+	ClosestPointFinderBruteForceCPU.h
 )
 
 SET(Stitching_SRCS
@@ -55,6 +58,7 @@ SET(Stitching_SRCS
 	StitchingPlugin.cxx
 	StitchingWidget.cxx
 	ExtendedICPTransform.cxx
+	ClosestPointFinderBruteForceCPU.cxx
 )
 
 #-----------------------------------------------------------------------------

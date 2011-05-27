@@ -7,6 +7,7 @@
 #include <vtkSmartPointer.h>
 #include <vtkPolyData.h>
 
+#include "defs.h"
 
 class ExtendedICPTransform : public vtkLinearTransform
 {
@@ -36,17 +37,6 @@ public:
 	inline double GetMeanDist() { return m_MeanDist; }
 	inline vtkLandmarkTransform* GetLandmarkTransform() { return m_LandmarkTransform; }
 
-	enum ICP_METRIC {
-		LOG_ABSOLUTE_DISTANCE,
-		ABSOLUTE_DISTANCE,
-		SQUARED_DISTANCE
-	};
-
-	typedef struct Point6D {
-		double x, y, z;
-		double r, g, b;
-	} Point6D;
-
 protected:
 	ExtendedICPTransform();
 	~ExtendedICPTransform();
@@ -55,8 +45,6 @@ protected:
 	unsigned long int GetMTime();
 	void vtkPolyDataToPoint6DArray();
 	void vtkPolyDataToPoint6DArray(vtkSmartPointer<vtkPoints> poly, Point6D *point);
-	int* FindClosestPoints(Point6D *source, Point6D* target);
-	int FindClosestPoint(Point6D source, Point6D* target);
 
 	vtkSmartPointer<vtkPolyData> m_Source;
 	vtkSmartPointer<vtkPolyData> m_Target;

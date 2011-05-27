@@ -1,7 +1,7 @@
 #include "ExtendedICPTransform.h"
 
 #include "ClosestPointFinderBruteForceCPU.h"
-//#include "CudaTest.cu"
+//#include "CudaTestKernel.h"
 
 #include "vtkDataSet.h"
 #include "vtkLandmarkTransform.h"
@@ -11,6 +11,7 @@
 #include "vtkTransform.h"
 #include "vtkSmartPointer.h"
 #include "vtkPolyData.h"
+#include "vtkPointData.h"
 
 #include <complex>
 
@@ -115,7 +116,6 @@ ExtendedICPTransform::vtkPolyDataToPoint6DArray(vtkSmartPointer<vtkPoints> poly,
 void
 ExtendedICPTransform::vtkPolyDataToPoint6DArray()
 {
-
 	int stepSource = 1;
 	int stepTarget = 1;
 
@@ -136,6 +136,9 @@ ExtendedICPTransform::vtkPolyDataToPoint6DArray()
 		m_SourcePoints[i].x = m_Source->GetPoint(static_cast<vtkIdType>(j))[0];
 		m_SourcePoints[i].y = m_Source->GetPoint(static_cast<vtkIdType>(j))[1];
 		m_SourcePoints[i].z = m_Source->GetPoint(static_cast<vtkIdType>(j))[2];
+		m_SourcePoints[i].r = m_Source->GetPointData()->GetScalars()->GetTuple(static_cast<vtkIdType>(j))[0];
+		m_SourcePoints[i].g = m_Source->GetPointData()->GetScalars()->GetTuple(static_cast<vtkIdType>(j))[1];
+		m_SourcePoints[i].b = m_Source->GetPointData()->GetScalars()->GetTuple(static_cast<vtkIdType>(j))[2];
 	}
 
 	for (int i = 0, j = 0; i < m_NumLandmarks; ++i, j += stepTarget)
@@ -143,6 +146,9 @@ ExtendedICPTransform::vtkPolyDataToPoint6DArray()
 		m_TargetPoints[i].x = m_Target->GetPoint(static_cast<vtkIdType>(j))[0];
 		m_TargetPoints[i].y = m_Target->GetPoint(static_cast<vtkIdType>(j))[1];
 		m_TargetPoints[i].z = m_Target->GetPoint(static_cast<vtkIdType>(j))[2];
+		m_TargetPoints[i].r = m_Target->GetPointData()->GetScalars()->GetTuple(static_cast<vtkIdType>(j))[0];
+		m_TargetPoints[i].g = m_Target->GetPointData()->GetScalars()->GetTuple(static_cast<vtkIdType>(j))[1];
+		m_TargetPoints[i].b = m_Target->GetPointData()->GetScalars()->GetTuple(static_cast<vtkIdType>(j))[2];
 	}
 }
 //----------------------------------------------------------------------------
@@ -155,12 +161,11 @@ ExtendedICPTransform::InternalUpdate()
 	// transform vtkPolyData in our own structures
 	vtkPolyDataToPoint6DArray();
 
-	// create own locator
-	ClosestPointFinderBruteForceCPU cp_locator(m_NumLandmarks);
 	// set target points once
-	cp_locator.SetTarget(m_TargetPoints);
+	m_ClosestPointFinder->SetTarget(m_TargetPoints);
 	// set used distance metric
-	cp_locator.SetMetric(m_Metric);
+	m_ClosestPointFinder->SetMetric(m_Metric);
+	
 
 	// Allocate some points.
 	vtkSmartPointer<vtkPoints> points1 =
@@ -198,7 +203,7 @@ ExtendedICPTransform::InternalUpdate()
 	while (true)
 	{
 		// Set locators source points and perfom nearest neighbor search
-		int* indices = cp_locator.FindClosestPoints( m_SourcePoints ); // FindClosestPoints(m_SourcePoints, m_TargetPoints);
+		int* indices = m_ClosestPointFinder->FindClosestPoints( m_SourcePoints ); // FindClosestPoints(m_SourcePoints, m_TargetPoints);
 		for(int i = 0; i < m_NumLandmarks; ++i)
 		{
 			int index = indices[i];

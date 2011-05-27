@@ -8,6 +8,7 @@
 #include <vtkPolyData.h>
 
 #include "defs.h"
+#include "ClosestPointFinder.h"
 
 class ExtendedICPTransform : public vtkLinearTransform
 {
@@ -32,6 +33,7 @@ public:
 	inline int GetMaxMeanDist() { return m_MaxMeanDist; }
 	inline void SetMetric(int metric) { m_Metric = metric; }
 	inline int GetMetric() { return m_Metric; }
+	inline void SetClosestPointFinder(ClosestPointFinder* cpf) { m_ClosestPointFinder = cpf; }
 
 	inline int GetNumIter() { return m_NumIter; }
 	inline double GetMeanDist() { return m_MeanDist; }
@@ -44,13 +46,15 @@ protected:
 	void InternalUpdate();
 	unsigned long int GetMTime();
 	void vtkPolyDataToPoint6DArray();
-	void vtkPolyDataToPoint6DArray(vtkSmartPointer<vtkPoints> poly, Point6D *point);
+	void vtkPolyDataToPoint6DArray(vtkSmartPointer<vtkPoints> poly, Point6D* point);
 
 	vtkSmartPointer<vtkPolyData> m_Source;
 	vtkSmartPointer<vtkPolyData> m_Target;
 
-	Point6D * m_SourcePoints;
-	Point6D * m_TargetPoints;
+	Point6D* m_SourcePoints;
+	Point6D* m_TargetPoints;
+
+	ClosestPointFinder* m_ClosestPointFinder;
 
 	int m_MaxIter;
 	int m_NumLandmarks;

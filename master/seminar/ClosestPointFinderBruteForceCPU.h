@@ -13,7 +13,6 @@ public:
 
 	int* FindClosestPoints(Point6D *source);
 	int FindClosestPoint(Point6D point);
-
 };
 
 #endif //ClosestPointFinderBruteForceCPU_H__

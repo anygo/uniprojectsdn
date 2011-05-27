@@ -7,9 +7,6 @@
 #include <QFileDialog.h>
 #include <QTime>
 
-// ITK includes
-#include <itkImageRegionConstIterator.h>
-
 // VTK includes
 #include <vtkPointData.h>
 #include <vtkPolyDataWriter.h>
@@ -25,7 +22,10 @@
 #include <vtkProperty.h>
 #include <vtkRendererCollection.h>
 
+// our includes
 #include <ExtendedICPTransform.h>
+#include <ClosestPointFinder.h>
+#include <ClosestPointFinderBruteForceCPU.h>
 
 
 
@@ -330,17 +330,26 @@ StitchingPlugin::StitchToWorld(bool update)
 		m_Data->DeepCopy(previousTransformFilter->GetOutput());
 	}
 
+	// get a subvolume of the original data
 	vtkSmartPointer<vtkPolyData> voi = 
 		vtkSmartPointer<vtkPolyData>::New();
 	voi->DeepCopy(m_Data);
 	Clip(voi);
 
+	// initialize ClosestPointFinder
+	ClosestPointFinder* cpf = new ClosestPointFinderBruteForceCPU(m_Widget->m_SpinBoxMaxLandmarks->value());
+	cpf->SetUseRGBData(m_Widget->m_CheckBoxUseRGBData->isChecked());
+	cpf->SetWeightRGB(m_Widget->m_DoubleSpinBoxRGBWeight->value());
+
+	// configure icp
 	icp->SetSource(voi);
 	icp->SetTarget(m_PreviousFrame);
 	icp->GetLandmarkTransform()->SetModeToRigidBody();
 	icp->SetMaxMeanDist(m_Widget->m_DoubleSpinBoxMaxRMS->value());
 	icp->SetNumLandmarks(m_Widget->m_SpinBoxMaxLandmarks->value());
 	icp->SetMaxIter(m_Widget->m_SpinBoxMaxIterations->value());
+	icp->SetClosestPointFinder(cpf);
+
 	int metric;
 	switch (m_Widget->m_ComboBoxMetric->currentIndex())
 	{
@@ -400,6 +409,9 @@ StitchingPlugin::StitchToWorld(bool update)
 
 		emit UpdateGUI();
 	}
+
+	// cleanup
+	delete cpf;
 }
 //----------------------------------------------------------------------------
 void

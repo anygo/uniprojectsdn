@@ -246,12 +246,12 @@
              <item row="1" column="0">
               <widget class="QLabel" name="label_2">
                <property name="text">
-                <string>max #Landmarks (ICP)</string>
+                <string>#Landmarks (ICP)</string>
                </property>
               </widget>
              </item>
              <item row="1" column="1">
-              <widget class="QSpinBox" name="m_SpinBoxMaxLandmarks">
+              <widget class="QSpinBox" name="m_SpinBoxLandmarks">
                <property name="minimum">
                 <number>1</number>
                </property>
@@ -1041,7 +1041,7 @@
   <tabstop>tabWidget</tabstop>
   <tabstop>m_HorizontalSliderPointSize</tabstop>
   <tabstop>m_DoubleSpinBoxCleanTolerance</tabstop>
-  <tabstop>m_SpinBoxMaxLandmarks</tabstop>
+  <tabstop>m_SpinBoxLandmarks</tabstop>
   <tabstop>m_SpinBoxMaxIterations</tabstop>
   <tabstop>m_ComboBoxMetric</tabstop>
   <tabstop>m_DoubleSpinBoxMaxRMS</tabstop>

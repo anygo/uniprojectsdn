@@ -340,7 +340,7 @@ StitchingPlugin::StitchToWorld(bool update)
 	Clip(voi);
 
 	// initialize ClosestPointFinder
-	ClosestPointFinder* cpf = new ClosestPointFinderBruteForceCPU(m_Widget->m_SpinBoxMaxLandmarks->value());
+	ClosestPointFinder* cpf = new ClosestPointFinderBruteForceCPU(m_Widget->m_SpinBoxLandmarks->value());
 	cpf->SetUseRGBData(m_Widget->m_CheckBoxUseRGBData->isChecked());
 	cpf->SetWeightRGB(m_Widget->m_DoubleSpinBoxRGBWeight->value());
 
@@ -349,7 +349,7 @@ StitchingPlugin::StitchToWorld(bool update)
 	icp->SetTarget(m_PreviousFrame);
 	icp->GetLandmarkTransform()->SetModeToRigidBody();
 	icp->SetMaxMeanDist(m_Widget->m_DoubleSpinBoxMaxRMS->value());
-	icp->SetNumLandmarks(m_Widget->m_SpinBoxMaxLandmarks->value());
+	icp->SetNumLandmarks(m_Widget->m_SpinBoxLandmarks->value());
 	icp->SetMaxIter(m_Widget->m_SpinBoxMaxIterations->value());
 	icp->SetClosestPointFinder(cpf);
 

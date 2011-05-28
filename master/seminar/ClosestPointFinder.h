@@ -3,14 +3,11 @@
 
 #include "defs.h"
 
-class ClosestPointFinder {
+class ClosestPointFinder
+{
 
 public:
-	ClosestPointFinder(int nrPoints) : m_NrOfPoints(nrPoints) 
-	{
-		m_Indices = new int[m_NrOfPoints];
-	}
-
+	ClosestPointFinder(int nrPoints) : m_NrOfPoints(nrPoints), m_Indices(new int[nrPoints]) {}
 	virtual ~ClosestPointFinder() { delete[] m_Indices; }
 
 	inline void SetTarget(Point6D* target) { m_Target = target; }
@@ -28,7 +25,6 @@ protected:
 	bool m_UseRGBData;
 	double m_WeightRGB;
 	Point6D* m_Target;
-
 
 };
 

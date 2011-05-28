@@ -151,7 +151,7 @@
                       <bool>false</bool>
                      </property>
                      <property name="text">
-                      <string>Stitch to World</string>
+                      <string>Stitch to History</string>
                      </property>
                     </widget>
                    </item>
@@ -218,6 +218,9 @@
              </item>
              <item>
               <widget class="QPushButton" name="m_PushButtonSaveVTKData">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
                <property name="text">
                 <string>Save as VTK Data (only last Entry in History)</string>
                </property>
@@ -507,7 +510,7 @@
                </property>
               </widget>
              </item>
-             <item row="1" column="1">
+             <item row="2" column="1">
               <spacer name="verticalSpacer_2">
                <property name="orientation">
                 <enum>Qt::Vertical</enum>
@@ -519,6 +522,44 @@
                 </size>
                </property>
               </spacer>
+             </item>
+             <item row="1" column="0">
+              <widget class="QLabel" name="label_12">
+               <property name="text">
+                <string>Background Color</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QToolButton" name="m_ToolButtonChooseBackgroundColor">
+               <property name="text">
+                <string>choose Color</string>
+               </property>
+               <property name="checkable">
+                <bool>false</bool>
+               </property>
+               <property name="checked">
+                <bool>false</bool>
+               </property>
+               <property name="autoRepeat">
+                <bool>false</bool>
+               </property>
+               <property name="autoExclusive">
+                <bool>false</bool>
+               </property>
+               <property name="popupMode">
+                <enum>QToolButton::DelayedPopup</enum>
+               </property>
+               <property name="toolButtonStyle">
+                <enum>Qt::ToolButtonIconOnly</enum>
+               </property>
+               <property name="autoRaise">
+                <bool>false</bool>
+               </property>
+               <property name="arrowType">
+                <enum>Qt::NoArrow</enum>
+               </property>
+              </widget>
              </item>
             </layout>
            </widget>
@@ -539,6 +580,12 @@
             </item>
             <item row="0" column="1">
              <widget class="QFrame" name="frame_4">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="frameShape">
                <enum>QFrame::StyledPanel</enum>
               </property>
@@ -570,16 +617,16 @@
                 </widget>
                </item>
                <item>
-                <widget class="QPushButton" name="m_PushButtonHistoryHideAll">
+                <widget class="QPushButton" name="m_PushButtonHistoryMerge">
                  <property name="text">
-                  <string>Hide All</string>
+                  <string>Merge Selection</string>
                  </property>
                 </widget>
                </item>
                <item>
-                <widget class="QPushButton" name="m_PushButtonHistoryMergeAll">
+                <widget class="QPushButton" name="m_PushButtonHistoryClean">
                  <property name="text">
-                  <string>Merge All</string>
+                  <string>Clean Selection</string>
                  </property>
                 </widget>
                </item>
@@ -602,21 +649,21 @@
             <string>Debug</string>
            </property>
            <layout class="QGridLayout" name="gridLayout_4">
-            <item row="0" column="0">
+            <item row="1" column="0">
              <widget class="QLabel" name="label_4">
               <property name="text">
                <string>ICP Iterations</string>
               </property>
              </widget>
             </item>
-            <item row="1" column="0">
+            <item row="2" column="0">
              <widget class="QLabel" name="label_5">
               <property name="text">
                <string>ICP Error</string>
               </property>
              </widget>
             </item>
-            <item row="0" column="1">
+            <item row="1" column="1">
              <widget class="QLCDNumber" name="m_lcdNumberICPIterations">
               <property name="smallDecimalPoint">
                <bool>true</bool>
@@ -626,7 +673,7 @@
               </property>
              </widget>
             </item>
-            <item row="1" column="1">
+            <item row="2" column="1">
              <widget class="QLCDNumber" name="m_lcdNumberICPError">
               <property name="palette">
                <palette>
@@ -1068,20 +1115,20 @@
               </property>
              </widget>
             </item>
-            <item row="2" column="0">
-             <widget class="QLabel" name="label_8">
-              <property name="text">
-               <string>#Points</string>
-              </property>
-             </widget>
-            </item>
-            <item row="2" column="1">
+            <item row="0" column="1">
              <widget class="QLCDNumber" name="m_lcdNumberPointsInWorld">
               <property name="smallDecimalPoint">
                <bool>true</bool>
               </property>
               <property name="numDigits">
                <number>10</number>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="0">
+             <widget class="QLabel" name="label_8">
+              <property name="text">
+               <string>#Points</string>
               </property>
              </widget>
             </item>
@@ -1124,28 +1171,12 @@
    <slot>selectAll()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>936</x>
-     <y>532</y>
+     <x>954</x>
+     <y>524</y>
     </hint>
     <hint type="destinationlabel">
      <x>834</x>
      <y>532</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>m_PushButtonHistoryHideAll</sender>
-   <signal>clicked()</signal>
-   <receiver>m_ListWidgetHistory</receiver>
-   <slot>clearSelection()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>922</x>
-     <y>561</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>842</x>
-     <y>561</y>
     </hint>
    </hints>
   </connection>

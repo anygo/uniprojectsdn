@@ -222,7 +222,7 @@ ExtendedICPTransform::InternalUpdate()
 			break;
 		}
 
-		// move mesh and compute mean distance
+		// move mesh and compute mean distance to previous iteration
 		totaldist = 0.0;
 
 		for(int i = 0; i < m_NumLandmarks; i++)
@@ -255,4 +255,3 @@ ExtendedICPTransform::InternalUpdate()
 	// now recover accumulated result
 	this->Matrix->DeepCopy(accumulate->GetMatrix());
 }
-//----------------------------------------------------------------------------

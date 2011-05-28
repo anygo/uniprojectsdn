@@ -42,10 +42,12 @@ protected slots:
 	void Delaunay2D();
 	void SaveVTKData();
 	void InitializeHistory();
-	void ChangeVisualizationProperties();
+	void ChangePointSize();
+	void ChangeBackgroundColor();
 	void ShowHideActors();
 	void DeleteSelectedActors();
-	void MergeHistory();
+	void MergeSelectedActors();
+	void CleanSelectedActors();
 
 
 protected:

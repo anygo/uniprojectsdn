@@ -9,6 +9,7 @@
 // Qt includes
 #include <QFileDialog.h>
 #include <QTime>
+#include <QColorDialog>
 
 // VTK includes
 #include <vtkPointData.h>
@@ -48,10 +49,12 @@ StitchingPlugin::StitchingPlugin()
 	connect(m_Widget->m_PushButtonSaveVTKData,			SIGNAL(clicked()),				this, SLOT(SaveVTKData()));
 	connect(m_Widget->m_PushButtonInitializeHistory,	SIGNAL(clicked()),				this, SLOT(InitializeHistory()));
 	connect(m_Widget->m_PushButtonStitch,				SIGNAL(clicked()),				this, SLOT(Stitch()));
-	connect(m_Widget->m_HorizontalSliderPointSize,		SIGNAL(valueChanged(int)),		this, SLOT(ChangeVisualizationProperties()));
+	connect(m_Widget->m_HorizontalSliderPointSize,		SIGNAL(valueChanged(int)),		this, SLOT(ChangePointSize()));
+	connect(m_Widget->m_ToolButtonChooseBackgroundColor,SIGNAL(clicked()),				this, SLOT(ChangeBackgroundColor()));
 	connect(m_Widget->m_ListWidgetHistory,				SIGNAL(itemSelectionChanged()),	this, SLOT(ShowHideActors()));
 	connect(m_Widget->m_PushButtonHistoryDelete,		SIGNAL(clicked()),				this, SLOT(DeleteSelectedActors()));
-	connect(m_Widget->m_PushButtonHistoryMergeAll,		SIGNAL(clicked()),				this, SLOT(MergeHistory()));
+	connect(m_Widget->m_PushButtonHistoryMerge,			SIGNAL(clicked()),				this, SLOT(MergeSelectedActors()));
+	connect(m_Widget->m_PushButtonHistoryClean,			SIGNAL(clicked()),				this, SLOT(CleanSelectedActors()));
 	
 		
 	// add data actor
@@ -83,7 +86,7 @@ StitchingPlugin::GetPluginGUI()
 }
 //----------------------------------------------------------------------------
 void
-StitchingPlugin::ChangeVisualizationProperties()
+StitchingPlugin::ChangePointSize()
 {
 	for (int i = 0; i < m_Widget->m_ListWidgetHistory->count(); ++i)
 	{
@@ -93,10 +96,18 @@ StitchingPlugin::ChangeVisualizationProperties()
 			hli->m_actor->GetProperty()->SetPointSize(m_Widget->m_HorizontalSliderPointSize->value());
 		}
 	}
-	//m_Widget->m_VisualizationWidget3D->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->SetBackground(0.2, 0.3, 0.9);
 	
 	emit UpdateGUI();
 }
+void
+StitchingPlugin::ChangeBackgroundColor()
+{
+	QColor color = QColorDialog::getColor();
+
+	m_Widget->m_VisualizationWidget3D->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->
+		SetBackground(color.red()/255., color.green()/255., color.blue()/255.);
+}
+//----------------------------------------------------------------------------
 void
 StitchingPlugin::ShowHideActors()
 {
@@ -151,7 +162,7 @@ StitchingPlugin::DeleteSelectedActors()
 	}
 }
 void
-StitchingPlugin::MergeHistory()
+StitchingPlugin::MergeSelectedActors()
 {
 	// append the whole history
 	vtkSmartPointer<vtkAppendPolyData> appendFilter =
@@ -162,20 +173,35 @@ StitchingPlugin::MergeHistory()
 	hli->setText(QDateTime::currentDateTime().time().toString("hh:mm:ss:zzz"));
 	hli->m_transform = vtkSmartPointer<vtkMatrix4x4>::New();
 	hli->m_actor = vtkSmartPointer<ritk::RImageActorPipeline>::New();
-	hli->setBackgroundColor(QColor(0, 0, 255, 50));
+	hli->setBackgroundColor(QColor(100, 255, 50, 100));
 	hli->setToolTip(QString("merged"));
+
+	// at this index, the merged points will be taken afterwards
+	int firstIndex = -1;
 
 	// add the data of each actor to the appendFilter and store the last transformation
 	for (int i = 0; i < m_Widget->m_ListWidgetHistory->count(); ++i)
 	{
-		HistoryListItem* hli = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
-		appendFilter->AddInput(hli->m_actor->GetData());
+		HistoryListItem* hli2 = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
 
-		// save the last "previous transformation"
-		if (i == m_Widget->m_ListWidgetHistory->count() - 1) 
+		if (hli2->isSelected())
 		{
-			hli->m_transform->DeepCopy(hli->m_transform);
+			appendFilter->AddInput(hli2->m_actor->GetData());
+
+			hli->m_transform->DeepCopy(hli2->m_transform);
+
+			if (firstIndex == -1)
+			{
+				firstIndex = i;
+			}
 		}
+	}
+
+	// nothing selected...
+	if (firstIndex == -1)
+	{
+		delete hli;
+		return;
 	}
 
 	appendFilter->Update();
@@ -191,13 +217,31 @@ StitchingPlugin::MergeHistory()
 	hli->m_actor->GetData()->SetVerts(cells);
 	hli->m_actor->GetData()->Update();
 
-	// clean the history list
-	m_Widget->m_ListWidgetHistory->selectAll();
+	// clean the selected history entries
 	DeleteSelectedActors();
 
-	// add the new merged history entry
-	m_Widget->m_ListWidgetHistory->insertItem(0, hli);
+	// and add the new merged history entry at a reasonable position
+	m_Widget->m_ListWidgetHistory->insertItem(firstIndex, hli);
 	hli->setSelected(true);
+}
+void
+StitchingPlugin::CleanSelectedActors()
+{
+	int numPoints = 0;
+	for (int i = 0; i < m_Widget->m_ListWidgetHistory->count(); ++i)
+	{
+		HistoryListItem* hli = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
+		if (hli->isSelected())
+		{
+			Clean(hli->m_actor->GetData());
+			numPoints += hli->m_actor->GetData()->GetNumberOfPoints();
+		}
+	}
+
+	// show number of points for selected history entries
+	m_Widget->m_lcdNumberPointsInWorld->display(numPoints);
+
+	emit UpdateGUI();
 }
 //----------------------------------------------------------------------------
 void
@@ -213,10 +257,10 @@ StitchingPlugin::ProcessEvent(ritk::Event::Pointer EventP)
 			LOG_DEB("Event mismatch detected: Type=" << EventP->type());
 			return;
 		}
+
 		m_CurrentFrame = NewFrameEventP->RImage;
 
 		// run autostitching for each frame if checkbox is checked
-		//if (m_Widget->m_CheckBoxAutoStitch->isChecked() && ++m_FramesProcessed % 10 == 0)
 		if (m_Widget->m_SpinBoxFrameStep->value() != 0 && ++m_FramesProcessed % m_Widget->m_SpinBoxFrameStep->value() == 0)
 		{
 			LoadCleanStitch();
@@ -395,6 +439,7 @@ StitchingPlugin::InitializeHistory()
 	// enable buttons
 	m_Widget->m_PushButtonStitch->setEnabled(true);
 	m_Widget->m_PushButtonDelaunay2D->setEnabled(true);
+	m_Widget->m_PushButtonSaveVTKData->setEnabled(true);
 	m_Widget->m_PushButtonLoadCleanStitch->setEnabled(true);
 	m_Widget->m_SpinBoxFrameStep->setEnabled(true);
 
@@ -432,6 +477,12 @@ StitchingPlugin::Stitch(bool update)
 		vtkSmartPointer<vtkPolyData>::New();
 	voi->DeepCopy(m_Data);
 	Clip(voi);
+
+	if (voi->GetNumberOfPoints() < m_Widget->m_SpinBoxLandmarks->value())
+	{
+		std::cout << "Reduce the number of landmarks!!! Data might be inconsistent now..." << std::endl;
+		return;
+	}
 
 	// initialize ClosestPointFinder
 	ClosestPointFinder* cpf = new ClosestPointFinderBruteForceCPU(m_Widget->m_SpinBoxLandmarks->value());

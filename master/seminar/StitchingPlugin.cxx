@@ -3,6 +3,9 @@
 #include "DebugManager.h"
 #include "Manager.h"
 
+// cpp std
+#include <vector>
+
 // Qt includes
 #include <QFileDialog.h>
 #include <QTime>
@@ -26,6 +29,7 @@
 #include <ExtendedICPTransform.h>
 #include <ClosestPointFinder.h>
 #include <ClosestPointFinderBruteForceCPU.h>
+#include <defs.h>
 
 
 
@@ -37,24 +41,26 @@ StitchingPlugin::StitchingPlugin()
 	connect(this, SIGNAL(UpdateGUI()), m_Widget->m_VisualizationWidget3D,	SLOT(UpdateGUI()));
 
 	// set signals (from buttons, etc) and slots (in this file)
-	connect(m_Widget->m_PushButtonLoadFrame,			SIGNAL(clicked()),			this, SLOT(LoadFrame()));
-	connect(m_Widget->m_PushButtonCleanFrame,			SIGNAL(clicked()),			this, SLOT(CleanFrame()));
-	connect(m_Widget->m_PushButtonLoadCleanStitch,		SIGNAL(clicked()),			this, SLOT(LoadCleanStitch()));
-	connect(m_Widget->m_PushButtonCleanWorld,			SIGNAL(clicked()),			this, SLOT(CleanWorld()));
-	connect(m_Widget->m_PushButtonDelaunay2D,			SIGNAL(clicked()),			this, SLOT(Delaunay2D()));
-	connect(m_Widget->m_PushButtonSaveVTKData,			SIGNAL(clicked()),			this, SLOT(SaveVTKData()));
-	connect(m_Widget->m_PushButtonInitializeWorld,		SIGNAL(clicked()),			this, SLOT(InitializeWorld()));
-	connect(m_Widget->m_PushButtonStitchToWorld,		SIGNAL(clicked()),			this, SLOT(StitchToWorld()));
-	connect(m_Widget->m_HorizontalSliderPointSize,		SIGNAL(valueChanged(int)),	this, SLOT(ChangeVisualizationProperties()));
+	connect(m_Widget->m_PushButtonLoadFrame,			SIGNAL(clicked()),				this, SLOT(LoadFrame()));
+	connect(m_Widget->m_PushButtonCleanFrame,			SIGNAL(clicked()),				this, SLOT(CleanFrame()));
+	connect(m_Widget->m_PushButtonLoadCleanStitch,		SIGNAL(clicked()),				this, SLOT(LoadCleanStitch()));
+	connect(m_Widget->m_PushButtonDelaunay2D,			SIGNAL(clicked()),				this, SLOT(Delaunay2D()));
+	connect(m_Widget->m_PushButtonSaveVTKData,			SIGNAL(clicked()),				this, SLOT(SaveVTKData()));
+	connect(m_Widget->m_PushButtonInitializeHistory,	SIGNAL(clicked()),				this, SLOT(InitializeHistory()));
+	connect(m_Widget->m_PushButtonStitch,				SIGNAL(clicked()),				this, SLOT(Stitch()));
+	connect(m_Widget->m_HorizontalSliderPointSize,		SIGNAL(valueChanged(int)),		this, SLOT(ChangeVisualizationProperties()));
+	connect(m_Widget->m_ListWidgetHistory,				SIGNAL(itemSelectionChanged()),	this, SLOT(ShowHideActors()));
+	connect(m_Widget->m_PushButtonHistoryDelete,		SIGNAL(clicked()),				this, SLOT(DeleteSelectedActors()));
+	connect(m_Widget->m_PushButtonHistoryMergeAll,		SIGNAL(clicked()),				this, SLOT(MergeHistory()));
+	
 		
 	// add data actor
 	m_DataActor3D = vtkSmartPointer<ritk::RImageActorPipeline>::New();	
 	m_DataActor3D->SetVisualizationMode(ritk::RImageActorPipeline::RGB);
-	m_Widget->m_VisualizationWidget3D->AddActor(m_DataActor3D);
+	//m_Widget->m_VisualizationWidget3D->AddActor(m_DataActor3D);
 
 	// initialize member objects
 	m_Data =					vtkSmartPointer<vtkPolyData>::New();
-	m_TheWorld =				vtkSmartPointer<vtkPolyData>::New();
 	m_PreviousFrame =			vtkSmartPointer<vtkPolyData>::New();
 	m_PreviousTransformMatrix =	vtkSmartPointer<vtkMatrix4x4>::New();
 	m_FramesProcessed = 0;
@@ -79,10 +85,119 @@ StitchingPlugin::GetPluginGUI()
 void
 StitchingPlugin::ChangeVisualizationProperties()
 {
-	m_DataActor3D->GetProperty()->SetPointSize(m_Widget->m_HorizontalSliderPointSize->value());
+	for (int i = 0; i < m_Widget->m_ListWidgetHistory->count(); ++i)
+	{
+		HistoryListItem* hli = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
+		if (hli->isSelected())
+		{
+			hli->m_actor->GetProperty()->SetPointSize(m_Widget->m_HorizontalSliderPointSize->value());
+		}
+	}
 	//m_Widget->m_VisualizationWidget3D->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->SetBackground(0.2, 0.3, 0.9);
-
+	
 	emit UpdateGUI();
+}
+void
+StitchingPlugin::ShowHideActors()
+{
+	int numPoints = 0;
+	for (int i = 0; i < m_Widget->m_ListWidgetHistory->count(); ++i)
+	{
+		HistoryListItem* hli = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
+		if (hli->isSelected())
+		{
+			m_Widget->m_VisualizationWidget3D->AddActor(hli->m_actor);
+			numPoints += hli->m_actor->GetData()->GetNumberOfPoints();
+		} else
+		{
+			m_Widget->m_VisualizationWidget3D->RemoveActor(hli->m_actor);
+		}
+	}
+
+	// show number of points for selected history entries
+	m_Widget->m_lcdNumberPointsInWorld->display(numPoints);
+}
+void
+StitchingPlugin::DeleteSelectedActors()
+{
+	// save all indices of list for actors that have to be deleted
+	std::vector<int> toDelete;
+
+	// delete all selected steps from history and from memory
+	for (int i = 0; i < m_Widget->m_ListWidgetHistory->count(); ++i)
+	{
+		HistoryListItem* hli = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
+		if (hli->isSelected())
+		{
+			m_Widget->m_VisualizationWidget3D->RemoveActor(hli->m_actor);
+			toDelete.push_back(i);
+		}
+	}
+
+	// run backwards through toDelete and delete those items from History and from memory
+	for (int i = toDelete.size() - 1; i >= 0; --i)
+	{
+		HistoryListItem* hli = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->takeItem(toDelete.at(i)));
+		delete hli;
+	}
+
+	// update previousTransform and previousFrame to be the last still existing frame in the history list
+	int size = m_Widget->m_ListWidgetHistory->count();
+	if (size > 0)
+	{
+		HistoryListItem* hli = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(size - 1));
+		m_PreviousFrame->DeepCopy(hli->m_actor->GetData());
+		m_PreviousTransformMatrix->DeepCopy(hli->m_transform);
+	}
+}
+void
+StitchingPlugin::MergeHistory()
+{
+	// append the whole history
+	vtkSmartPointer<vtkAppendPolyData> appendFilter =
+		vtkSmartPointer<vtkAppendPolyData>::New();
+
+	// create the merged history entry
+	HistoryListItem* hli = new HistoryListItem;
+	hli->setText(QDateTime::currentDateTime().time().toString("hh:mm:ss:zzz"));
+	hli->m_transform = vtkSmartPointer<vtkMatrix4x4>::New();
+	hli->m_actor = vtkSmartPointer<ritk::RImageActorPipeline>::New();
+	hli->setBackgroundColor(QColor(0, 0, 255, 50));
+	hli->setToolTip(QString("merged"));
+
+	// add the data of each actor to the appendFilter and store the last transformation
+	for (int i = 0; i < m_Widget->m_ListWidgetHistory->count(); ++i)
+	{
+		HistoryListItem* hli = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
+		appendFilter->AddInput(hli->m_actor->GetData());
+
+		// save the last "previous transformation"
+		if (i == m_Widget->m_ListWidgetHistory->count() - 1) 
+		{
+			hli->m_transform->DeepCopy(hli->m_transform);
+		}
+	}
+
+	appendFilter->Update();
+	hli->m_actor->SetData(appendFilter->GetOutput(), true);
+
+	// get rid of useless cells
+	vtkSmartPointer<vtkCellArray> cells =
+		vtkSmartPointer<vtkCellArray>::New();
+	for (vtkIdType i = 0; i < hli->m_actor->GetData()->GetNumberOfPoints(); i++)
+	{
+		cells->InsertNextCell(1, &i);
+	}
+	hli->m_actor->GetData()->SetVerts(cells);
+	hli->m_actor->GetData()->Update();
+
+	// clean the history list
+	m_Widget->m_ListWidgetHistory->selectAll();
+	DeleteSelectedActors();
+
+	// add the new merged history entry
+	m_Widget->m_ListWidgetHistory->insertItem(0, hli);
+	hli->setSelected(true);
 }
 //----------------------------------------------------------------------------
 void
@@ -133,11 +248,8 @@ StitchingPlugin::LoadCleanStitch()
 	std::cout << "CleanFrame():    " << t.elapsed() << " ms" << std::endl;
 
 	t.start();
-	StitchToWorld(false);
-	std::cout << "StitchToWorld(): " << t.elapsed() << " ms" << std::endl;
-
-
-	m_DataActor3D->SetData(m_TheWorld, false);
+	Stitch(false);
+	std::cout << "Stitch(): " << t.elapsed() << " ms" << std::endl;
 
 	emit UpdateGUI();
 }
@@ -155,7 +267,7 @@ StitchingPlugin::LoadFrame(bool update)
 	{
 		// enable buttons
 		m_Widget->m_PushButtonCleanFrame->setEnabled(true);
-		m_Widget->m_PushButtonInitializeWorld->setEnabled(true);
+		m_Widget->m_PushButtonInitializeHistory->setEnabled(true);
 
 		emit UpdateGUI();
 		m_Widget->m_VisualizationWidget3D->UpdateGUI();
@@ -240,20 +352,13 @@ StitchingPlugin::CleanFrame(bool update)
 	}
 }
 void
-StitchingPlugin::CleanWorld()
-{
-	Clean(m_TheWorld);
-
-	m_DataActor3D->SetData(m_TheWorld, false);
-
-	// update number of points label
-	m_Widget->m_lcdNumberPointsInWorld->display(m_TheWorld->GetNumberOfPoints());
-
-	emit UpdateGUI();
-}
-void
 StitchingPlugin::Clean(vtkPolyData *toBeCleaned)
 {
+	// stop if tolerance is 0 (almost nothing will be cleaned, but it still takes
+	// some milliseconds... not good...
+	if (m_Widget->m_DoubleSpinBoxCleanTolerance->value() < DBL_EPSILON)
+		return;
+
 	vtkSmartPointer<vtkCleanPolyData> cleanPolyData =
 		vtkSmartPointer<vtkCleanPolyData>::New();
 	cleanPolyData->SetTolerance(m_Widget->m_DoubleSpinBoxCleanTolerance->value());
@@ -268,48 +373,37 @@ StitchingPlugin::Clean(vtkPolyData *toBeCleaned)
 }
 //----------------------------------------------------------------------------
 void
-StitchingPlugin::Delaunay2D()
-{
-	vtkSmartPointer<vtkTransform> t = 
-		vtkSmartPointer<vtkTransform>::New();
-	vtkSmartPointer<vtkDelaunay2D> Delaunay2D = 
-		vtkSmartPointer<vtkDelaunay2D>::New();
-	Delaunay2D->SetInput(m_TheWorld);
-	Delaunay2D->SetTransform(t);
-	Delaunay2D->Update();
-	m_TheWorld->DeepCopy(Delaunay2D->GetOutput());
-
-	m_DataActor3D->SetData(m_TheWorld, false);
-
-	emit UpdateGUI();
-}
-//----------------------------------------------------------------------------
-void
-StitchingPlugin::InitializeWorld()
+StitchingPlugin::InitializeHistory()
 {
 	// copy data
-	m_TheWorld->DeepCopy(m_Data);
 	m_PreviousFrame->DeepCopy(m_Data);
 	m_PreviousTransformMatrix->Identity();
 
+	// clear history
+	m_Widget->m_ListWidgetHistory->selectAll();
+	DeleteSelectedActors();
+
+	// add first actor
+	HistoryListItem* hle = new HistoryListItem();
+	hle->setText(QDateTime::currentDateTime().time().toString("hh:mm:ss:zzz"));
+	hle->m_actor = vtkSmartPointer<ritk::RImageActorPipeline>::New();
+	hle->m_actor->SetData(m_PreviousFrame, true);
+	hle->m_transform = m_PreviousTransformMatrix;
+	m_Widget->m_ListWidgetHistory->insertItem(0, hle);
+	hle->setSelected(true);
+
 	// enable buttons
-	m_Widget->m_PushButtonStitchToWorld->setEnabled(true);
-	m_Widget->m_PushButtonCleanWorld->setEnabled(true);
+	m_Widget->m_PushButtonStitch->setEnabled(true);
 	m_Widget->m_PushButtonDelaunay2D->setEnabled(true);
 	m_Widget->m_PushButtonLoadCleanStitch->setEnabled(true);
-	//m_Widget->m_CheckBoxAutoStitch->setEnabled(true);
 	m_Widget->m_SpinBoxFrameStep->setEnabled(true);
 
-	m_DataActor3D->SetData(m_TheWorld, false);
-
-	// update number of points label
-	m_Widget->m_lcdNumberPointsInWorld->display(m_TheWorld->GetNumberOfPoints());
 
 	emit UpdateGUI();
 }
 //----------------------------------------------------------------------------
 void
-StitchingPlugin::StitchToWorld(bool update)
+StitchingPlugin::Stitch(bool update)
 {
 	// iterative closest point (ICP) transformation
 	vtkSmartPointer<ExtendedICPTransform> icp = 
@@ -384,37 +478,17 @@ StitchingPlugin::StitchToWorld(bool update)
 	// update m_PreviousFrame
 	m_PreviousFrame->ShallowCopy(icpTransformFilter->GetOutput());
 
-	// append world and new data
-	vtkSmartPointer<vtkAppendPolyData> appendFilter =
-		vtkSmartPointer<vtkAppendPolyData>::New();
-	appendFilter->AddInput(m_TheWorld);
-	appendFilter->AddInput(m_PreviousFrame);
-	appendFilter->Update();
-	m_TheWorld->ShallowCopy(appendFilter->GetOutput());
-
-	// get rid of useless cells
-	vtkSmartPointer<vtkCellArray> cells =
-		vtkSmartPointer<vtkCellArray>::New();
-	for (vtkIdType i = 0; i < m_TheWorld->GetNumberOfPoints(); i++)
-	{
-		cells->InsertNextCell(1, &i);
-	}
-	m_TheWorld->SetVerts(cells);
-	m_TheWorld->Update();
-
-	// update number of points label
-	m_Widget->m_lcdNumberPointsInWorld->display(m_TheWorld->GetNumberOfPoints());
-
-	if (update)
-	{
-		// update scene
-		m_DataActor3D->SetData(m_TheWorld, false);
-
-		emit UpdateGUI();
-	}
+	int listSize = m_Widget->m_ListWidgetHistory->count();
+	HistoryListItem* hli = new HistoryListItem();
+	hli->setText(QDateTime::currentDateTime().time().toString("hh:mm:ss:zzz"));
+	hli->m_actor = vtkSmartPointer<ritk::RImageActorPipeline>::New();
+	hli->m_actor->SetData(m_PreviousFrame, true);
+	hli->m_transform = m_PreviousTransformMatrix;
+	m_Widget->m_ListWidgetHistory->insertItem(listSize, hli);
+	hli->setSelected(true);
 
 	// cleanup
-	delete cpf;
+	delete cpf; // delete ClosestPointFinder
 }
 //----------------------------------------------------------------------------
 void
@@ -422,13 +496,38 @@ StitchingPlugin::SaveVTKData()
 {
 	QString outputFile = QFileDialog::getSaveFileName(m_Widget, "Save VTK File", "D:/RITK/bin/release/Data/", "VTK files (*.vtk)");		
 
+	// get last entry in history
+	HistoryListItem* hli = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(m_Widget->m_ListWidgetHistory->count() - 1));
+
 	if (!outputFile.isEmpty()) 
 	{
 		vtkSmartPointer<vtkPolyDataWriter> writer =
 			vtkSmartPointer<vtkPolyDataWriter>::New();
 		writer->SetFileName(outputFile.toStdString().c_str());
-		writer->SetInput(m_DataActor3D->GetData());
+		writer->SetInput(hli->m_actor->GetData());
 		writer->SetFileTypeToASCII();
 		writer->Update();		
 	}	
+}
+void
+StitchingPlugin::Delaunay2D()
+{
+	// triangulation for each selected history entry - may take some time...
+	for (int i = 0; i < m_Widget->m_ListWidgetHistory->count(); ++i)
+	{
+		HistoryListItem* hli = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
+		if (hli->isSelected())
+		{
+			vtkSmartPointer<vtkTransform> t = 
+				vtkSmartPointer<vtkTransform>::New();
+			vtkSmartPointer<vtkDelaunay2D> Delaunay2D = 
+				vtkSmartPointer<vtkDelaunay2D>::New();
+			Delaunay2D->SetInput(hli->m_actor->GetData());
+			Delaunay2D->SetTransform(t);
+			Delaunay2D->Update();
+			hli->m_actor->SetData(Delaunay2D->GetOutput(), true);
+		} 
+	}
+
+	emit UpdateGUI();
 }

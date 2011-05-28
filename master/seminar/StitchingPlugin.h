@@ -37,13 +37,15 @@ signals:
 protected slots:
 	void LoadFrame(bool update = true);
 	void CleanFrame(bool update = true);
-	void StitchToWorld(bool update = true);
+	void Stitch(bool update = true);
 	void LoadCleanStitch();
-	void CleanWorld();
 	void Delaunay2D();
 	void SaveVTKData();
-	void InitializeWorld();
+	void InitializeHistory();
 	void ChangeVisualizationProperties();
+	void ShowHideActors();
+	void DeleteSelectedActors();
+	void MergeHistory();
 
 
 protected:
@@ -60,7 +62,6 @@ protected:
 	vtkSmartPointer<ritk::RImageActorPipeline>	m_DataActor3D;
 	ritk::NewFrameEvent::RImageConstPointer		m_CurrentFrame;
 	vtkSmartPointer<vtkPolyData>				m_Data;
-	vtkSmartPointer<vtkPolyData>				m_TheWorld;
 	vtkSmartPointer<vtkPolyData>				m_PreviousFrame;
 	vtkSmartPointer<vtkMatrix4x4>				m_PreviousTransformMatrix;
 

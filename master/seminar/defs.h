@@ -1,11 +1,24 @@
 #ifndef defs_H__
 #define	defs_H__
 
+#include <QListWidget.h>
+#include <vtkSmartPointer.h>
+#include <vtkMatrix4x4.h>
+#include <RImageActorPipeline.h>
+
 typedef struct Point6D
 {
 	double x, y, z;
 	double r, g, b;
-} Point6D;
+}
+Point6D;
+
+class HistoryListItem : public QListWidgetItem
+{
+public:
+	vtkSmartPointer<ritk::RImageActorPipeline>	m_actor;
+	vtkSmartPointer<vtkMatrix4x4>				m_transform;
+};
 
 enum ICP_METRIC
 {
@@ -15,4 +28,4 @@ enum ICP_METRIC
 };
 
 
-#endif //defs_H__
+#endif // defs_H__

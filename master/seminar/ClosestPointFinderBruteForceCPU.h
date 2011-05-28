@@ -54,4 +54,4 @@ protected:
 	Point6D* m_Target;
 };
 
-#endif //ClosestPointFinderBruteForceCPU_H__
+#endif // ClosestPointFinderBruteForceCPU_H__

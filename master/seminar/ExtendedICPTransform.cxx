@@ -155,19 +155,17 @@ ExtendedICPTransform::vtkPolyDataToPoint6DArray()
 void
 ExtendedICPTransform::InternalUpdate() 
 {
-	// Test Cuda
+	// test Cuda
 	//cudaTest();
 
 	// transform vtkPolyData in our own structures
 	vtkPolyDataToPoint6DArray();
 
-	// set target points once
+	// configure ClosestPointFinder
 	m_ClosestPointFinder->SetTarget(m_TargetPoints);
-	// set used distance metric
 	m_ClosestPointFinder->SetMetric(m_Metric);
 	
-
-	// Allocate some points.
+	// allocate some points used for icp
 	vtkSmartPointer<vtkPoints> points1 =
 		vtkSmartPointer<vtkPoints>::New();
 	points1->SetNumberOfPoints(m_NumLandmarks);
@@ -196,14 +194,14 @@ ExtendedICPTransform::InternalUpdate()
 	vtkSmartPointer<vtkPoints> a = points1;
 	vtkSmartPointer<vtkPoints> b = points2;
 
-	double totaldist;
 
+	double totaldist;
 	m_NumIter = 0;
 
 	while (true)
 	{
 		// Set locators source points and perfom nearest neighbor search
-		int* indices = m_ClosestPointFinder->FindClosestPoints( m_SourcePoints ); // FindClosestPoints(m_SourcePoints, m_TargetPoints);
+		int* indices = m_ClosestPointFinder->FindClosestPoints(m_SourcePoints);
 		for(int i = 0; i < m_NumLandmarks; ++i)
 		{
 			int index = indices[i];
@@ -233,20 +231,11 @@ ExtendedICPTransform::InternalUpdate()
 			m_LandmarkTransform->InternalTransformPoint(p1, p2);
 			b->SetPoint(i, p2);
 
-			switch (m_Metric)
-			{
-			case ABSOLUTE_DISTANCE:
-				totaldist += std::abs(p1[0] - p2[0]) + std::abs(p1[1] - p2[1]) + std::abs(p1[2] - p2[2]); break;
-			case LOG_ABSOLUTE_DISTANCE:
-				totaldist += std::log(std::abs(p1[0] - p2[0]) + std::abs(p1[1] - p2[1]) + std::abs(p1[2] - p2[2]) + 1.0); break;
-			case SQUARED_DISTANCE:
-				totaldist += vtkMath::Distance2BetweenPoints(p1, p2);
-			}
-
+			totaldist += vtkMath::Distance2BetweenPoints(p1, p2);
 		}
 
 		m_MeanDist = totaldist / (double)m_NumLandmarks;
-		std::cout << "\rIteration " << m_NumIter << ":\t mean distance = " << m_MeanDist << "           ";
+		std::cout << "\r  -> Iteration " << m_NumIter << ":\t mean distance = " << m_MeanDist << "           ";
 			
 		if (m_MeanDist <= m_MaxMeanDist)
 		{
@@ -258,7 +247,7 @@ ExtendedICPTransform::InternalUpdate()
 		a = b;
 		b = temp;
 
-		vtkPolyDataToPoint6DArray( a, m_SourcePoints );
+		vtkPolyDataToPoint6DArray(a, m_SourcePoints);
 	} 
 
 	std::cout << std::endl;

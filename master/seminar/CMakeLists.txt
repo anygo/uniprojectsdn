@@ -28,11 +28,11 @@ SET(VTK_LIBRARIES
 )
 
 # boost
-find_package(Boost 1.46.1 COMPONENTS thread)
-if(Boost_FOUND)
-	include_directories(${Boost_INCLUDE_DIRS})
-	link_directories(${Boost_LIBRARY_DIRS})
-endif()
+#find_package(Boost 1.46.1 COMPONENTS thread)
+#if(Boost_FOUND)
+#	include_directories(${Boost_INCLUDE_DIRS})
+#	link_directories(${Boost_LIBRARY_DIRS})
+#endif()
 
 
 # Qt4
@@ -158,7 +158,7 @@ ADD_LIBRARY(
 	${CUDA_SRCS}
 	${MOC_SRCS} 
 	${UI_HDRS}
-	${Boost_LIBRARY_DIRS}
+#	${Boost_LIBRARY_DIRS}
 )
 TARGET_LINK_LIBRARIES(
 	${LIBRARY_NAME} 
@@ -178,7 +178,7 @@ TARGET_LINK_LIBRARIES(
 	${CUDA_CUDA_LIBRARY} 
 	${CUDA_CUDART_LIBRARY} 
 	${CUDA_CUT_LIBRARIES}
-	${Boost_LIBRARIES}
+#	${Boost_LIBRARIES}
 )
 SET_TARGET_PROPERTIES(
 	${LIBRARY_NAME} 

@@ -11,14 +11,12 @@ public:
 	ClosestPointFinderBruteForceCPU(int NrOfPoints) : ClosestPointFinder(NrOfPoints) { }
 
 	int* FindClosestPoints(Point6D *source);
-	int FindClosestPoint(Point6D point);
 };
 
 
 // for the multithreaded version
 class ClosestPointFinderBruteForceCPUWorker : public QThread
 {
-
 public:
 	ClosestPointFinderBruteForceCPUWorker() : QThread() {}
 	~ClosestPointFinderBruteForceCPUWorker() {}
@@ -32,7 +30,7 @@ public:
 					int* indices,
 					Point6D* source,
 					Point6D* target
-					) 
+				  ) 
 	{
 		m_From = from;
 		m_To = to;
@@ -46,7 +44,6 @@ public:
 	}
 
 protected:
-
 	void run();
 
 	int m_From;
@@ -59,5 +56,6 @@ protected:
 	Point6D* m_Source;
 	Point6D* m_Target;
 };
+
 
 #endif // ClosestPointFinderBruteForceCPU_H__

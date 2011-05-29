@@ -42,19 +42,18 @@ StitchingPlugin::StitchingPlugin()
 	connect(this, SIGNAL(UpdateGUI()), m_Widget->m_VisualizationWidget3D,	SLOT(UpdateGUI()));
 
 	// set signals (from buttons, etc) and slots (in this file)
-	connect(m_Widget->m_PushButtonLoadFrame,			SIGNAL(clicked()),				this, SLOT(LoadFrame()));
-	connect(m_Widget->m_PushButtonCleanFrame,			SIGNAL(clicked()),				this, SLOT(CleanFrame()));
-	connect(m_Widget->m_PushButtonLoadCleanStitch,		SIGNAL(clicked()),				this, SLOT(LoadCleanStitch()));
-	connect(m_Widget->m_PushButtonDelaunay2D,			SIGNAL(clicked()),				this, SLOT(Delaunay2D()));
-	connect(m_Widget->m_PushButtonSaveVTKData,			SIGNAL(clicked()),				this, SLOT(SaveVTKData()));
-	connect(m_Widget->m_PushButtonInitializeHistory,	SIGNAL(clicked()),				this, SLOT(InitializeHistory()));
-	connect(m_Widget->m_PushButtonStitch,				SIGNAL(clicked()),				this, SLOT(Stitch()));
-	connect(m_Widget->m_HorizontalSliderPointSize,		SIGNAL(valueChanged(int)),		this, SLOT(ChangePointSize()));
-	connect(m_Widget->m_ToolButtonChooseBackgroundColor,SIGNAL(clicked()),				this, SLOT(ChangeBackgroundColor()));
-	connect(m_Widget->m_ListWidgetHistory,				SIGNAL(itemSelectionChanged()),	this, SLOT(ShowHideActors()));
-	connect(m_Widget->m_PushButtonHistoryDelete,		SIGNAL(clicked()),				this, SLOT(DeleteSelectedActors()));
-	connect(m_Widget->m_PushButtonHistoryMerge,			SIGNAL(clicked()),				this, SLOT(MergeSelectedActors()));
-	connect(m_Widget->m_PushButtonHistoryClean,			SIGNAL(clicked()),				this, SLOT(CleanSelectedActors()));
+	connect(m_Widget->m_PushButtonLoadCleanStitch,			SIGNAL(clicked()),								this, SLOT(LoadCleanStitch()));
+	connect(m_Widget->m_PushButtonInitialize,				SIGNAL(clicked()),								this, SLOT(LoadCleanInitialize()));
+	connect(m_Widget->m_PushButtonDelaunay2D,				SIGNAL(clicked()),								this, SLOT(Delaunay2D()));
+	connect(m_Widget->m_PushButtonSaveVTKData,				SIGNAL(clicked()),								this, SLOT(SaveVTKData()));
+	connect(m_Widget->m_HorizontalSliderPointSize,			SIGNAL(valueChanged(int)),						this, SLOT(ChangePointSize()));
+	connect(m_Widget->m_ToolButtonChooseBackgroundColor1,	SIGNAL(clicked()),								this, SLOT(ChangeBackgroundColor1()));
+	connect(m_Widget->m_ToolButtonChooseBackgroundColor2,	SIGNAL(clicked()),								this, SLOT(ChangeBackgroundColor2()));
+	connect(m_Widget->m_ListWidgetHistory,					SIGNAL(itemSelectionChanged()),					this, SLOT(ShowHideActors()));
+	connect(m_Widget->m_PushButtonHistoryDelete,			SIGNAL(clicked()),								this, SLOT(DeleteSelectedActors()));
+	connect(m_Widget->m_PushButtonHistoryMerge,				SIGNAL(clicked()),								this, SLOT(MergeSelectedActors()));
+	connect(m_Widget->m_PushButtonHistoryClean,				SIGNAL(clicked()),								this, SLOT(CleanSelectedActors()));
+	connect(m_Widget->m_ListWidgetHistory,					SIGNAL(itemDoubleClicked(QListWidgetItem*)),	this, SLOT(HighlightActor(QListWidgetItem*)));
 	
 		
 	// add data actor
@@ -100,12 +99,20 @@ StitchingPlugin::ChangePointSize()
 	emit UpdateGUI();
 }
 void
-StitchingPlugin::ChangeBackgroundColor()
+StitchingPlugin::ChangeBackgroundColor1()
 {
 	QColor color = QColorDialog::getColor();
 
 	m_Widget->m_VisualizationWidget3D->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->
 		SetBackground(color.red()/255., color.green()/255., color.blue()/255.);
+}
+void
+StitchingPlugin::ChangeBackgroundColor2()
+{
+	QColor color = QColorDialog::getColor();
+
+	m_Widget->m_VisualizationWidget3D->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->
+		SetBackground2(color.red()/255., color.green()/255., color.blue()/255.);
 }
 //----------------------------------------------------------------------------
 void
@@ -127,6 +134,26 @@ StitchingPlugin::ShowHideActors()
 
 	// show number of points for selected history entries
 	m_Widget->m_lcdNumberPointsInWorld->display(numPoints);
+}
+void
+StitchingPlugin::HighlightActor(QListWidgetItem* item)
+{
+	HistoryListItem* hli = reinterpret_cast<HistoryListItem*>(item);
+
+	// toggle colormode
+	int mode = hli->m_actor->GetMapper()->GetColorMode();
+
+	if (mode == 0)
+	{
+		hli->m_actor->GetMapper()->ColorByArrayComponent(0, 1);
+		hli->m_actor->GetMapper()->SetColorModeToMapScalars();
+		hli->setBackgroundColor(QColor(0, 0, 255, 100));
+	} else
+	{
+		hli->m_actor->GetMapper()->SetColorModeToDefault();
+		hli->setBackgroundColor(QColor(255, 255, 255, 255));
+	}
+	emit UpdateGUI();
 }
 void
 StitchingPlugin::DeleteSelectedActors()
@@ -170,10 +197,9 @@ StitchingPlugin::MergeSelectedActors()
 
 	// create the merged history entry
 	HistoryListItem* hli = new HistoryListItem;
-	hli->setText(QDateTime::currentDateTime().time().toString("hh:mm:ss:zzz"));
+	hli->setText(QDateTime::currentDateTime().time().toString("hh:mm:ss:zzz") + " (merged)");
 	hli->m_transform = vtkSmartPointer<vtkMatrix4x4>::New();
 	hli->m_actor = vtkSmartPointer<ritk::RImageActorPipeline>::New();
-	hli->setBackgroundColor(QColor(100, 255, 50, 100));
 	hli->setToolTip(QString("merged"));
 
 	// at this index, the merged points will be taken afterwards
@@ -268,7 +294,7 @@ StitchingPlugin::ProcessEvent(ritk::Event::Pointer EventP)
 
 		// enable buttons (ProcessEvent has to be called at least once before
 		// we can load the data into our plugin)
-		m_Widget->m_PushButtonLoadFrame->setEnabled(true);
+		m_Widget->m_PushButtonInitialize->setEnabled(true);
 		
 		emit UpdateGUI();
 	}
@@ -278,6 +304,25 @@ StitchingPlugin::ProcessEvent(ritk::Event::Pointer EventP)
 	}
 }
 //----------------------------------------------------------------------------
+void
+StitchingPlugin::LoadCleanInitialize()
+{
+	QTime t = QTime::currentTime();
+
+	t.start();
+	LoadFrame(false);
+	std::cout << "LoadFrame():     " << t.elapsed() << " ms" << std::endl;
+
+	t.start();
+	CleanFrame(false);
+	std::cout << "CleanFrame():    " << t.elapsed() << " ms" << std::endl;
+
+	t.start();
+	InitializeHistory();
+	std::cout << "Initialize():    " << t.elapsed() << " ms" << std::endl;
+
+	emit UpdateGUI();
+}
 void
 StitchingPlugin::LoadCleanStitch()
 {
@@ -307,15 +352,7 @@ StitchingPlugin::LoadFrame(bool update)
 	// remove invalid points
 	ExtractValidPoints();
 
-	if (update)
-	{
-		// enable buttons
-		m_Widget->m_PushButtonCleanFrame->setEnabled(true);
-		m_Widget->m_PushButtonInitializeHistory->setEnabled(true);
-
-		emit UpdateGUI();
-		m_Widget->m_VisualizationWidget3D->UpdateGUI();
-	}
+	m_Widget->m_PushButtonLoadCleanStitch->setEnabled(true);
 }
 //----------------------------------------------------------------------------
 void
@@ -437,7 +474,7 @@ StitchingPlugin::InitializeHistory()
 	hle->setSelected(true);
 
 	// enable buttons
-	m_Widget->m_PushButtonStitch->setEnabled(true);
+	//m_Widget->m_PushButtonStitch->setEnabled(true);
 	m_Widget->m_PushButtonDelaunay2D->setEnabled(true);
 	m_Widget->m_PushButtonSaveVTKData->setEnabled(true);
 	m_Widget->m_PushButtonLoadCleanStitch->setEnabled(true);

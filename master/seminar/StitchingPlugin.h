@@ -39,15 +39,18 @@ protected slots:
 	void CleanFrame(bool update = true);
 	void Stitch(bool update = true);
 	void LoadCleanStitch();
+	void LoadCleanInitialize();
 	void Delaunay2D();
 	void SaveVTKData();
 	void InitializeHistory();
 	void ChangePointSize();
-	void ChangeBackgroundColor();
+	void ChangeBackgroundColor1();
+	void ChangeBackgroundColor2();
 	void ShowHideActors();
 	void DeleteSelectedActors();
 	void MergeSelectedActors();
 	void CleanSelectedActors();
+	void HighlightActor(QListWidgetItem*);
 
 
 protected:

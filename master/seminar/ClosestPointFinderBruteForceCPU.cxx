@@ -2,7 +2,6 @@
 
 #include <limits>
 #include <iostream>
-#include <boost/thread.hpp>
 
 int
 ClosestPointFinderBruteForceCPU::FindClosestPoint(Point6D point) {
@@ -64,14 +63,14 @@ ClosestPointFinderBruteForceCPU::FindClosestPoints(Point6D *source) {
 	}*/
 
 	// use as many threads as there are hardware threads available on the machine
-	int numThreads = std::max(1, static_cast<int>(boost::thread::hardware_concurrency()));
+	int numThreads = std::max(1, QThread::idealThreadCount());
 
-	boost::thread* workers = new boost::thread[numThreads];
+	ClosestPointFinderBruteForceCPUWorker* workers = new ClosestPointFinderBruteForceCPUWorker[numThreads];
 
 	for (int i = 0; i < numThreads; ++i)
 	{
 		// assign a balanced range of points to each thread
-		ClosestPointFinderBruteForceCPUWorker worker(
+		workers[i].setConfig(
 			i*m_NrOfPoints/numThreads,
 			(i+1)*m_NrOfPoints/numThreads,
 			m_NrOfPoints,
@@ -84,13 +83,13 @@ ClosestPointFinderBruteForceCPU::FindClosestPoints(Point6D *source) {
 			);
 
 		// start the thread
-		workers[i] = boost::thread(worker);
+		workers[i].start();
 	}
 
 	for (int i = 0; i < numThreads; ++i)
 	{
 		// wait for the thread to be finished
-		workers[i].join();
+		workers[i].wait();
 	}
 
 	// cleanup
@@ -101,7 +100,7 @@ ClosestPointFinderBruteForceCPU::FindClosestPoints(Point6D *source) {
 }
 //----------------------------------------------------------------------------
 void
-ClosestPointFinderBruteForceCPUWorker::operator()()
+ClosestPointFinderBruteForceCPUWorker::run()
 {
 	for (int j = 0; j < m_NrOfPoints; ++j)
 	{

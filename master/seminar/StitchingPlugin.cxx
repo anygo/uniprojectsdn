@@ -7,7 +7,7 @@
 #include <vector>
 
 // Qt includes
-#include <QFileDialog.h>
+#include <QFileDialog>
 #include <QTime>
 #include <QColorDialog>
 
@@ -133,7 +133,7 @@ StitchingPlugin::ShowHideActors()
 	}
 
 	// show number of points for selected history entries
-	m_Widget->m_lcdNumberPointsInWorld->display(numPoints);
+	m_Widget->m_LabelNumberOfPoints->setText(QString::number(numPoints));
 }
 void
 StitchingPlugin::HighlightActor(QListWidgetItem* item)
@@ -147,11 +147,13 @@ StitchingPlugin::HighlightActor(QListWidgetItem* item)
 	{
 		hli->m_actor->GetMapper()->ColorByArrayComponent(0, 1);
 		hli->m_actor->GetMapper()->SetColorModeToMapScalars();
-		hli->setBackgroundColor(QColor(0, 0, 255, 100));
+		//hli->setBackgroundColor(QColor(0, 0, 255, 100));
+		hli->setTextColor(QColor(0, 50, 255, 255));
 	} else
 	{
 		hli->m_actor->GetMapper()->SetColorModeToDefault();
-		hli->setBackgroundColor(QColor(255, 255, 255, 255));
+		//hli->setBackgroundColor(QColor(255, 255, 255, 255));
+		hli->setTextColor(QColor(0, 0, 0, 255));
 	}
 	emit UpdateGUI();
 }
@@ -191,6 +193,12 @@ StitchingPlugin::DeleteSelectedActors()
 void
 StitchingPlugin::MergeSelectedActors()
 {
+	if (m_Widget->m_ListWidgetHistory->selectedItems().size() <= 1)
+	{
+		std::cout << "nothing to be merged..." << std::endl;
+		return;
+	}
+
 	// append the whole history
 	vtkSmartPointer<vtkAppendPolyData> appendFilter =
 		vtkSmartPointer<vtkAppendPolyData>::New();
@@ -265,7 +273,7 @@ StitchingPlugin::CleanSelectedActors()
 	}
 
 	// show number of points for selected history entries
-	m_Widget->m_lcdNumberPointsInWorld->display(numPoints);
+	m_Widget->m_LabelNumberOfPoints->setText(QString::number(numPoints));
 
 	emit UpdateGUI();
 }
@@ -552,8 +560,9 @@ StitchingPlugin::Stitch(bool update)
 	m_PreviousTransformMatrix->DeepCopy(m);
 	//std::cout << "ICP transform: " << *m << std::endl;
 
-	m_Widget->m_lcdNumberICPIterations->display(icp->GetNumIter());
-	m_Widget->m_lcdNumberICPError->display(icp->GetMeanDist());
+	// update debug information in GUI
+	m_Widget->m_LabelICPIterations->setText(QString::number(icp->GetNumIter()));
+	m_Widget->m_LabelICPError->setText(QString::number(icp->GetMeanDist()));
 
 	// do the transform
 	vtkSmartPointer<vtkTransformPolyDataFilter> icpTransformFilter =
@@ -566,6 +575,7 @@ StitchingPlugin::Stitch(bool update)
 	// update m_PreviousFrame
 	m_PreviousFrame->ShallowCopy(icpTransformFilter->GetOutput());
 
+	// create new history entry
 	int listSize = m_Widget->m_ListWidgetHistory->count();
 	HistoryListItem* hli = new HistoryListItem();
 	hli->setText(QDateTime::currentDateTime().time().toString("hh:mm:ss:zzz"));

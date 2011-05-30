@@ -30,8 +30,8 @@
 #include <ExtendedICPTransform.h>
 #include <ClosestPointFinder.h>
 #include <ClosestPointFinderBruteForceCPU.h>
+#include <ClosestPointFinderBruteForceGPU.h>
 #include <defs.h>
-
 
 
 StitchingPlugin::StitchingPlugin()
@@ -530,7 +530,12 @@ StitchingPlugin::Stitch(bool update)
 	}
 
 	// initialize ClosestPointFinder
-	ClosestPointFinder* cpf = new ClosestPointFinderBruteForceCPU(m_Widget->m_SpinBoxLandmarks->value());
+	ClosestPointFinder* cpf; 
+	switch (m_Widget->m_ComboBoxClosestPointFinder->currentIndex())
+	{
+	case 0: cpf = new ClosestPointFinderBruteForceGPU(m_Widget->m_SpinBoxLandmarks->value()); break;
+	case 1: cpf = new ClosestPointFinderBruteForceCPU(m_Widget->m_SpinBoxLandmarks->value()); break;
+	}
 	cpf->SetUseRGBData(m_Widget->m_CheckBoxUseRGBData->isChecked());
 	cpf->SetWeightRGB(m_Widget->m_DoubleSpinBoxRGBWeight->value());
 

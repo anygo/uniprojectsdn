@@ -8,8 +8,13 @@ ClosestPointFinderBruteForceCPU::FindClosestPoints(Point6D *source) {
 	
 	// create some worker threads and do the job
 
-	// use as many threads as there are hardware threads available on the machine
-	int numThreads = std::max(1, QThread::idealThreadCount());
+	
+	int numThreads = 1;
+	if (m_Multithreaded)
+	{
+		// use as many threads as there are hardware threads available on the machine
+		numThreads = std::max(1, QThread::idealThreadCount()); 
+	}
 
 	ClosestPointFinderBruteForceCPUWorker* workers = new ClosestPointFinderBruteForceCPUWorker[numThreads];
 

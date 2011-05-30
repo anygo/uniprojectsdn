@@ -15,11 +15,14 @@
 int* dev_indices;
 Point6D* dev_source;
 Point6D* dev_target;
+bool sourceCopied;
 	
 
 extern "C"
 void initGPU(Point6D* target, int nrOfPoints) 
 {
+	sourceCopied = false;
+
 	// allocate memory on gpu
 	cudaMalloc((void**)&dev_indices, nrOfPoints*sizeof(int));
 	cudaMalloc((void**)&dev_source, nrOfPoints*sizeof(Point6D));
@@ -40,9 +43,11 @@ void cleanupGPU()
 extern "C"
 void FindClosestPointsCUDA(int nrOfPoints, int metric, bool useRGBData, double weightRGB, int* indices, Point6D* source)
 {
-
-	// copy data from host to gpu
-	cudaMemcpy(dev_source, source, nrOfPoints*sizeof(Point6D), cudaMemcpyHostToDevice);	
+	// copy data from host to gpu only if it is not yet copied
+	// copy only once, because the data is transformed directly on the gpu!
+	if (!sourceCopied)
+		cudaMemcpy(dev_source, source, nrOfPoints*sizeof(Point6D), cudaMemcpyHostToDevice);	
+	sourceCopied = true;
 
 	// execution
 	if (useRGBData)
@@ -51,6 +56,50 @@ void FindClosestPointsCUDA(int nrOfPoints, int metric, bool useRGBData, double w
 		kernelWithoutRGB<<<nrOfPoints,1>>>(nrOfPoints, metric, dev_indices, dev_source, dev_target);
 			
 	// copy data from gpu to host
-	cudaMemcpy(indices, dev_indices, nrOfPoints*sizeof(int), cudaMemcpyDeviceToHost);	
+	cudaMemcpy(indices, dev_indices, nrOfPoints*sizeof(int), cudaMemcpyDeviceToHost);
+}
+
+extern "C"
+void TransformPointsDirectlyOnGPU(int nrOfPoints, double transformationMatrix[4][4], Point6D* writeTo, float* distances)
+{
+	// returns mean distance
 	
+	// allocate memory for distances
+	float* dev_distances;
+	cudaMalloc((void**)&dev_distances, nrOfPoints*sizeof(float));
+	
+	// allocate memory for transformation matrix (will be stored linearly) and copy it
+	float* dev_transformationMatrix;
+	cudaMalloc((void**)&dev_transformationMatrix, 16*sizeof(float));
+	float tmp[16];
+	tmp[0] = (float)transformationMatrix[0][0];
+	tmp[1] = (float)transformationMatrix[0][1];
+	tmp[2] = (float)transformationMatrix[0][2];
+	tmp[3] = (float)transformationMatrix[0][3];
+	tmp[4] = (float)transformationMatrix[1][0];
+	tmp[5] = (float)transformationMatrix[1][1];
+	tmp[6] = (float)transformationMatrix[1][2];
+	tmp[7] = (float)transformationMatrix[1][3];
+	tmp[8] = (float)transformationMatrix[2][0];
+	tmp[9] = (float)transformationMatrix[2][1];
+	tmp[10] = (float)transformationMatrix[2][2];
+	tmp[11] = (float)transformationMatrix[2][3];
+	tmp[12] = (float)transformationMatrix[3][0];
+	tmp[13] = (float)transformationMatrix[3][1];
+	tmp[14] = (float)transformationMatrix[3][2];
+	tmp[15] = (float)transformationMatrix[3][3];
+	cudaMemcpy(dev_transformationMatrix, tmp, 16*sizeof(float), cudaMemcpyHostToDevice);
+	
+	// compute transformations
+	kernelTransformPoints<<<nrOfPoints,1>>>(dev_source, dev_transformationMatrix, dev_distances);
+	
+	// copy distance array to host
+	cudaMemcpy(distances, dev_distances, nrOfPoints*sizeof(float), cudaMemcpyDeviceToHost);
+	
+	// copy transformed points to host
+	cudaMemcpy(writeTo, dev_source, nrOfPoints*sizeof(Point6D), cudaMemcpyDeviceToHost);
+	
+	// cleanup
+	cudaFree(dev_distances);
+	cudaFree(dev_transformationMatrix);
 }

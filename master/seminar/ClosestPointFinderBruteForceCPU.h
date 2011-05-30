@@ -8,13 +8,14 @@
 class ClosestPointFinderBruteForceCPU : public ClosestPointFinder
 {
 public:
-	ClosestPointFinderBruteForceCPU(int NrOfPoints) : ClosestPointFinder(NrOfPoints) { }
+	ClosestPointFinderBruteForceCPU(int NrOfPoints, bool multithreaded) : m_Multithreaded(multithreaded), ClosestPointFinder(NrOfPoints) { }
 
 	int* FindClosestPoints(Point6D *source);
+
+protected:
+	bool m_Multithreaded;
 };
 
-
-// for the multithreaded version
 class ClosestPointFinderBruteForceCPUWorker : public QThread
 {
 public:

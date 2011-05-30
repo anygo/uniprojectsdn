@@ -29,8 +29,6 @@ void kernelWithoutRGB(int nrOfPoints, int metric, int* indices, Point6D* source,
 			spaceDist = ((source[tid].x - target[i].x)*(source[tid].x - target[i].x) + (source[tid].y - target[i].y)*(source[tid].y - target[i].y) + (source[tid].z - target[i].z)*(source[tid].z - target[i].z));
 		//}
 
-		spaceDist;
-
 		if (spaceDist < minDist)
 		{
 			minDist = spaceDist;
@@ -90,5 +88,31 @@ void kernelWithRGB(int nrOfPoints, int metric, float weightRGB, int* indices, Po
 	indices[tid] = idx;
 }
 
+
+__global__
+void kernelTransformPoints(Point6D* source, float* m, float* distances)
+{
+	// get source[tid] for this thread
+	int tid = blockIdx.x;
+
+	// compute homogeneous transformation
+	float x = m[0]*source[tid].x + m[1]*source[tid].y + m[2]*source[tid].z + m[3];
+	float y = m[4]*source[tid].x + m[5]*source[tid].y + m[6]*source[tid].z + m[7];
+	float z = m[8]*source[tid].x + m[9]*source[tid].y + m[10]*source[tid].z + m[11];
+	float w = m[12]*source[tid].x + m[13]*source[tid].y + m[14]*source[tid].z + m[15];
+
+	// divide by the last component
+	x = x/w;
+	y = y/w;
+	z = z/w;
+
+	// compute distance to previous point
+	distances[tid] = (source[tid].x - x)*(source[tid].x - x) + (source[tid].y - y)*(source[tid].y - y) + (source[tid].z - z)*(source[tid].z - z);
+
+	// set new coordinates
+	source[tid].x = x;
+	source[tid].y = y;
+	source[tid].z = z;
+}
 
 #endif // ClosestPointFinderBruteForceGPUKernel_H__

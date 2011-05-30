@@ -301,6 +301,11 @@
                   </item>
                   <item>
                    <property name="text">
+                    <string>BruteForce CPU</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
                     <string>BruteForce CPU (mt)</string>
                    </property>
                   </item>

@@ -114,6 +114,46 @@ StitchingPlugin::ChangeBackgroundColor2()
 	m_Widget->m_VisualizationWidget3D->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->
 		SetBackground2(color.red()/255., color.green()/255., color.blue()/255.);
 }
+void
+StitchingPlugin::SaveVTKData()
+{
+	QString outputFile = QFileDialog::getSaveFileName(m_Widget, "Save VTK File", "D:/RITK/bin/release/Data/", "VTK files (*.vtk)");		
+
+	// get last entry in history
+	HistoryListItem* hli = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(m_Widget->m_ListWidgetHistory->count() - 1));
+
+	if (!outputFile.isEmpty()) 
+	{
+		vtkSmartPointer<vtkPolyDataWriter> writer =
+			vtkSmartPointer<vtkPolyDataWriter>::New();
+		writer->SetFileName(outputFile.toStdString().c_str());
+		writer->SetInput(hli->m_actor->GetData());
+		writer->SetFileTypeToASCII();
+		writer->Update();		
+	}	
+}
+void
+StitchingPlugin::Delaunay2D()
+{
+	// triangulation for each selected history entry - may take some time...
+	for (int i = 0; i < m_Widget->m_ListWidgetHistory->count(); ++i)
+	{
+		HistoryListItem* hli = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
+		if (hli->isSelected())
+		{
+			vtkSmartPointer<vtkTransform> t = 
+				vtkSmartPointer<vtkTransform>::New();
+			vtkSmartPointer<vtkDelaunay2D> Delaunay2D = 
+				vtkSmartPointer<vtkDelaunay2D>::New();
+			Delaunay2D->SetInput(hli->m_actor->GetData());
+			Delaunay2D->SetTransform(t);
+			Delaunay2D->Update();
+			hli->m_actor->SetData(Delaunay2D->GetOutput(), true);
+		} 
+	}
+
+	emit UpdateGUI();
+}
 //----------------------------------------------------------------------------
 void
 StitchingPlugin::ShowHideActors()
@@ -534,10 +574,19 @@ StitchingPlugin::Stitch(bool update)
 	switch (m_Widget->m_ComboBoxClosestPointFinder->currentIndex())
 	{
 	case 0: cpf = new ClosestPointFinderBruteForceGPU(m_Widget->m_SpinBoxLandmarks->value()); break;
-	case 1: cpf = new ClosestPointFinderBruteForceCPU(m_Widget->m_SpinBoxLandmarks->value()); break;
+	case 1: cpf = new ClosestPointFinderBruteForceCPU(m_Widget->m_SpinBoxLandmarks->value(), false); break;
+	case 2: cpf = new ClosestPointFinderBruteForceCPU(m_Widget->m_SpinBoxLandmarks->value(), true); break;
 	}
 	cpf->SetUseRGBData(m_Widget->m_CheckBoxUseRGBData->isChecked());
 	cpf->SetWeightRGB(m_Widget->m_DoubleSpinBoxRGBWeight->value());
+	int metric;
+	switch (m_Widget->m_ComboBoxMetric->currentIndex())
+	{
+	case 0: metric = LOG_ABSOLUTE_DISTANCE; break;
+	case 1: metric = ABSOLUTE_DISTANCE; break;
+	case 2: metric = SQUARED_DISTANCE; break;
+	}
+	cpf->SetMetric(metric);
 
 	// configure icp
 	icp->SetSource(voi);
@@ -547,15 +596,6 @@ StitchingPlugin::Stitch(bool update)
 	icp->SetNumLandmarks(m_Widget->m_SpinBoxLandmarks->value());
 	icp->SetMaxIter(m_Widget->m_SpinBoxMaxIterations->value());
 	icp->SetClosestPointFinder(cpf);
-
-	int metric;
-	switch (m_Widget->m_ComboBoxMetric->currentIndex())
-	{
-	case 0: metric = LOG_ABSOLUTE_DISTANCE; break;
-	case 1: metric = ABSOLUTE_DISTANCE; break;
-	case 2: metric = SQUARED_DISTANCE; break;
-	}
-	icp->SetMetric(metric);
 	icp->Modified();
 	icp->Update();
 
@@ -592,45 +632,4 @@ StitchingPlugin::Stitch(bool update)
 
 	// cleanup
 	delete cpf; // delete ClosestPointFinder
-}
-//----------------------------------------------------------------------------
-void
-StitchingPlugin::SaveVTKData()
-{
-	QString outputFile = QFileDialog::getSaveFileName(m_Widget, "Save VTK File", "D:/RITK/bin/release/Data/", "VTK files (*.vtk)");		
-
-	// get last entry in history
-	HistoryListItem* hli = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(m_Widget->m_ListWidgetHistory->count() - 1));
-
-	if (!outputFile.isEmpty()) 
-	{
-		vtkSmartPointer<vtkPolyDataWriter> writer =
-			vtkSmartPointer<vtkPolyDataWriter>::New();
-		writer->SetFileName(outputFile.toStdString().c_str());
-		writer->SetInput(hli->m_actor->GetData());
-		writer->SetFileTypeToASCII();
-		writer->Update();		
-	}	
-}
-void
-StitchingPlugin::Delaunay2D()
-{
-	// triangulation for each selected history entry - may take some time...
-	for (int i = 0; i < m_Widget->m_ListWidgetHistory->count(); ++i)
-	{
-		HistoryListItem* hli = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
-		if (hli->isSelected())
-		{
-			vtkSmartPointer<vtkTransform> t = 
-				vtkSmartPointer<vtkTransform>::New();
-			vtkSmartPointer<vtkDelaunay2D> Delaunay2D = 
-				vtkSmartPointer<vtkDelaunay2D>::New();
-			Delaunay2D->SetInput(hli->m_actor->GetData());
-			Delaunay2D->SetTransform(t);
-			Delaunay2D->Update();
-			hli->m_actor->SetData(Delaunay2D->GetOutput(), true);
-		} 
-	}
-
-	emit UpdateGUI();
 }

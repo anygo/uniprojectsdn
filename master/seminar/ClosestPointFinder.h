@@ -10,12 +10,13 @@ public:
 	ClosestPointFinder(int nrPoints) : m_NrOfPoints(nrPoints), m_Indices(new int[nrPoints]) {}
 	virtual ~ClosestPointFinder() { delete[] m_Indices; }
 
-	virtual inline void SetTarget(Point6D* target) { m_Target = target; }
-	inline void SetMetric(int metric) { m_Metric = metric; }
 	virtual int* FindClosestPoints(Point6D* source) = 0;
 
-	void SetUseRGBData(bool use) { m_UseRGBData = use; }
-	void SetWeightRGB(double weight) { m_WeightRGB = weight; }
+	virtual inline void SetTarget(Point6D* target) { m_Target = target; }
+	virtual inline void SetUseRGBData(bool use) { m_UseRGBData = use; }
+	virtual inline void SetWeightRGB(double weight) { m_WeightRGB = weight; }
+	virtual inline void SetMetric(int metric) { m_Metric = metric; }
+	virtual inline bool usesGPU() { return false; }
 
 
 protected:

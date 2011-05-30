@@ -17,8 +17,9 @@
 
 vtkStandardNewMacro(ExtendedICPTransform);
 
+
 extern "C"
-void cudaTest();
+void TransformPointsDirectlyOnGPU(int nrOfPoints, double transformationMatrix[4][4], Point6D* writeTo, float* distances);
 
 //----------------------------------------------------------------------------
 ExtendedICPTransform::ExtendedICPTransform() : vtkLinearTransform()
@@ -163,7 +164,6 @@ ExtendedICPTransform::InternalUpdate()
 
 	// configure ClosestPointFinder
 	m_ClosestPointFinder->SetTarget(m_TargetPoints);
-	m_ClosestPointFinder->SetMetric(m_Metric);
 	
 	// allocate some points used for icp
 	vtkSmartPointer<vtkPoints> points1 =
@@ -194,7 +194,6 @@ ExtendedICPTransform::InternalUpdate()
 	vtkSmartPointer<vtkPoints> a = points1;
 	vtkSmartPointer<vtkPoints> b = points2;
 
-
 	double totaldist;
 	m_NumIter = 0;
 
@@ -213,7 +212,7 @@ ExtendedICPTransform::InternalUpdate()
 		m_LandmarkTransform->SetTargetLandmarks(closestp);
 		m_LandmarkTransform->Update();
 
-		// concatenate
+		// concatenate transformation matrices
 		accumulate->Concatenate(m_LandmarkTransform->GetMatrix());
 
 		m_NumIter++;
@@ -225,14 +224,31 @@ ExtendedICPTransform::InternalUpdate()
 		// move mesh and compute mean distance to previous iteration
 		totaldist = 0.0;
 
-		for(int i = 0; i < m_NumLandmarks; i++)
+		// transform on gpu
+		if (m_ClosestPointFinder->usesGPU())
 		{
-			a->GetPoint(i, p1);
-			m_LandmarkTransform->InternalTransformPoint(p1, p2);
-			b->SetPoint(i, p2);
+			float* distances = new float[m_NumLandmarks];
+			TransformPointsDirectlyOnGPU(m_NumLandmarks, m_LandmarkTransform->GetMatrix()->Element, m_SourcePoints, distances);
+			for(int i = 0; i < m_NumLandmarks; i++)
+			{
+				totaldist += distances[i];
+				b->SetPoint(i, m_SourcePoints[i].x, m_SourcePoints[i].y, m_SourcePoints[i].z);
+			}
+			delete [] distances;
 
-			totaldist += vtkMath::Distance2BetweenPoints(p1, p2);
+		} else
+		{
+			for(int i = 0; i < m_NumLandmarks; i++)
+			{
+				a->GetPoint(i, p1);
+				m_LandmarkTransform->InternalTransformPoint(p1, p2);
+				b->SetPoint(i, p2);
+
+				totaldist += vtkMath::Distance2BetweenPoints(p1, p2);
+			}
 		}
+
+		
 
 		m_MeanDist = totaldist / (double)m_NumLandmarks;
 		std::cout << "\r  -> Iteration " << m_NumIter << ":\t mean distance = " << m_MeanDist << "           ";

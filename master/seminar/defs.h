@@ -3,8 +3,8 @@
 
 typedef struct Point6D
 {
-	double x, y, z;
-	double r, g, b;
+	float x, y, z;
+	float r, g, b;
 }
 Point6D;
 

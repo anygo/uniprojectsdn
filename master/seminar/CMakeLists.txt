@@ -92,6 +92,7 @@ SET(HDRS
 	ExtendedICPTransform.h
 	ClosestPointFinder.h
 	ClosestPointFinderBruteForceCPU.h
+	ClosestPointFinderBruteForceGPU.h
 )
 
 SET(SRCS
@@ -100,16 +101,17 @@ SET(SRCS
 	StitchingWidget.cxx
 	ExtendedICPTransform.cxx
 	ClosestPointFinderBruteForceCPU.cxx
+	ClosestPointFinderBruteForceGPU.cxx
 )
 
 
 SET(CUDA_HDRS
-	CudaTestKernel.h
+	ClosestPointFinderBruteForceGPUKernel.h
 )
 
 
 SET(CUDA_SRCS
-	CudaTest.cu
+	ClosestPointFinderBruteForceGPU.cu
 )
 
 #-----------------------------------------------------------------------------
@@ -150,7 +152,7 @@ INCLUDE_DIRECTORIES(
 	${RITK_INCLUDE_DIRS}
 	${QT_QTOPENGL_INCLUDE_DIR}
 )
-ADD_LIBRARY(
+CUDA_ADD_LIBRARY(
 	${LIBRARY_NAME} SHARED 
 	${SRCS} 
 	${HDRS} 

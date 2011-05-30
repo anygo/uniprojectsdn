@@ -12,6 +12,16 @@ typedef ritk::RImageF2					RImageType;
 typedef RImageType::Pointer				RImagePointer;
 typedef RImageType::ConstPointer		RImageConstPointer;
 
+
+// defs
+class HistoryListItem : public QListWidgetItem
+{
+public:
+	vtkSmartPointer<ritk::RImageActorPipeline>	m_actor;
+	vtkSmartPointer<vtkMatrix4x4>				m_transform;
+};
+
+
 class StitchingPlugin : public ritk::ApplicationPlugin
 {
 	Q_OBJECT

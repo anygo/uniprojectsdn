@@ -17,6 +17,8 @@
 
 vtkStandardNewMacro(ExtendedICPTransform);
 
+extern "C"
+void cudaTest();
 
 //----------------------------------------------------------------------------
 ExtendedICPTransform::ExtendedICPTransform() : vtkLinearTransform()
@@ -155,8 +157,6 @@ ExtendedICPTransform::vtkPolyDataToPoint6DArray()
 void
 ExtendedICPTransform::InternalUpdate() 
 {
-	// test Cuda
-	//cudaTest();
 
 	// transform vtkPolyData in our own structures
 	vtkPolyDataToPoint6DArray();

@@ -27,13 +27,6 @@ SET(VTK_LIBRARIES
 	QVTK
 )
 
-# boost
-#find_package(Boost 1.46.1 COMPONENTS thread)
-#if(Boost_FOUND)
-#	include_directories(${Boost_INCLUDE_DIRS})
-#	link_directories(${Boost_LIBRARY_DIRS})
-#endif()
-
 
 # Qt4
 FIND_PACKAGE(Qt4 REQUIRED)
@@ -62,7 +55,7 @@ IF(CUDA_FOUND)
 		PATH_SUFFIXES "common/inc"
 		DOC "Location of cutil.h"
 		NO_DEFAULT_PATH
-    )
+    	)
 	mark_as_advanced(CUDA_CUT_INCLUDE_DIR)
 	INCLUDE_DIRECTORIES(${CUDA_INCLUDE_DIRS} ${CUDA_CUT_INCLUDE_DIR})
 	
@@ -160,7 +153,6 @@ CUDA_ADD_LIBRARY(
 	${CUDA_SRCS}
 	${MOC_SRCS} 
 	${UI_HDRS}
-#	${Boost_LIBRARY_DIRS}
 )
 TARGET_LINK_LIBRARIES(
 	${LIBRARY_NAME} 
@@ -180,7 +172,6 @@ TARGET_LINK_LIBRARIES(
 	${CUDA_CUDA_LIBRARY} 
 	${CUDA_CUDART_LIBRARY} 
 	${CUDA_CUT_LIBRARIES}
-#	${Boost_LIBRARIES}
 )
 SET_TARGET_PROPERTIES(
 	${LIBRARY_NAME} 

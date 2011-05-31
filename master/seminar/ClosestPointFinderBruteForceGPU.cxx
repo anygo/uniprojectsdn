@@ -23,7 +23,7 @@ ClosestPointFinderBruteForceGPU::FindClosestPoints(Point6D *source)
 void ClosestPointFinderBruteForceGPU::SetTarget(Point6D* target) 
 { 
 	
-	m_Target = target;
+	ClosestPointFinder::SetTarget(target);
 	initGPU(target, m_NrOfPoints);
 }
 

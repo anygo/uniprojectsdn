@@ -77,8 +77,6 @@ protected:
 	vtkSmartPointer<ritk::RImageActorPipeline>	m_DataActor3D;
 	ritk::NewFrameEvent::RImageConstPointer		m_CurrentFrame;
 	vtkSmartPointer<vtkPolyData>				m_Data;
-	vtkSmartPointer<vtkPolyData>				m_PreviousFrame;
-	vtkSmartPointer<vtkMatrix4x4>				m_PreviousTransformMatrix;
 
 };
 

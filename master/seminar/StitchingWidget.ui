@@ -272,7 +272,7 @@
                    <number>500</number>
                   </property>
                   <property name="value">
-                   <number>2000</number>
+                   <number>2048</number>
                   </property>
                  </widget>
                 </item>
@@ -809,6 +809,23 @@
               </property>
               <property name="text">
                <string>0</string>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="0">
+             <widget class="QLabel" name="label_15">
+              <property name="text">
+               <string>Time</string>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="1">
+             <widget class="QLabel" name="m_LabelStitchTime">
+              <property name="frameShadow">
+               <enum>QFrame::Plain</enum>
+              </property>
+              <property name="text">
+               <string>0 ms</string>
               </property>
              </widget>
             </item>

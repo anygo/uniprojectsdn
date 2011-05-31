@@ -45,9 +45,9 @@ signals:
 	void UpdateGUI();
 
 protected slots:
-	void LoadFrame(bool update = true);
-	void CleanFrame(bool update = true);
-	void Stitch(bool update = true);
+	void LoadFrame();
+	void CleanFrame();
+	void Stitch();
 	void LoadCleanStitch();
 	void LoadCleanInitialize();
 	void Delaunay2D();

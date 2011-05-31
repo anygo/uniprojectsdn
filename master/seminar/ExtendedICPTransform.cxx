@@ -1,7 +1,7 @@
 #include "ExtendedICPTransform.h"
 
 #include "ClosestPointFinderBruteForceCPU.h"
-//#include "CudaTestKernel.h"
+#include "ClosestPointFinderBruteForceGPU.h"
 
 #include "vtkDataSet.h"
 #include "vtkLandmarkTransform.h"
@@ -196,7 +196,7 @@ ExtendedICPTransform::InternalUpdate()
 	vtkSmartPointer<vtkPoints> a = points1;
 	vtkSmartPointer<vtkPoints> b = points2;
 
-	double totaldist;
+	float totaldist;
 	m_NumIter = 0;
 
 	while (true)
@@ -249,7 +249,7 @@ ExtendedICPTransform::InternalUpdate()
 		}
 
 		m_MeanDist = totaldist / (double)m_NumLandmarks;
-		std::cout << "\r  -> Iteration " << m_NumIter << ":\t mean distance = " << m_MeanDist << "           ";
+		std::cout << "\rICP Iteration " << m_NumIter << ":\t mean distance = " << m_MeanDist << "\t\t";
 			
 		if (m_MeanDist <= m_MaxMeanDist)
 		{

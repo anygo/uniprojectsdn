@@ -228,6 +228,13 @@ StitchingPlugin::DeleteSelectedActors()
 		HistoryListItem* hli = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(size - 1));
 		m_PreviousFrame->DeepCopy(hli->m_actor->GetData());
 		m_PreviousTransformMatrix->DeepCopy(hli->m_transform);
+	} else
+	{
+		m_Widget->m_PushButtonLoadCleanStitch->setEnabled(false);
+		m_Widget->m_PushButtonDelaunay2D->setEnabled(false);
+		m_Widget->m_PushButtonSaveVTKData->setEnabled(false);
+		m_Widget->m_PushButtonLoadCleanStitch->setEnabled(false);
+		m_Widget->m_SpinBoxFrameStep->setEnabled(false);
 	}
 }
 void
@@ -356,18 +363,21 @@ void
 StitchingPlugin::LoadCleanInitialize()
 {
 	QTime t = QTime::currentTime();
-
 	t.start();
-	LoadFrame(false);
-	std::cout << "LoadFrame():     " << t.elapsed() << " ms" << std::endl;
 
-	t.start();
-	CleanFrame(false);
-	std::cout << "CleanFrame():    " << t.elapsed() << " ms" << std::endl;
+	//t.start();
+	LoadFrame();
+	//std::cout << "LoadFrame():     " << t.elapsed() << " ms" << std::endl;
 
-	t.start();
+	//t.start();
+	CleanFrame();
+	//std::cout << "CleanFrame():    " << t.elapsed() << " ms" << std::endl;
+
+	//t.start();
 	InitializeHistory();
-	std::cout << "Initialize():    " << t.elapsed() << " ms" << std::endl;
+	//std::cout << "Initialize():    " << t.elapsed() << " ms" << std::endl;
+
+	m_Widget->m_LabelStitchTime->setText(QString::number(t.elapsed()) + " ms");
 
 	emit UpdateGUI();
 }
@@ -375,24 +385,27 @@ void
 StitchingPlugin::LoadCleanStitch()
 {
 	QTime t = QTime::currentTime();
-
 	t.start();
-	LoadFrame(false);
-	std::cout << "LoadFrame():     " << t.elapsed() << " ms" << std::endl;
 
-	t.start();
-	CleanFrame(false);
-	std::cout << "CleanFrame():    " << t.elapsed() << " ms" << std::endl;
+	//t.start();
+	LoadFrame();
+	//std::cout << "LoadFrame():     " << t.elapsed() << " ms" << std::endl;
 
-	t.start();
-	Stitch(false);
-	std::cout << "Stitch(): " << t.elapsed() << " ms" << std::endl;
+	//t.start();
+	CleanFrame();
+	//std::cout << "CleanFrame():    " << t.elapsed() << " ms" << std::endl;
+
+	//t.start();
+	Stitch();
+	//std::cout << "Stitch(): " << t.elapsed() << " ms" << std::endl;
+
+	m_Widget->m_LabelStitchTime->setText(QString::number(t.elapsed()) + " ms");
 
 	emit UpdateGUI();
 }
 //----------------------------------------------------------------------------
 void
-StitchingPlugin::LoadFrame(bool update)
+StitchingPlugin::LoadFrame()
 {
 	m_DataActor3D->SetData(m_CurrentFrame);
 	m_Data->ShallowCopy(m_DataActor3D->GetData());
@@ -469,16 +482,9 @@ StitchingPlugin::Clip(vtkPolyData *toBeClipped)
 }
 //----------------------------------------------------------------------------
 void
-StitchingPlugin::CleanFrame(bool update)
+StitchingPlugin::CleanFrame()
 {
 	Clean(m_Data);
-
-	if (update)
-	{
-		m_DataActor3D->SetData(m_Data, false);
-
-		emit UpdateGUI();
-	}
 }
 void
 StitchingPlugin::Clean(vtkPolyData *toBeCleaned)
@@ -533,7 +539,7 @@ StitchingPlugin::InitializeHistory()
 }
 //----------------------------------------------------------------------------
 void
-StitchingPlugin::Stitch(bool update)
+StitchingPlugin::Stitch()
 {
 	// iterative closest point (ICP) transformation
 	vtkSmartPointer<ExtendedICPTransform> icp = 
@@ -626,6 +632,7 @@ StitchingPlugin::Stitch(bool update)
 	hli->setText(QDateTime::currentDateTime().time().toString("hh:mm:ss:zzz"));
 	hli->m_actor = vtkSmartPointer<ritk::RImageActorPipeline>::New();
 	hli->m_actor->SetData(m_PreviousFrame, true);
+	hli->m_actor->GetProperty()->SetPointSize(m_Widget->m_HorizontalSliderPointSize->value());
 	hli->m_transform = m_PreviousTransformMatrix;
 	m_Widget->m_ListWidgetHistory->insertItem(listSize, hli);
 	hli->setSelected(true);

@@ -7,10 +7,10 @@ class ClosestPointFinder
 {
 
 public:
-	ClosestPointFinder(int nrPoints) : m_NrOfPoints(nrPoints), m_Indices(new int[nrPoints]) {}
+	ClosestPointFinder(int nrPoints) : m_NrOfPoints(nrPoints), m_Indices(new unsigned short[nrPoints]) {}
 	virtual ~ClosestPointFinder() { delete[] m_Indices; }
 
-	virtual int* FindClosestPoints(Point6D* source) = 0;
+	virtual unsigned short* FindClosestPoints(Point6D* source) = 0;
 
 	virtual inline void SetTarget(Point6D* target) { m_Target = target; }
 	virtual inline void SetUseRGBData(bool use) { m_UseRGBData = use; }
@@ -22,7 +22,7 @@ public:
 protected:
 	int m_NrOfPoints;
 	int m_Metric;
-	int* m_Indices;
+	unsigned short* m_Indices;
 	bool m_UseRGBData;
 	double m_WeightRGB;
 	Point6D* m_Target;

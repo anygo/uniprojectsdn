@@ -183,6 +183,8 @@ ExtendedICPTransform::InternalUpdate()
 	accumulate->PostMultiply();
 
 	double p1[3], p2[3];
+	// for gpu based distance computation
+	float* distances = new float[m_NumLandmarks];
 
 	for (int i = 0; i < m_NumLandmarks; i++)
 	{
@@ -200,7 +202,7 @@ ExtendedICPTransform::InternalUpdate()
 	while (true)
 	{
 		// Set locators source points and perfom nearest neighbor search
-		int* indices = m_ClosestPointFinder->FindClosestPoints(m_SourcePoints);
+		unsigned short* indices = m_ClosestPointFinder->FindClosestPoints(m_SourcePoints);
 		for(int i = 0; i < m_NumLandmarks; ++i)
 		{
 			int index = indices[i];
@@ -226,15 +228,13 @@ ExtendedICPTransform::InternalUpdate()
 
 		// transform on gpu
 		if (m_ClosestPointFinder->usesGPU())
-		{
-			float* distances = new float[m_NumLandmarks];
+		{	
 			TransformPointsDirectlyOnGPU(m_NumLandmarks, m_LandmarkTransform->GetMatrix()->Element, m_SourcePoints, distances);
 			for(int i = 0; i < m_NumLandmarks; i++)
 			{
 				totaldist += distances[i];
 				b->SetPoint(i, m_SourcePoints[i].x, m_SourcePoints[i].y, m_SourcePoints[i].z);
-			}
-			delete [] distances;
+			}	
 
 		} else
 		{
@@ -247,8 +247,6 @@ ExtendedICPTransform::InternalUpdate()
 				totaldist += vtkMath::Distance2BetweenPoints(p1, p2);
 			}
 		}
-
-		
 
 		m_MeanDist = totaldist / (double)m_NumLandmarks;
 		std::cout << "\r  -> Iteration " << m_NumIter << ":\t mean distance = " << m_MeanDist << "           ";
@@ -263,11 +261,17 @@ ExtendedICPTransform::InternalUpdate()
 		a = b;
 		b = temp;
 
-		vtkPolyDataToPoint6DArray(a, m_SourcePoints);
+
+		if (!m_ClosestPointFinder->usesGPU()) {
+			vtkPolyDataToPoint6DArray(a, m_SourcePoints);
+		}
 	} 
 
 	std::cout << std::endl;
 
 	// now recover accumulated result
 	this->Matrix->DeepCopy(accumulate->GetMatrix());
+
+	// cleanup data structure for gpu version
+	delete [] distances;
 }

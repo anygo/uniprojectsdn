@@ -5,14 +5,14 @@
 #include "float.h"
 
 __global__
-void kernelWithoutRGB(int nrOfPoints, int metric, int* indices, Point6D* source, Point6D* target) 
+void kernelWithoutRGB(int nrOfPoints, int metric, unsigned short* indices, Point6D* source, Point6D* target) 
 {
 	// get source[tid] for this thread
 	int tid = blockIdx.x;
 
 	float minDist = FLT_MAX;
 
-	int idx = -1;
+	unsigned short idx = 0;
 
 
 	for (int i = 0; i < nrOfPoints; ++i)
@@ -40,14 +40,14 @@ void kernelWithoutRGB(int nrOfPoints, int metric, int* indices, Point6D* source,
 }
 
 __global__
-void kernelWithRGB(int nrOfPoints, int metric, float weightRGB, int* indices, Point6D* source, Point6D* target) 
+void kernelWithRGB(int nrOfPoints, int metric, float weightRGB, unsigned short* indices, Point6D* source, Point6D* target) 
 {
 	// get source[tid] for this thread
 	int tid = blockIdx.x;
 
 	float minDist = FLT_MAX;
 
-	int idx = -1;
+	unsigned short idx = 0;
 
 
 	for (int i = 0; i < nrOfPoints; ++i)

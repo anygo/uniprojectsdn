@@ -10,7 +10,7 @@ class ClosestPointFinderBruteForceCPU : public ClosestPointFinder
 public:
 	ClosestPointFinderBruteForceCPU(int NrOfPoints, bool multithreaded) : m_Multithreaded(multithreaded), ClosestPointFinder(NrOfPoints) { }
 
-	int* FindClosestPoints(Point6D *source);
+	unsigned short* FindClosestPoints(Point6D *source);
 
 protected:
 	bool m_Multithreaded;
@@ -28,7 +28,7 @@ public:
 					int metric,
 					bool useRGBData,
 					double weightRGB,
-					int* indices,
+					unsigned short* indices,
 					Point6D* source,
 					Point6D* target
 				  ) 
@@ -53,7 +53,7 @@ protected:
 	int m_Metric;
 	bool m_UseRGBData;
 	double m_WeightRGB;
-	int* m_Indices;
+	unsigned short* m_Indices;
 	Point6D* m_Source;
 	Point6D* m_Target;
 };

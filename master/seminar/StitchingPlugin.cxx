@@ -59,12 +59,9 @@ StitchingPlugin::StitchingPlugin()
 	// add data actor
 	m_DataActor3D = vtkSmartPointer<ritk::RImageActorPipeline>::New();	
 	m_DataActor3D->SetVisualizationMode(ritk::RImageActorPipeline::RGB);
-	//m_Widget->m_VisualizationWidget3D->AddActor(m_DataActor3D);
 
 	// initialize member objects
 	m_Data =					vtkSmartPointer<vtkPolyData>::New();
-	m_PreviousFrame =			vtkSmartPointer<vtkPolyData>::New();
-	m_PreviousTransformMatrix =	vtkSmartPointer<vtkMatrix4x4>::New();
 	m_FramesProcessed = 0;
 }
 StitchingPlugin::~StitchingPlugin()
@@ -223,12 +220,7 @@ StitchingPlugin::DeleteSelectedActors()
 
 	// update previousTransform and previousFrame to be the last still existing frame in the history list
 	int size = m_Widget->m_ListWidgetHistory->count();
-	if (size > 0)
-	{
-		HistoryListItem* hli = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(size - 1));
-		m_PreviousFrame->DeepCopy(hli->m_actor->GetData());
-		m_PreviousTransformMatrix->DeepCopy(hli->m_transform);
-	} else
+	if (size == 0)
 	{
 		m_Widget->m_PushButtonLoadCleanStitch->setEnabled(false);
 		m_Widget->m_PushButtonDelaunay2D->setEnabled(false);
@@ -298,11 +290,13 @@ StitchingPlugin::MergeSelectedActors()
 	hli->m_actor->GetData()->SetVerts(cells);
 	hli->m_actor->GetData()->Update();
 
+	// and add the new merged history entry at a reasonable position
+	m_Widget->m_ListWidgetHistory->insertItem(firstIndex, hli);
+
 	// clean the selected history entries
 	DeleteSelectedActors();
 
-	// and add the new merged history entry at a reasonable position
-	m_Widget->m_ListWidgetHistory->insertItem(firstIndex, hli);
+	// set the new element as selected
 	hli->setSelected(true);
 }
 void
@@ -349,7 +343,8 @@ StitchingPlugin::ProcessEvent(ritk::Event::Pointer EventP)
 
 		// enable buttons (ProcessEvent has to be called at least once before
 		// we can load the data into our plugin)
-		m_Widget->m_PushButtonInitialize->setEnabled(true);
+		if (!m_Widget->m_PushButtonInitialize->isEnabled())
+			m_Widget->m_PushButtonInitialize->setEnabled(true);
 		
 		emit UpdateGUI();
 	}
@@ -408,7 +403,7 @@ void
 StitchingPlugin::LoadFrame()
 {
 	m_DataActor3D->SetData(m_CurrentFrame);
-	m_Data->ShallowCopy(m_DataActor3D->GetData());
+	m_Data->DeepCopy(m_DataActor3D->GetData());
 
 	// remove invalid points
 	ExtractValidPoints();
@@ -510,10 +505,6 @@ StitchingPlugin::Clean(vtkPolyData *toBeCleaned)
 void
 StitchingPlugin::InitializeHistory()
 {
-	// copy data
-	m_PreviousFrame->DeepCopy(m_Data);
-	m_PreviousTransformMatrix->Identity();
-
 	// clear history
 	m_Widget->m_ListWidgetHistory->selectAll();
 	DeleteSelectedActors();
@@ -522,13 +513,13 @@ StitchingPlugin::InitializeHistory()
 	HistoryListItem* hle = new HistoryListItem();
 	hle->setText(QDateTime::currentDateTime().time().toString("hh:mm:ss:zzz"));
 	hle->m_actor = vtkSmartPointer<ritk::RImageActorPipeline>::New();
-	hle->m_actor->SetData(m_PreviousFrame, true);
-	hle->m_transform = m_PreviousTransformMatrix;
+	hle->m_actor->SetData(m_Data, true);
+	hle->m_transform = vtkSmartPointer<vtkMatrix4x4>::New();
+	hle->m_transform->Identity();
 	m_Widget->m_ListWidgetHistory->insertItem(0, hle);
 	hle->setSelected(true);
 
 	// enable buttons
-	//m_Widget->m_PushButtonStitch->setEnabled(true);
 	m_Widget->m_PushButtonDelaunay2D->setEnabled(true);
 	m_Widget->m_PushButtonSaveVTKData->setEnabled(true);
 	m_Widget->m_PushButtonLoadCleanStitch->setEnabled(true);
@@ -545,12 +536,22 @@ StitchingPlugin::Stitch()
 	vtkSmartPointer<ExtendedICPTransform> icp = 
 		vtkSmartPointer<ExtendedICPTransform>::New();
 
+
+	// get last entry in history to determine previousTransformationMatrix and previousFrame
+	int listSize = m_Widget->m_ListWidgetHistory->count();
+	if (listSize == 0)
+	{
+		std::cout << "Something went wrong, please initialize the history first!" << std::endl;
+	}
+		
+	HistoryListItem* hli_last = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(listSize - 1));
+
 	if (m_Widget->m_CheckBoxUsePreviousTransformation->isChecked())
 	{
 		// start with previous transform
 		vtkSmartPointer<vtkTransform> prevTrans =
 			vtkSmartPointer<vtkTransform>::New();
-		prevTrans->SetMatrix(m_PreviousTransformMatrix);
+		prevTrans->SetMatrix(hli_last->m_transform);
 		prevTrans->Modified();
 
 		vtkSmartPointer<vtkTransformPolyDataFilter> previousTransformFilter =
@@ -596,7 +597,7 @@ StitchingPlugin::Stitch()
 
 	// configure icp
 	icp->SetSource(voi);
-	icp->SetTarget(m_PreviousFrame);
+	icp->SetTarget(hli_last->m_actor->GetData());
 	icp->GetLandmarkTransform()->SetModeToRigidBody();
 	icp->SetMaxMeanDist(m_Widget->m_DoubleSpinBoxMaxRMS->value());
 	icp->SetNumLandmarks(m_Widget->m_SpinBoxLandmarks->value());
@@ -607,8 +608,7 @@ StitchingPlugin::Stitch()
 
 	// get the resulting transformation matrix (this matrix takes the source
 	// points to the target points)
-	vtkSmartPointer<vtkMatrix4x4> m = icp->GetMatrix();
-	m_PreviousTransformMatrix->DeepCopy(m);
+	//vtkSmartPointer<vtkMatrix4x4> m = icp->GetMatrix();
 	//std::cout << "ICP transform: " << *m << std::endl;
 
 	// update debug information in GUI
@@ -623,17 +623,14 @@ StitchingPlugin::Stitch()
 	icpTransformFilter->SetTransform(icp);
 	icpTransformFilter->Update();
 
-	// update m_PreviousFrame
-	m_PreviousFrame->ShallowCopy(icpTransformFilter->GetOutput());
-
 	// create new history entry
-	int listSize = m_Widget->m_ListWidgetHistory->count();
 	HistoryListItem* hli = new HistoryListItem();
 	hli->setText(QDateTime::currentDateTime().time().toString("hh:mm:ss:zzz"));
 	hli->m_actor = vtkSmartPointer<ritk::RImageActorPipeline>::New();
-	hli->m_actor->SetData(m_PreviousFrame, true);
+	hli->m_actor->SetData(icpTransformFilter->GetOutput(), true);
 	hli->m_actor->GetProperty()->SetPointSize(m_Widget->m_HorizontalSliderPointSize->value());
-	hli->m_transform = m_PreviousTransformMatrix;
+	hli->m_transform = vtkSmartPointer<vtkMatrix4x4>::New();
+	hli->m_transform->DeepCopy(icp->GetMatrix());
 	m_Widget->m_ListWidgetHistory->insertItem(listSize, hli);
 	hli->setSelected(true);
 

@@ -18,6 +18,11 @@ Point6D* dev_target;
 
 float* dev_distances;
 float* dev_transformationMatrix;
+
+// we have to copy the source points only once, because they will be
+// transformed directly on the gpu! unfortunately, we do not yet have
+// the source points, hence we use that boolean to determine whether
+// the data is already on the gpu (after 1st iteration)
 bool sourceCopied;
 	
 
@@ -73,7 +78,6 @@ void FindClosestPointsCUDA(int nrOfPoints, int metric, bool useRGBData, double w
 extern "C"
 void TransformPointsDirectlyOnGPU(int nrOfPoints, double transformationMatrix[4][4], Point6D* writeTo, float* distances)
 {
-
 	// allocate memory for transformation matrix (will be stored linearly) and copy it
 	float tmp[16];
 	tmp[0] = (float)transformationMatrix[0][0];

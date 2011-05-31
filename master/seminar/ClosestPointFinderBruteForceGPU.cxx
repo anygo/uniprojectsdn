@@ -9,9 +9,9 @@ extern "C"
 void cleanupGPU(); 
 
 extern "C"
-void FindClosestPointsCUDA(int nrOfPoints, int metric, bool useRGBData, double weightRGB, int* indices, Point6D* source);
+void FindClosestPointsCUDA(int nrOfPoints, int metric, bool useRGBData, double weightRGB, unsigned short* indices, Point6D* source);
 
-int*
+unsigned short*
 ClosestPointFinderBruteForceGPU::FindClosestPoints(Point6D *source)
 {
 	FindClosestPointsCUDA(m_NrOfPoints, m_Metric, m_UseRGBData, m_WeightRGB, m_Indices, source);

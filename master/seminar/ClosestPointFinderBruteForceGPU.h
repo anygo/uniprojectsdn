@@ -11,7 +11,7 @@ public:
 	~ClosestPointFinderBruteForceGPU();
 
 	void SetTarget(Point6D* target); 
-	int* FindClosestPoints(Point6D *source);
+	unsigned short* FindClosestPoints(Point6D *source);
 	inline bool usesGPU() { return true; }
 
 };

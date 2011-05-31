@@ -3,7 +3,7 @@
 #include <limits>
 #include <iostream>
 
-int*
+unsigned short*
 ClosestPointFinderBruteForceCPU::FindClosestPoints(Point6D *source) {
 	
 	// create some worker threads and do the job

@@ -45,9 +45,6 @@ signals:
 	void UpdateGUI();
 
 protected slots:
-	void LoadFrame();
-	void CleanFrame();
-	void Stitch();
 	void LoadCleanStitch();
 	void LoadCleanInitialize();
 	void Delaunay2D();
@@ -60,6 +57,8 @@ protected slots:
 	void DeleteSelectedActors();
 	void MergeSelectedActors();
 	void CleanSelectedActors();
+	void StitchSelectedActors();
+	void UndoTransformForSelectedActors();
 	void HighlightActor(QListWidgetItem*);
 
 
@@ -70,8 +69,15 @@ protected:
 	void ExtractValidPoints();
 	void Clip(vtkPolyData *toBeClipped);
 	void Clean(vtkPolyData *toBeCleaned);
+	void LoadFrame();
+	void CleanFrame();
+	void Stitch(vtkPolyData* toBeStitched, vtkPolyData* previousFrame,
+						vtkMatrix4x4* previousTransformationMatrix,
+						vtkPolyData* outputStitchedPolyData,
+						vtkMatrix4x4* outputTransformationMatrix);
 
 	int m_FramesProcessed;
+	QMutex m_Mutex;
 
 	// our members
 	vtkSmartPointer<ritk::RImageActorPipeline>	m_DataActor3D;

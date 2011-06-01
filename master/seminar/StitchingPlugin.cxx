@@ -53,8 +53,9 @@ StitchingPlugin::StitchingPlugin()
 	connect(m_Widget->m_PushButtonHistoryDelete,			SIGNAL(clicked()),								this, SLOT(DeleteSelectedActors()));
 	connect(m_Widget->m_PushButtonHistoryMerge,				SIGNAL(clicked()),								this, SLOT(MergeSelectedActors()));
 	connect(m_Widget->m_PushButtonHistoryClean,				SIGNAL(clicked()),								this, SLOT(CleanSelectedActors()));
+	connect(m_Widget->m_PushButtonHistoryStitchSelection,	SIGNAL(clicked()),								this, SLOT(StitchSelectedActors()));
+	connect(m_Widget->m_PushButtonHistoryUndoTransform,		SIGNAL(clicked()),								this, SLOT(UndoTransformForSelectedActors()));
 	connect(m_Widget->m_ListWidgetHistory,					SIGNAL(itemDoubleClicked(QListWidgetItem*)),	this, SLOT(HighlightActor(QListWidgetItem*)));
-	
 		
 	// add data actor
 	m_DataActor3D = vtkSmartPointer<ritk::RImageActorPipeline>::New();	
@@ -318,12 +319,67 @@ StitchingPlugin::CleanSelectedActors()
 
 	emit UpdateGUI();
 }
+void
+StitchingPlugin::StitchSelectedActors()
+{
+	// stitch all selected actors to previous actor in list
+	// ignore the first one, because it can not be stitched to anything
+	for (int i = 1; i < m_Widget->m_ListWidgetHistory->count(); ++i)
+	{
+		HistoryListItem* hli = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
+		if (hli->isSelected())
+		{
+			HistoryListItem* hli_prev = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i - 1));
+			Stitch(hli->m_actor->GetData(), hli_prev->m_actor->GetData(), hli_prev->m_transform, hli->m_actor->GetData(), hli->m_transform);
+		}
+	}
+
+	emit UpdateGUI();
+}
+void
+StitchingPlugin::UndoTransformForSelectedActors()
+{
+	// take the inverse of the transform s.t. we get the original data back (approximately)
+	for (int i = 1; i < m_Widget->m_ListWidgetHistory->count(); ++i)
+	{
+		HistoryListItem* hli = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
+		if (hli->isSelected())
+		{
+			// invert the transform
+			hli->m_transform->Invert();
+
+			// set up transform
+			vtkSmartPointer<vtkTransform> inverseTransform =
+				vtkSmartPointer<vtkTransform>::New();
+
+			inverseTransform->SetMatrix(hli->m_transform);
+			inverseTransform->Modified();
+
+			// set up transform filter
+			vtkSmartPointer<vtkTransformPolyDataFilter> inverseTransformFilter =
+				vtkSmartPointer<vtkTransformPolyDataFilter>::New();
+
+			inverseTransformFilter->SetInput(hli->m_actor->GetData());
+			inverseTransformFilter->SetTransform(inverseTransform);
+			inverseTransformFilter->Modified();
+			inverseTransformFilter->Update();
+
+			// update the data
+			hli->m_actor->GetData()->DeepCopy(inverseTransformFilter->GetOutput());
+
+			// set transform to identity
+			hli->m_transform->Identity();
+		}
+	}
+
+	emit UpdateGUI();
+}
 //----------------------------------------------------------------------------
 void
 StitchingPlugin::ProcessEvent(ritk::Event::Pointer EventP)
 {
 	// New frame event
-	if ( EventP->type() == ritk::NewFrameEvent::EventType )
+	if (EventP->type() == ritk::NewFrameEvent::EventType)
 	{
 		// Cast the event
 		ritk::NewFrameEvent::Pointer NewFrameEventP = qSharedPointerDynamicCast<ritk::NewFrameEvent, ritk::Event>(EventP);
@@ -338,7 +394,23 @@ StitchingPlugin::ProcessEvent(ritk::Event::Pointer EventP)
 		// run autostitching for each frame if checkbox is checked
 		if (m_Widget->m_SpinBoxFrameStep->value() != 0 && ++m_FramesProcessed % m_Widget->m_SpinBoxFrameStep->value() == 0)
 		{
-			LoadCleanStitch();
+			// skip frame if plugin is still working
+			if (m_Mutex.tryLock())
+			{
+				LoadFrame();
+				//CleanFrame();
+
+				// add next actor
+				HistoryListItem* hli = new HistoryListItem();
+				hli->setText(QDateTime::currentDateTime().time().toString("hh:mm:ss:zzz"));
+				hli->m_actor = vtkSmartPointer<ritk::RImageActorPipeline>::New();
+				hli->m_actor->SetData(m_Data, true);
+				hli->m_transform = vtkSmartPointer<vtkMatrix4x4>::New();
+				hli->m_transform->Identity();
+				m_Widget->m_ListWidgetHistory->insertItem(0, hli);
+				//hli->setSelected(true);
+				m_Mutex.unlock();
+			}
 		}
 
 		// enable buttons (ProcessEvent has to be called at least once before
@@ -360,17 +432,9 @@ StitchingPlugin::LoadCleanInitialize()
 	QTime t = QTime::currentTime();
 	t.start();
 
-	//t.start();
 	LoadFrame();
-	//std::cout << "LoadFrame():     " << t.elapsed() << " ms" << std::endl;
-
-	//t.start();
 	CleanFrame();
-	//std::cout << "CleanFrame():    " << t.elapsed() << " ms" << std::endl;
-
-	//t.start();
 	InitializeHistory();
-	//std::cout << "Initialize():    " << t.elapsed() << " ms" << std::endl;
 
 	m_Widget->m_LabelStitchTime->setText(QString::number(t.elapsed()) + " ms");
 
@@ -382,18 +446,31 @@ StitchingPlugin::LoadCleanStitch()
 	QTime t = QTime::currentTime();
 	t.start();
 
-	//t.start();
+	// get last entry in history to determine previousTransformationMatrix and previousFrame
+	int listSize = m_Widget->m_ListWidgetHistory->count();
+	if (listSize == 0)
+	{
+		std::cout << "Please initialize the history first!" << std::endl;
+	}		
+	HistoryListItem* hli_last = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(listSize - 1));
+
+	// load and clean the new frame
 	LoadFrame();
-	//std::cout << "LoadFrame():     " << t.elapsed() << " ms" << std::endl;
-
-	//t.start();
 	CleanFrame();
-	//std::cout << "CleanFrame():    " << t.elapsed() << " ms" << std::endl;
 
-	//t.start();
-	Stitch();
-	//std::cout << "Stitch(): " << t.elapsed() << " ms" << std::endl;
+	// create new history entry
+	HistoryListItem* hli = new HistoryListItem();
+	hli->setText(QDateTime::currentDateTime().time().toString("hh:mm:ss:zzz"));
+	hli->m_actor = vtkSmartPointer<ritk::RImageActorPipeline>::New();
+	hli->m_actor->GetProperty()->SetPointSize(m_Widget->m_HorizontalSliderPointSize->value());
+	hli->m_transform = vtkSmartPointer<vtkMatrix4x4>::New();
+	m_Widget->m_ListWidgetHistory->insertItem(listSize, hli);
+	hli->setSelected(true);
 
+	// stitch to just loaded frame to the previous frame (given by last history entry)
+	Stitch(m_Data, hli_last->m_actor->GetData(), hli_last->m_transform, hli->m_actor->GetData(), hli->m_transform);
+
+	// update label (Runtime)
 	m_Widget->m_LabelStitchTime->setText(QString::number(t.elapsed()) + " ms");
 
 	emit UpdateGUI();
@@ -510,14 +587,14 @@ StitchingPlugin::InitializeHistory()
 	DeleteSelectedActors();
 
 	// add first actor
-	HistoryListItem* hle = new HistoryListItem();
-	hle->setText(QDateTime::currentDateTime().time().toString("hh:mm:ss:zzz"));
-	hle->m_actor = vtkSmartPointer<ritk::RImageActorPipeline>::New();
-	hle->m_actor->SetData(m_Data, true);
-	hle->m_transform = vtkSmartPointer<vtkMatrix4x4>::New();
-	hle->m_transform->Identity();
-	m_Widget->m_ListWidgetHistory->insertItem(0, hle);
-	hle->setSelected(true);
+	HistoryListItem* hli = new HistoryListItem();
+	hli->setText(QDateTime::currentDateTime().time().toString("hh:mm:ss:zzz"));
+	hli->m_actor = vtkSmartPointer<ritk::RImageActorPipeline>::New();
+	hli->m_actor->SetData(m_Data, true);
+	hli->m_transform = vtkSmartPointer<vtkMatrix4x4>::New();
+	hli->m_transform->Identity();
+	m_Widget->m_ListWidgetHistory->insertItem(0, hli);
+	hli->setSelected(true);
 
 	// enable buttons
 	m_Widget->m_PushButtonDelaunay2D->setEnabled(true);
@@ -530,44 +607,37 @@ StitchingPlugin::InitializeHistory()
 }
 //----------------------------------------------------------------------------
 void
-StitchingPlugin::Stitch()
+StitchingPlugin::Stitch(vtkPolyData* toBeStitched, vtkPolyData* previousFrame,
+						vtkMatrix4x4* previousTransformationMatrix,
+						vtkPolyData* outputStitchedPolyData,
+						vtkMatrix4x4* outputTransformationMatrix)
 {
 	// iterative closest point (ICP) transformation
 	vtkSmartPointer<ExtendedICPTransform> icp = 
 		vtkSmartPointer<ExtendedICPTransform>::New();
-
-
-	// get last entry in history to determine previousTransformationMatrix and previousFrame
-	int listSize = m_Widget->m_ListWidgetHistory->count();
-	if (listSize == 0)
-	{
-		std::cout << "Something went wrong, please initialize the history first!" << std::endl;
-	}
-		
-	HistoryListItem* hli_last = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(listSize - 1));
 
 	if (m_Widget->m_CheckBoxUsePreviousTransformation->isChecked())
 	{
 		// start with previous transform
 		vtkSmartPointer<vtkTransform> prevTrans =
 			vtkSmartPointer<vtkTransform>::New();
-		prevTrans->SetMatrix(hli_last->m_transform);
+		prevTrans->SetMatrix(previousTransformationMatrix);
 		prevTrans->Modified();
 
 		vtkSmartPointer<vtkTransformPolyDataFilter> previousTransformFilter =
 			vtkSmartPointer<vtkTransformPolyDataFilter>::New();
 
-		previousTransformFilter->SetInput(m_Data);
+		previousTransformFilter->SetInput(toBeStitched);
 		previousTransformFilter->SetTransform(prevTrans);
 		previousTransformFilter->Modified();
 		previousTransformFilter->Update();
-		m_Data->DeepCopy(previousTransformFilter->GetOutput());
+		toBeStitched->DeepCopy(previousTransformFilter->GetOutput());
 	}
 
 	// get a subvolume of the original data
 	vtkSmartPointer<vtkPolyData> voi = 
 		vtkSmartPointer<vtkPolyData>::New();
-	voi->DeepCopy(m_Data);
+	voi->DeepCopy(toBeStitched);
 	Clip(voi);
 
 	if (voi->GetNumberOfPoints() < m_Widget->m_SpinBoxLandmarks->value())
@@ -597,7 +667,7 @@ StitchingPlugin::Stitch()
 
 	// configure icp
 	icp->SetSource(voi);
-	icp->SetTarget(hli_last->m_actor->GetData());
+	icp->SetTarget(previousFrame);
 	icp->GetLandmarkTransform()->SetModeToRigidBody();
 	icp->SetMaxMeanDist(m_Widget->m_DoubleSpinBoxMaxRMS->value());
 	icp->SetNumLandmarks(m_Widget->m_SpinBoxLandmarks->value());
@@ -606,33 +676,22 @@ StitchingPlugin::Stitch()
 	icp->Modified();
 	icp->Update();
 
-	// get the resulting transformation matrix (this matrix takes the source
-	// points to the target points)
-	//vtkSmartPointer<vtkMatrix4x4> m = icp->GetMatrix();
-	//std::cout << "ICP transform: " << *m << std::endl;
+	// update output parameter
+	outputTransformationMatrix->DeepCopy(icp->GetMatrix());
 
 	// update debug information in GUI
 	m_Widget->m_LabelICPIterations->setText(QString::number(icp->GetNumIter()));
 	m_Widget->m_LabelICPError->setText(QString::number(icp->GetMeanDist()));
 
-	// do the transform
+	// perform the transform
 	vtkSmartPointer<vtkTransformPolyDataFilter> icpTransformFilter =
 		vtkSmartPointer<vtkTransformPolyDataFilter>::New();
 
-	icpTransformFilter->SetInput(m_Data);
+	icpTransformFilter->SetInput(toBeStitched);
 	icpTransformFilter->SetTransform(icp);
 	icpTransformFilter->Update();
 
-	// create new history entry
-	HistoryListItem* hli = new HistoryListItem();
-	hli->setText(QDateTime::currentDateTime().time().toString("hh:mm:ss:zzz"));
-	hli->m_actor = vtkSmartPointer<ritk::RImageActorPipeline>::New();
-	hli->m_actor->SetData(icpTransformFilter->GetOutput(), true);
-	hli->m_actor->GetProperty()->SetPointSize(m_Widget->m_HorizontalSliderPointSize->value());
-	hli->m_transform = vtkSmartPointer<vtkMatrix4x4>::New();
-	hli->m_transform->DeepCopy(icp->GetMatrix());
-	m_Widget->m_ListWidgetHistory->insertItem(listSize, hli);
-	hli->setSelected(true);
+	outputStitchedPolyData->DeepCopy(icpTransformFilter->GetOutput());
 
 	// cleanup
 	delete cpf; // delete ClosestPointFinder

@@ -209,6 +209,8 @@ StitchingPlugin::DeleteSelectedActors()
 		{
 			m_Widget->m_VisualizationWidget3D->RemoveActor(hli->m_actor);
 			toDelete.push_back(i);
+
+			std::cout << "deleting actor " << i << std::endl;
 		}
 	}
 
@@ -268,6 +270,8 @@ StitchingPlugin::MergeSelectedActors()
 			{
 				firstIndex = i;
 			}
+
+			std::cout << "merging actor " << i << std::endl;
 		}
 	}
 
@@ -311,6 +315,8 @@ StitchingPlugin::CleanSelectedActors()
 		{
 			Clean(hli->m_actor->GetData());
 			numPoints += hli->m_actor->GetData()->GetNumberOfPoints();
+
+			std::cout << "cleaning actor " << i << std::endl;
 		}
 	}
 
@@ -331,6 +337,7 @@ StitchingPlugin::StitchSelectedActors()
 		{
 			HistoryListItem* hli_prev = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i - 1));
 			Stitch(hli->m_actor->GetData(), hli_prev->m_actor->GetData(), hli_prev->m_transform, hli->m_actor->GetData(), hli->m_transform);
+			std::cout << "stitching actor " << i << std::endl;
 		}
 	}
 
@@ -369,6 +376,8 @@ StitchingPlugin::UndoTransformForSelectedActors()
 
 			// set transform to identity
 			hli->m_transform->Identity();
+
+			std::cout << "undoing transform for actor " << i << std::endl;
 		}
 	}
 
@@ -389,28 +398,31 @@ StitchingPlugin::ProcessEvent(ritk::Event::Pointer EventP)
 			return;
 		}
 
-		m_CurrentFrame = NewFrameEventP->RImage;
-
-		// run autostitching for each frame if checkbox is checked
-		if (m_Widget->m_SpinBoxFrameStep->value() != 0 && ++m_FramesProcessed % m_Widget->m_SpinBoxFrameStep->value() == 0)
+		// skip frame if plugin is still working
+		if (m_Mutex.tryLock())
 		{
-			// skip frame if plugin is still working
-			if (m_Mutex.tryLock())
+			m_CurrentFrame = NewFrameEventP->RImage;
+
+			// run autostitching for each frame if checkbox is checked
+			if (m_Widget->m_SpinBoxFrameStep->value() != 0 && ++m_FramesProcessed % m_Widget->m_SpinBoxFrameStep->value() == 0)
 			{
 				LoadFrame();
 				//CleanFrame();
 
 				// add next actor
+				int listSize = m_Widget->m_ListWidgetHistory->count();
 				HistoryListItem* hli = new HistoryListItem();
 				hli->setText(QDateTime::currentDateTime().time().toString("hh:mm:ss:zzz"));
 				hli->m_actor = vtkSmartPointer<ritk::RImageActorPipeline>::New();
 				hli->m_actor->SetData(m_Data, true);
 				hli->m_transform = vtkSmartPointer<vtkMatrix4x4>::New();
 				hli->m_transform->Identity();
-				m_Widget->m_ListWidgetHistory->insertItem(0, hli);
+				m_Widget->m_ListWidgetHistory->insertItem(listSize, hli);
 				//hli->setSelected(true);
-				m_Mutex.unlock();
 			}
+
+			// unlock mutex
+			m_Mutex.unlock();
 		}
 
 		// enable buttons (ProcessEvent has to be called at least once before
@@ -469,6 +481,12 @@ StitchingPlugin::LoadCleanStitch()
 
 	// stitch to just loaded frame to the previous frame (given by last history entry)
 	Stitch(m_Data, hli_last->m_actor->GetData(), hli_last->m_transform, hli->m_actor->GetData(), hli->m_transform);
+
+	// also include previous transform into the transform to make "undo" possible
+	if (m_Widget->m_CheckBoxUsePreviousTransformation->isChecked())
+	{
+		vtkMatrix4x4::Multiply4x4(hli->m_transform, hli_last->m_transform, hli->m_transform);
+	}
 
 	// update label (Runtime)
 	m_Widget->m_LabelStitchTime->setText(QString::number(t.elapsed()) + " ms");

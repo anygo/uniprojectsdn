@@ -19,7 +19,7 @@ vtkStandardNewMacro(ExtendedICPTransform);
 
 
 extern "C"
-void TransformPointsDirectlyOnGPU(int nrOfPoints, double transformationMatrix[4][4], Point6D* writeTo, float* distances);
+void TransformPointsDirectlyOnGPU(int nrOfPoints, double transformationMatrix[4][4], PointCoords* writeTo, float* distances);
 
 //----------------------------------------------------------------------------
 ExtendedICPTransform::ExtendedICPTransform() : vtkLinearTransform()
@@ -107,7 +107,7 @@ ExtendedICPTransform::PrintSelf(ostream& os, vtkIndent indent)
 }
 //----------------------------------------------------------------------------
 void
-ExtendedICPTransform::vtkPolyDataToPoint6DArray(vtkSmartPointer<vtkPoints> poly, Point6D *point)
+ExtendedICPTransform::vtkPolyDataToPointCoords(vtkSmartPointer<vtkPoints> poly, PointCoords *point)
 {
 	for (int i = 0; i < m_NumLandmarks; ++i)
 	{
@@ -117,7 +117,7 @@ ExtendedICPTransform::vtkPolyDataToPoint6DArray(vtkSmartPointer<vtkPoints> poly,
 	}
 }
 void
-ExtendedICPTransform::vtkPolyDataToPoint6DArray()
+ExtendedICPTransform::vtkPolyDataToPointCoordsAndColors()
 {
 	int stepSource = 1;
 	int stepTarget = 1;
@@ -131,27 +131,29 @@ ExtendedICPTransform::vtkPolyDataToPoint6DArray()
 		stepTarget = m_Target->GetNumberOfPoints() / m_NumLandmarks;
 	}
 
-	m_SourcePoints = new Point6D[m_NumLandmarks];
-	m_TargetPoints = new Point6D[m_NumLandmarks];
+	m_SourceCoords = new PointCoords[m_NumLandmarks];
+	m_SourceColors = new PointColors[m_NumLandmarks];
+	m_TargetCoords = new PointCoords[m_NumLandmarks];
+	m_TargetColors = new PointColors[m_NumLandmarks];
 
 	for (int i = 0, j = 0; i < m_NumLandmarks; ++i, j += stepSource)
 	{
-		m_SourcePoints[i].x = m_Source->GetPoint(static_cast<vtkIdType>(j))[0];
-		m_SourcePoints[i].y = m_Source->GetPoint(static_cast<vtkIdType>(j))[1];
-		m_SourcePoints[i].z = m_Source->GetPoint(static_cast<vtkIdType>(j))[2];
-		m_SourcePoints[i].r = m_Source->GetPointData()->GetScalars()->GetTuple(static_cast<vtkIdType>(j))[0];
-		m_SourcePoints[i].g = m_Source->GetPointData()->GetScalars()->GetTuple(static_cast<vtkIdType>(j))[1];
-		m_SourcePoints[i].b = m_Source->GetPointData()->GetScalars()->GetTuple(static_cast<vtkIdType>(j))[2];
+		m_SourceCoords[i].x = m_Source->GetPoint(static_cast<vtkIdType>(j))[0];
+		m_SourceCoords[i].y = m_Source->GetPoint(static_cast<vtkIdType>(j))[1];
+		m_SourceCoords[i].z = m_Source->GetPoint(static_cast<vtkIdType>(j))[2];
+		m_SourceColors[i].r = m_Source->GetPointData()->GetScalars()->GetTuple(static_cast<vtkIdType>(j))[0];
+		m_SourceColors[i].g = m_Source->GetPointData()->GetScalars()->GetTuple(static_cast<vtkIdType>(j))[1];
+		m_SourceColors[i].b = m_Source->GetPointData()->GetScalars()->GetTuple(static_cast<vtkIdType>(j))[2];
 	}
 
 	for (int i = 0, j = 0; i < m_NumLandmarks; ++i, j += stepTarget)
 	{
-		m_TargetPoints[i].x = m_Target->GetPoint(static_cast<vtkIdType>(j))[0];
-		m_TargetPoints[i].y = m_Target->GetPoint(static_cast<vtkIdType>(j))[1];
-		m_TargetPoints[i].z = m_Target->GetPoint(static_cast<vtkIdType>(j))[2];
-		m_TargetPoints[i].r = m_Target->GetPointData()->GetScalars()->GetTuple(static_cast<vtkIdType>(j))[0];
-		m_TargetPoints[i].g = m_Target->GetPointData()->GetScalars()->GetTuple(static_cast<vtkIdType>(j))[1];
-		m_TargetPoints[i].b = m_Target->GetPointData()->GetScalars()->GetTuple(static_cast<vtkIdType>(j))[2];
+		m_TargetCoords[i].x = m_Target->GetPoint(static_cast<vtkIdType>(j))[0];
+		m_TargetCoords[i].y = m_Target->GetPoint(static_cast<vtkIdType>(j))[1];
+		m_TargetCoords[i].z = m_Target->GetPoint(static_cast<vtkIdType>(j))[2];
+		m_TargetColors[i].r = m_Target->GetPointData()->GetScalars()->GetTuple(static_cast<vtkIdType>(j))[0];
+		m_TargetColors[i].g = m_Target->GetPointData()->GetScalars()->GetTuple(static_cast<vtkIdType>(j))[1];
+		m_TargetColors[i].b = m_Target->GetPointData()->GetScalars()->GetTuple(static_cast<vtkIdType>(j))[2];
 	}
 }
 //----------------------------------------------------------------------------
@@ -160,10 +162,10 @@ ExtendedICPTransform::InternalUpdate()
 {
 
 	// transform vtkPolyData in our own structures
-	vtkPolyDataToPoint6DArray();
+	vtkPolyDataToPointCoordsAndColors();
 
 	// configure ClosestPointFinder
-	m_ClosestPointFinder->SetTarget(m_TargetPoints);
+	m_ClosestPointFinder->SetTarget(m_TargetCoords, m_TargetColors);
 	
 	// allocate some points used for icp
 	vtkSmartPointer<vtkPoints> points1 =
@@ -188,7 +190,7 @@ ExtendedICPTransform::InternalUpdate()
 
 	for (int i = 0; i < m_NumLandmarks; i++)
 	{
-		points1->SetPoint(static_cast<vtkIdType>(i), m_SourcePoints[i].x, m_SourcePoints[i].y, m_SourcePoints[i].z);
+		points1->SetPoint(static_cast<vtkIdType>(i), m_SourceCoords[i].x, m_SourceCoords[i].y, m_SourceCoords[i].z);
 	}
 
 	// go
@@ -202,11 +204,11 @@ ExtendedICPTransform::InternalUpdate()
 	while (true)
 	{
 		// Set locators source points and perfom nearest neighbor search
-		unsigned short* indices = m_ClosestPointFinder->FindClosestPoints(m_SourcePoints);
+		unsigned short* indices = m_ClosestPointFinder->FindClosestPoints(m_SourceCoords, m_SourceColors);
 		for(int i = 0; i < m_NumLandmarks; ++i)
 		{
 			int index = indices[i];
-			closestp->SetPoint(i, m_TargetPoints[index].x, m_TargetPoints[index].y, m_TargetPoints[index].z );
+			closestp->SetPoint(i, m_TargetCoords[index].x, m_TargetCoords[index].y, m_TargetCoords[index].z );
 		}
 
 		// build the landmark transform
@@ -229,11 +231,11 @@ ExtendedICPTransform::InternalUpdate()
 		// transform on gpu
 		if (m_ClosestPointFinder->usesGPU())
 		{	
-			TransformPointsDirectlyOnGPU(m_NumLandmarks, m_LandmarkTransform->GetMatrix()->Element, m_SourcePoints, distances);
+			TransformPointsDirectlyOnGPU(m_NumLandmarks, m_LandmarkTransform->GetMatrix()->Element, m_SourceCoords, distances);
 			for(int i = 0; i < m_NumLandmarks; i++)
 			{
 				totaldist += distances[i];
-				b->SetPoint(i, m_SourcePoints[i].x, m_SourcePoints[i].y, m_SourcePoints[i].z);
+				b->SetPoint(i, m_SourceCoords[i].x, m_SourceCoords[i].y, m_SourceCoords[i].z);
 			}	
 
 		} else
@@ -263,7 +265,7 @@ ExtendedICPTransform::InternalUpdate()
 
 
 		if (!m_ClosestPointFinder->usesGPU()) {
-			vtkPolyDataToPoint6DArray(a, m_SourcePoints);
+			vtkPolyDataToPointCoords(a, m_SourceCoords);
 		}
 	} 
 

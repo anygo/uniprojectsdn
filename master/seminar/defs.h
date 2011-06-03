@@ -8,6 +8,18 @@ typedef struct Point6D
 }
 Point6D;
 
+typedef struct PointCoords
+{
+	float x, y, z;
+}
+PointCoords;
+
+typedef struct PointColors
+{
+	short r, g, b;
+}
+PointColors;
+
 enum ICP_METRIC
 {
 	LOG_ABSOLUTE_DISTANCE,

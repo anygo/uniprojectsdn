@@ -13,8 +13,10 @@
 
 // global pointers for gpu... 
 unsigned short* dev_indices;
-Point6D* dev_source;
-Point6D* dev_target;
+PointCoords* dev_sourceCoords;
+PointColors* dev_sourceColors;
+PointCoords* dev_targetCoords;
+PointColors* dev_targetColors;
 
 float* dev_distances;
 float* dev_transformationMatrix;
@@ -27,19 +29,22 @@ bool sourceCopied;
 	
 
 extern "C"
-void initGPU(Point6D* target, int nrOfPoints) 
+void initGPU(PointCoords* targetCoords, PointColors* targetColors, int nrOfPoints) 
 {
 	sourceCopied = false;
 
 	// allocate memory on gpu
 	CUDA_SAFE_CALL(cudaMalloc((void**)&dev_indices, nrOfPoints*sizeof(unsigned short)));
-	CUDA_SAFE_CALL(cudaMalloc((void**)&dev_source, nrOfPoints*sizeof(Point6D)));
-	CUDA_SAFE_CALL(cudaMalloc((void**)&dev_target, nrOfPoints*sizeof(Point6D)));
+	CUDA_SAFE_CALL(cudaMalloc((void**)&dev_sourceCoords, nrOfPoints*sizeof(PointCoords)));
+	CUDA_SAFE_CALL(cudaMalloc((void**)&dev_targetCoords, nrOfPoints*sizeof(PointCoords)));
+	CUDA_SAFE_CALL(cudaMalloc((void**)&dev_sourceColors, nrOfPoints*sizeof(PointColors)));
+	CUDA_SAFE_CALL(cudaMalloc((void**)&dev_targetColors, nrOfPoints*sizeof(PointColors)));
 	
 	CUDA_SAFE_CALL(cudaMalloc((void**)&dev_distances, nrOfPoints*sizeof(float)));
 	CUDA_SAFE_CALL(cudaMalloc((void**)&dev_transformationMatrix, 16*sizeof(float)));
 	
-	CUDA_SAFE_CALL(cudaMemcpy(dev_target, target, nrOfPoints*sizeof(Point6D), cudaMemcpyHostToDevice));
+	CUDA_SAFE_CALL(cudaMemcpy(dev_targetCoords, targetCoords, nrOfPoints*sizeof(PointCoords), cudaMemcpyHostToDevice));
+	CUDA_SAFE_CALL(cudaMemcpy(dev_targetColors, targetColors, nrOfPoints*sizeof(PointColors), cudaMemcpyHostToDevice));
 }
 
 extern "C"
@@ -47,27 +52,30 @@ void cleanupGPU()
 {
 	// free memory
 	CUDA_SAFE_CALL(cudaFree(dev_indices));
-	CUDA_SAFE_CALL(cudaFree(dev_source));
-	CUDA_SAFE_CALL(cudaFree(dev_target));
+	CUDA_SAFE_CALL(cudaFree(dev_sourceCoords));
+	CUDA_SAFE_CALL(cudaFree(dev_targetCoords));
+	CUDA_SAFE_CALL(cudaFree(dev_sourceColors));
+	CUDA_SAFE_CALL(cudaFree(dev_targetColors));
 	
 	CUDA_SAFE_CALL(cudaFree(dev_distances));
 	CUDA_SAFE_CALL(cudaFree(dev_transformationMatrix));
 }
 
 extern "C"
-void FindClosestPointsCUDA(int nrOfPoints, int metric, bool useRGBData, double weightRGB, unsigned short* indices, Point6D* source)
+void FindClosestPointsCUDA(int nrOfPoints, int metric, bool useRGBData, double weightRGB, unsigned short* indices, PointCoords* sourceCoords, PointColors* sourceColors)
 {
 	// copy data from host to gpu only if it is not yet copied
 	// copy only once, because the data is transformed directly on the gpu!
 	if (!sourceCopied)
-		CUDA_SAFE_CALL(cudaMemcpy(dev_source, source, nrOfPoints*sizeof(Point6D), cudaMemcpyHostToDevice));	
+		CUDA_SAFE_CALL(cudaMemcpy(dev_sourceCoords, sourceCoords, nrOfPoints*sizeof(PointCoords), cudaMemcpyHostToDevice));	
+		CUDA_SAFE_CALL(cudaMemcpy(dev_sourceColors, sourceColors, nrOfPoints*sizeof(PointColors), cudaMemcpyHostToDevice));	
 	sourceCopied = true;
 
 	// execution
 	if (useRGBData)
-		kernelWithRGB<<<nrOfPoints,1>>>(nrOfPoints, metric, (float)weightRGB, dev_indices, dev_source, dev_target);
+		kernelWithRGB<<<nrOfPoints,1>>>(nrOfPoints, metric, (float)weightRGB, dev_indices, dev_sourceCoords, dev_sourceColors, dev_targetCoords, dev_targetColors);
 	else
-		kernelWithoutRGB<<<nrOfPoints,1>>>(nrOfPoints, metric, dev_indices, dev_source, dev_target);
+		kernelWithoutRGB<<<nrOfPoints,1>>>(nrOfPoints, metric, dev_indices, dev_sourceCoords, dev_targetCoords);
 		
 	CUT_CHECK_ERROR("Kernel execution failed (while trying to find closest points)");
 			
@@ -76,7 +84,7 @@ void FindClosestPointsCUDA(int nrOfPoints, int metric, bool useRGBData, double w
 }
 
 extern "C"
-void TransformPointsDirectlyOnGPU(int nrOfPoints, double transformationMatrix[4][4], Point6D* writeTo, float* distances)
+void TransformPointsDirectlyOnGPU(int nrOfPoints, double transformationMatrix[4][4], PointCoords* writeTo, float* distances)
 {
 	// allocate memory for transformation matrix (will be stored linearly) and copy it
 	float tmp[16];
@@ -100,12 +108,12 @@ void TransformPointsDirectlyOnGPU(int nrOfPoints, double transformationMatrix[4]
 	CUDA_SAFE_CALL(cudaMemcpy(dev_transformationMatrix, tmp, 16*sizeof(float), cudaMemcpyHostToDevice));
 	
 	// compute transformations
-	kernelTransformPoints<<<nrOfPoints,1>>>(dev_source, dev_transformationMatrix, dev_distances);
+	kernelTransformPoints<<<nrOfPoints,1>>>(dev_sourceCoords, dev_transformationMatrix, dev_distances);
 	CUT_CHECK_ERROR("Kernel execution failed (while transforming points)");
 	
 	// copy distance array to host
 	CUDA_SAFE_CALL(cudaMemcpy(distances, dev_distances, nrOfPoints*sizeof(float), cudaMemcpyDeviceToHost));
 	
 	// copy transformed points to host
-	CUDA_SAFE_CALL(cudaMemcpy(writeTo, dev_source, nrOfPoints*sizeof(Point6D), cudaMemcpyDeviceToHost));
+	CUDA_SAFE_CALL(cudaMemcpy(writeTo, dev_sourceCoords, nrOfPoints*sizeof(PointCoords), cudaMemcpyDeviceToHost));
 }

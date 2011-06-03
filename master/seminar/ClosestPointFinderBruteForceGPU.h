@@ -10,8 +10,8 @@ public:
 	ClosestPointFinderBruteForceGPU(int NrOfPoints) : ClosestPointFinder(NrOfPoints) { }
 	~ClosestPointFinderBruteForceGPU();
 
-	void SetTarget(Point6D* target); 
-	unsigned short* FindClosestPoints(Point6D *source);
+	void SetTarget(PointCoords* targetCoords, PointColors* targetColors); 
+	unsigned short* FindClosestPoints(PointCoords* sourceCoords, PointColors* sourceColors);
 	inline bool usesGPU() { return true; }
 
 };

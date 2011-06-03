@@ -14,7 +14,7 @@ public:
 
 	virtual inline void SetTarget(PointCoords* targetCoords, PointColors* targetColors) { m_TargetCoords = targetCoords; m_TargetColors = targetColors; }
 	virtual inline void SetUseRGBData(bool use) { m_UseRGBData = use; }
-	virtual inline void SetWeightRGB(double weight) { m_WeightRGB = weight; }
+	virtual inline void SetWeightRGB(float weight) { m_WeightRGB = weight; }
 	virtual inline void SetMetric(int metric) { m_Metric = metric; }
 	virtual inline bool usesGPU() { return false; }
 
@@ -24,7 +24,7 @@ protected:
 	int m_Metric;
 	unsigned short* m_Indices;
 	bool m_UseRGBData;
-	double m_WeightRGB;
+	float m_WeightRGB;
 	PointCoords* m_TargetCoords;
 	PointColors* m_TargetColors;
 

@@ -39,10 +39,12 @@ StitchingPlugin::StitchingPlugin()
 {
 	// create the widget
 	m_Widget = new StitchingWidget();
+
+	// basic signals
 	connect(this, SIGNAL(UpdateGUI()), m_Widget,							SLOT(UpdateGUI()));
 	connect(this, SIGNAL(UpdateGUI()), m_Widget->m_VisualizationWidget3D,	SLOT(UpdateGUI()));
 
-	// set signals (from buttons, etc) and slots (in this file)
+	// our signals and slots
 	connect(m_Widget->m_PushButtonLoadCleanStitch,			SIGNAL(clicked()),								this, SLOT(LoadCleanStitch()));
 	connect(m_Widget->m_PushButtonInitialize,				SIGNAL(clicked()),								this, SLOT(LoadCleanInitialize()));
 	connect(m_Widget->m_PushButtonDelaunay2D,				SIGNAL(clicked()),								this, SLOT(Delaunay2DSelectedActors()));
@@ -68,7 +70,7 @@ StitchingPlugin::StitchingPlugin()
 	m_DataActor3D->SetVisualizationMode(ritk::RImageActorPipeline::RGB);
 
 	// initialize member objects
-	m_Data =					vtkSmartPointer<vtkPolyData>::New();
+	m_Data = vtkSmartPointer<vtkPolyData>::New();
 	m_FramesProcessed = 0;
 }
 
@@ -112,7 +114,6 @@ StitchingPlugin::ProcessEvent(ritk::Event::Pointer EventP)
 			if (m_Widget->m_SpinBoxFrameStep->value() != 0 && ++m_FramesProcessed % m_Widget->m_SpinBoxFrameStep->value() == 0)
 			{
 				LoadFrame();
-				//CleanFrame();
 
 				// add next actor
 				int listSize = m_Widget->m_ListWidgetHistory->count();
@@ -124,6 +125,9 @@ StitchingPlugin::ProcessEvent(ritk::Event::Pointer EventP)
 				hli->m_transform->Identity();
 				m_Widget->m_ListWidgetHistory->insertItem(listSize, hli);
 				//hli->setSelected(true);
+
+				m_Widget->m_CheckBoxShowSelectedActors->setText(QString("Show ") + QString::number(m_Widget->m_ListWidgetHistory->selectedItems().count()) + 
+					QString("/") + QString::number(m_Widget->m_ListWidgetHistory->count()) + " Actors");
 			}
 
 			// unlock mutex
@@ -226,12 +230,11 @@ StitchingPlugin::DeleteSelectedActors()
 		delete hli;
 	}
 
-	// update previousTransform and previousFrame to be the last still existing frame in the history list
+	// update gui
 	int size = m_Widget->m_ListWidgetHistory->count();
 	if (size == 0)
 	{
 		m_Widget->m_PushButtonLoadCleanStitch->setEnabled(false);
-		m_Widget->m_SpinBoxFrameStep->setEnabled(false);
 	}
 }
 void
@@ -379,7 +382,7 @@ StitchingPlugin::UndoTransformForSelectedActors()
 	emit UpdateProgressBar(counterProgressBar);
 
 	// take the inverse of the transform s.t. we get the original data back (approximately)
-	for (int i = 1; i < m_Widget->m_ListWidgetHistory->count(); ++i)
+	for (int i = 0; i < m_Widget->m_ListWidgetHistory->count(); ++i)
 	{
 		HistoryListItem* hli = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
 		if (hli->isSelected())
@@ -681,7 +684,6 @@ StitchingPlugin::InitializeHistory()
 
 	// enable buttons
 	m_Widget->m_PushButtonLoadCleanStitch->setEnabled(true);
-	m_Widget->m_SpinBoxFrameStep->setEnabled(true);
 
 
 	emit UpdateGUI();

@@ -11,7 +11,7 @@ PointColors* dev_sourceColors;
 PointCoords* dev_targetCoords;
 PointColors* dev_targetColors;
 
-cudaArray* cuArray;
+//cudaArray* cuArray;
 
 
 float* dev_distances;
@@ -44,14 +44,14 @@ void initGPU(PointCoords* targetCoords, PointColors* targetColors, int nrOfPoint
 	
 	
 	// texture stuff
-    CUDA_SAFE_CALL (cudaMallocArray (&cuArray, &tex.channelDesc, nrOfPoints*3, 1));
-    CUDA_SAFE_CALL (cudaBindTextureToArray (tex, cuArray));
+    //CUDA_SAFE_CALL (cudaMallocArray (&cuArray, &tex.channelDesc, nrOfPoints*3, 1));
+    //CUDA_SAFE_CALL (cudaBindTextureToArray (tex, cuArray));
 
-    tex.filterMode = cudaFilterModePoint;
-    tex.normalized = false;
-    tex.addressMode[0]=cudaAddressModeClamp;
+    //tex.filterMode = cudaFilterModePoint;
+    //tex.normalized = false;
+    //tex.addressMode[0]=cudaAddressModeClamp;
 
-    CUDA_SAFE_CALL( cudaMemcpyToArray(cuArray, 0, 0, targetCoords, sizeof(PointCoords)*nrOfPoints, cudaMemcpyHostToDevice) );
+    //CUDA_SAFE_CALL(cudaMemcpyToArray(cuArray, 0, 0, targetCoords, sizeof(PointCoords)*nrOfPoints, cudaMemcpyHostToDevice));
 
 }
 
@@ -69,12 +69,12 @@ void cleanupGPU()
 	CUDA_SAFE_CALL(cudaFree(dev_transformationMatrix));
 	
 	// texture stuff	
-	CUDA_SAFE_CALL(cudaFreeArray(cuArray));
-	CUDA_SAFE_CALL(cudaUnbindTexture(tex));
+	//CUDA_SAFE_CALL(cudaFreeArray(cuArray));
+	//CUDA_SAFE_CALL(cudaUnbindTexture(tex));
 }
 
 extern "C"
-void FindClosestPointsCUDA(int nrOfPoints, int metric, bool useRGBData, double weightRGB, unsigned short* indices, PointCoords* sourceCoords, PointColors* sourceColors)
+void FindClosestPointsCUDA(int nrOfPoints, int metric, bool useRGBData, float weightRGB, unsigned short* indices, PointCoords* sourceCoords, PointColors* sourceColors)
 {
 	// copy data from host to gpu only if it is not yet copied
 	// copy only once, because the data is transformed directly on the gpu!
@@ -85,7 +85,7 @@ void FindClosestPointsCUDA(int nrOfPoints, int metric, bool useRGBData, double w
 
 	// execution
 	if (useRGBData)
-		kernelWithRGB<<<nrOfPoints,1>>>(nrOfPoints, metric, (float)weightRGB, dev_indices, dev_sourceCoords, dev_sourceColors, dev_targetCoords, dev_targetColors);
+		kernelWithRGB<<<nrOfPoints,1>>>(nrOfPoints, metric, weightRGB, dev_indices, dev_sourceCoords, dev_sourceColors, dev_targetCoords, dev_targetColors);
 	else
 		kernelWithoutRGB<<<nrOfPoints,1>>>(nrOfPoints, metric, dev_indices, dev_sourceCoords, dev_targetCoords);
 		

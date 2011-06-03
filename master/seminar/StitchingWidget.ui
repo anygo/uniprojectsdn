@@ -123,7 +123,7 @@
             <item row="1" column="1">
              <widget class="QSpinBox" name="m_SpinBoxFrameStep">
               <property name="enabled">
-               <bool>false</bool>
+               <bool>true</bool>
               </property>
               <property name="toolTip">
                <string>Autostitch each n'th frame. Set to 0 to turn off Autostitching.</string>
@@ -560,6 +560,9 @@
             <string>History</string>
            </property>
            <layout class="QGridLayout" name="gridLayout_8">
+            <property name="verticalSpacing">
+             <number>2</number>
+            </property>
             <item row="0" column="0">
              <widget class="QListWidget" name="m_ListWidgetHistory">
               <property name="minimumSize">
@@ -665,7 +668,7 @@
               <item row="9" column="0">
                <widget class="QPushButton" name="m_PushButtonHistoryUndoTransform">
                 <property name="toolTip">
-                 <string>inverts the transform that was applied to these actor</string>
+                 <string>inverts the transforms that were applied to these actors</string>
                 </property>
                 <property name="text">
                  <string>Undo</string>
@@ -733,6 +736,31 @@
               </item>
              </layout>
             </item>
+            <item row="1" column="1">
+             <widget class="QProgressBar" name="m_ProgressBar">
+              <property name="maximum">
+               <number>100</number>
+              </property>
+              <property name="value">
+               <number>0</number>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+              </property>
+              <property name="textVisible">
+               <bool>true</bool>
+              </property>
+              <property name="invertedAppearance">
+               <bool>false</bool>
+              </property>
+              <property name="textDirection">
+               <enum>QProgressBar::TopToBottom</enum>
+              </property>
+              <property name="format">
+               <string>%p%</string>
+              </property>
+             </widget>
+            </item>
             <item row="1" column="0">
              <widget class="QCheckBox" name="m_CheckBoxShowSelectedActors">
               <property name="text">
@@ -743,13 +771,6 @@
               </property>
               <property name="checked">
                <bool>true</bool>
-              </property>
-             </widget>
-            </item>
-            <item row="1" column="1">
-             <widget class="QProgressBar" name="m_ProgressBar">
-              <property name="value">
-               <number>0</number>
               </property>
              </widget>
             </item>

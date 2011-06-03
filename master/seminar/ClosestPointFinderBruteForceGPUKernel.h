@@ -10,7 +10,7 @@
 #include <channel_descriptor.h>
 #include <cuda_runtime_api.h>
 
-texture<float, 1, cudaReadModeElementType> tex;
+//texture<float, 1, cudaReadModeElementType> tex;
 
 __global__
 void kernelWithRGB(int nrOfPoints, int metric, float weightRGB, unsigned short* indices, PointCoords* sourceCoords, PointColors* sourceColors, PointCoords* targetCoords, PointColors* targetColors) 
@@ -22,6 +22,9 @@ void kernelWithRGB(int nrOfPoints, int metric, float weightRGB, unsigned short* 
 	float minDist = FLT_MAX;
 
 	unsigned short idx = 0;
+	float spaceDist;
+	float colorDist;
+	float dist;
 	
 	// fuckingly did it!! freaking texture crap 0.5 addition is damn important somehow :D
 	/*float x = tex1Dfetch(tex, float(tid*3.f + 0.5f));
@@ -30,27 +33,31 @@ void kernelWithRGB(int nrOfPoints, int metric, float weightRGB, unsigned short* 
 
 	for (int i = 0; i < nrOfPoints; ++i)
 	{
-		float spaceDist = 0.f;
-		float colorDist = 0.f;
+		spaceDist = 0.f;
+		colorDist = 0.f;
+
+		float x_dist = sourceCoords[tid].x - targetCoords[i].x; 
+		float y_dist = sourceCoords[tid].y - targetCoords[i].y;
+		float z_dist = sourceCoords[tid].z - targetCoords[i].z;
 
 		//switch (metric)
 		//{
 		//case ABSOLUTE_DISTANCE:
-		//	spaceDist = std::abs(sourceCoords[tid].x - targetCoords[i].x) + std::abs(sourceCoords[tid].y - targetCoords[i].y) + std::abs(sourceCoords[tid].z - targetCoords[i].z); break;
-			//spaceDist = std::abs(sourceCoords[tid].x - x) + std::abs(sourceCoords[tid].y - y) + std::abs(sourceCoords[tid].z - z); break;
+		//	spaceDist = std::abs(x_dist) + std::abs(y_dist) + std::abs(z_dist);
 		//case LOG_ABSOLUTE_DISTANCE:
-		//	spaceDist = std::log(std::abs(sourceCoords[tid].x - targetCoords[i].x) + std::abs(sourceCoords[tid].y - targetCoords[i].y) + std::abs(sourceCoords[tid].z - targetCoords[i].z) + 1.0); break;
-			//spaceDist = std::log(std::abs(sourceCoords[tid].x - x) + std::abs(sourceCoords[tid].y - y) + std::abs(sourceCoords[tid].z - z) + 1.0); break;
+		//	spaceDist = std::log(spaceDist + 1.f); break;
 		//case SQUARED_DISTANCE:
-			spaceDist = ((sourceCoords[tid].x - targetCoords[i].x)*(sourceCoords[tid].x - targetCoords[i].x) + (sourceCoords[tid].y - targetCoords[i].y)*(sourceCoords[tid].y - targetCoords[i].y) + (sourceCoords[tid].z - targetCoords[i].z)*(sourceCoords[tid].z - targetCoords[i].z));
-			//spaceDist = ((sourceCoords[tid].x - x)*(sourceCoords[tid].x - x) + (sourceCoords[tid].y - y)*(sourceCoords[tid].y - y) + (sourceCoords[tid].z -z)*(sourceCoords[tid].z - z));
+			spaceDist = ((x_dist * x_dist) + (y_dist * y_dist) + (z_dist * z_dist));
 		//}
 
 		// always use euclidean distance for colors...
-		colorDist = ((sourceColors[tid].r - targetColors[i].r)*(sourceColors[tid].r - targetColors[i].r) + (sourceColors[tid].g - targetColors[i].g)*(sourceColors[tid].g - targetColors[i].g) + (sourceColors[tid].b - targetColors[i].b)*(sourceColors[tid].b - targetColors[i].b));
+		float r_dist = sourceColors[tid].r - targetColors[i].r; 
+		float g_dist = sourceColors[tid].g - targetColors[i].g;
+		float b_dist = sourceColors[tid].b - targetColors[i].b;
+		colorDist = (r_dist * r_dist) + (g_dist * g_dist) + (b_dist * b_dist);
 
 		
-		float dist = (1 - weightRGB) * spaceDist + weightRGB * colorDist;
+		dist = (1 - weightRGB) * spaceDist + weightRGB * colorDist;
 
 		if (dist < minDist)
 		{
@@ -71,11 +78,12 @@ void kernelWithoutRGB(int nrOfPoints, int metric, unsigned short* indices, Point
 	float minDist = FLT_MAX;
 
 	unsigned short idx = 0;
+	float spaceDist;
 
 
 	for (int i = 0; i < nrOfPoints; ++i)
 	{
-		float spaceDist = 0.f;
+		spaceDist = 0.f;
 
 		/*switch (metric)
 		{

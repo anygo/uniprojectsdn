@@ -43,14 +43,16 @@ protected:
 
 	void InternalUpdate();
 	unsigned long int GetMTime();
-	void vtkPolyDataToPoint6DArray();
-	void vtkPolyDataToPoint6DArray(vtkSmartPointer<vtkPoints> poly, Point6D* point);
+	void vtkPolyDataToPointCoordsAndColors();
+	void vtkPolyDataToPointCoords(vtkSmartPointer<vtkPoints> poly, PointCoords* coords);
 
 	vtkSmartPointer<vtkPolyData> m_Source;
 	vtkSmartPointer<vtkPolyData> m_Target;
 
-	Point6D* m_SourcePoints;
-	Point6D* m_TargetPoints;
+	PointCoords* m_SourceCoords;
+	PointCoords* m_TargetCoords;
+	PointColors* m_SourceColors;
+	PointColors* m_TargetColors;
 
 	ClosestPointFinder* m_ClosestPointFinder;
 

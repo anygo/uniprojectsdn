@@ -271,7 +271,7 @@ StitchingPlugin::MergeSelectedActors()
 				firstIndex = i;
 			}
 
-			std::cout << "merging actor " << i << std::endl;
+			std::cout << "merge - adding actor " << i << std::endl;
 		}
 	}
 
@@ -313,10 +313,10 @@ StitchingPlugin::CleanSelectedActors()
 		HistoryListItem* hli = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
 		if (hli->isSelected())
 		{
+			std::cout << "cleaning actor " << i << std::endl;
+
 			Clean(hli->m_actor->GetData());
 			numPoints += hli->m_actor->GetData()->GetNumberOfPoints();
-
-			std::cout << "cleaning actor " << i << std::endl;
 		}
 	}
 
@@ -335,9 +335,10 @@ StitchingPlugin::StitchSelectedActors()
 		HistoryListItem* hli = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
 		if (hli->isSelected())
 		{
+			std::cout << "stitching actor " << i << std::endl;
+
 			HistoryListItem* hli_prev = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i - 1));
 			Stitch(hli->m_actor->GetData(), hli_prev->m_actor->GetData(), hli_prev->m_transform, hli->m_actor->GetData(), hli->m_transform);
-			std::cout << "stitching actor " << i << std::endl;
 		}
 	}
 
@@ -352,6 +353,8 @@ StitchingPlugin::UndoTransformForSelectedActors()
 		HistoryListItem* hli = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
 		if (hli->isSelected())
 		{
+			std::cout << "undoing transform for actor " << i << std::endl;
+
 			// invert the transform
 			hli->m_transform->Invert();
 
@@ -376,8 +379,6 @@ StitchingPlugin::UndoTransformForSelectedActors()
 
 			// set transform to identity
 			hli->m_transform->Identity();
-
-			std::cout << "undoing transform for actor " << i << std::endl;
 		}
 	}
 

@@ -24,37 +24,30 @@ void kernelWithRGB(int nrOfPoints, int metric, float weightRGB, unsigned short* 
 	unsigned short idx = 0;
 	
 	// fuckingly did it!! freaking texture crap 0.5 addition is damn important somehow :D
-	float x = tex1Dfetch(tex, float(tid*3.f + 0.5f));
+	/*float x = tex1Dfetch(tex, float(tid*3.f + 0.5f));
 	float y = tex1Dfetch(tex, float(tid*3.f + 1.5f));
-	float z = tex1Dfetch(tex, float(tid*3.f + 2.5f));
-	//targetCoords[tid].x = LLL;
+	float z = tex1Dfetch(tex, float(tid*3.f + 2.5f));*/
 
 	for (int i = 0; i < nrOfPoints; ++i)
 	{
 		float spaceDist = 0.f;
 		float colorDist = 0.f;
 
-		/*switch (metric)
-		{
-		case ABSOLUTE_DISTANCE:
-			spaceDist = std::abs(source[tid].x - target[i].x) + std::abs(source[tid].y - target[i].y) + std::abs(source[tid].z - target[i].z); break;
-		case LOG_ABSOLUTE_DISTANCE:
-			spaceDist = std::log(std::abs(source[tid].x - target[i].x) + std::abs(source[tid].y - target[i].y) + std::abs(source[tid].z - target[i].z) + 1.0); break;
-		case SQUARED_DISTANCE:*/
+		//switch (metric)
+		//{
+		//case ABSOLUTE_DISTANCE:
+		//	spaceDist = std::abs(sourceCoords[tid].x - targetCoords[i].x) + std::abs(sourceCoords[tid].y - targetCoords[i].y) + std::abs(sourceCoords[tid].z - targetCoords[i].z); break;
+			//spaceDist = std::abs(sourceCoords[tid].x - x) + std::abs(sourceCoords[tid].y - y) + std::abs(sourceCoords[tid].z - z); break;
+		//case LOG_ABSOLUTE_DISTANCE:
+		//	spaceDist = std::log(std::abs(sourceCoords[tid].x - targetCoords[i].x) + std::abs(sourceCoords[tid].y - targetCoords[i].y) + std::abs(sourceCoords[tid].z - targetCoords[i].z) + 1.0); break;
+			//spaceDist = std::log(std::abs(sourceCoords[tid].x - x) + std::abs(sourceCoords[tid].y - y) + std::abs(sourceCoords[tid].z - z) + 1.0); break;
+		//case SQUARED_DISTANCE:
 			spaceDist = ((sourceCoords[tid].x - targetCoords[i].x)*(sourceCoords[tid].x - targetCoords[i].x) + (sourceCoords[tid].y - targetCoords[i].y)*(sourceCoords[tid].y - targetCoords[i].y) + (sourceCoords[tid].z - targetCoords[i].z)*(sourceCoords[tid].z - targetCoords[i].z));
 			//spaceDist = ((sourceCoords[tid].x - x)*(sourceCoords[tid].x - x) + (sourceCoords[tid].y - y)*(sourceCoords[tid].y - y) + (sourceCoords[tid].z -z)*(sourceCoords[tid].z - z));
-
 		//}
 
-		/*switch (metric)
-		{
-		case ABSOLUTE_DISTANCE:
-			colorDist = std::abs(source[tid].r - target[i].r) + std::abs(source[tid].g - target[i].g) + std::abs(source[tid].b - target[i].b); break;
-		case LOG_ABSOLUTE_DISTANCE:
-			colorDist = std::log(std::abs(source[tid].r - target[i].r) + std::abs(source[tid].g - target[i].g) + std::abs(source[tid].b - target[i].b) + 1.0); break;
-		case SQUARED_DISTANCE:*/
-			colorDist = ((sourceColors[tid].r - targetColors[i].r)*(sourceColors[tid].r - targetColors[i].r) + (sourceColors[tid].g - targetColors[i].g)*(sourceColors[tid].g - targetColors[i].g) + (sourceColors[tid].b - targetColors[i].b)*(sourceColors[tid].b - targetColors[i].b));
-		//}
+		// always use euclidean distance for colors...
+		colorDist = ((sourceColors[tid].r - targetColors[i].r)*(sourceColors[tid].r - targetColors[i].r) + (sourceColors[tid].g - targetColors[i].g)*(sourceColors[tid].g - targetColors[i].g) + (sourceColors[tid].b - targetColors[i].b)*(sourceColors[tid].b - targetColors[i].b));
 
 		
 		float dist = (1 - weightRGB) * spaceDist + weightRGB * colorDist;

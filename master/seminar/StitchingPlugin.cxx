@@ -10,6 +10,7 @@
 #include <QFileDialog>
 #include <QTime>
 #include <QColorDialog>
+#include <QMessageBox>
 
 // VTK includes
 #include <vtkPointData.h>
@@ -58,8 +59,9 @@ StitchingPlugin::StitchingPlugin()
 	connect(m_Widget->m_PushButtonHistoryUndoTransform,		SIGNAL(clicked()),								this, SLOT(UndoTransformForSelectedActors()));
 	connect(m_Widget->m_ListWidgetHistory,					SIGNAL(itemDoubleClicked(QListWidgetItem*)),	this, SLOT(HighlightActor(QListWidgetItem*)));
 		
-	connect(this, SIGNAL(updateProgressBar(int)), m_Widget->m_ProgressBar, SLOT(setValue(int)));
-	connect(this, SIGNAL(initProgressBar(int, int)), m_Widget->m_ProgressBar, SLOT(setRange(int, int)));
+	// progress bar signals
+	connect(this, SIGNAL(UpdateProgressBar(int)),		m_Widget->m_ProgressBar, SLOT(setValue(int)));
+	connect(this, SIGNAL(InitProgressBar(int, int)),	m_Widget->m_ProgressBar, SLOT(setRange(int, int)));
 
 	// add data actor
 	m_DataActor3D = vtkSmartPointer<ritk::RImageActorPipeline>::New();	
@@ -85,366 +87,6 @@ QWidget*
 StitchingPlugin::GetPluginGUI()
 {
 	return m_Widget;
-}
-//----------------------------------------------------------------------------
-void
-StitchingPlugin::ChangePointSize()
-{
-	for (int i = 0; i < m_Widget->m_ListWidgetHistory->count(); ++i)
-	{
-		HistoryListItem* hli = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
-		if (hli->isSelected())
-		{
-			hli->m_actor->GetProperty()->SetPointSize(m_Widget->m_HorizontalSliderPointSize->value());
-		}
-	}
-	
-	emit UpdateGUI();
-}
-void
-StitchingPlugin::ChangeBackgroundColor1()
-{
-	QColor color = QColorDialog::getColor();
-
-	m_Widget->m_VisualizationWidget3D->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->
-		SetBackground(color.red()/255., color.green()/255., color.blue()/255.);
-}
-void
-StitchingPlugin::ChangeBackgroundColor2()
-{
-	QColor color = QColorDialog::getColor();
-
-	m_Widget->m_VisualizationWidget3D->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->
-		SetBackground2(color.red()/255., color.green()/255., color.blue()/255.);
-}
-//----------------------------------------------------------------------------
-void
-StitchingPlugin::ShowHideActors()
-{
-	int numPoints = 0;
-	for (int i = 0; i < m_Widget->m_ListWidgetHistory->count(); ++i)
-	{
-		HistoryListItem* hli = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
-		if (hli->isSelected() && m_Widget->m_CheckBoxShowSelectedActors->isChecked())
-		{
-			m_Widget->m_VisualizationWidget3D->AddActor(hli->m_actor);
-		} else
-		{
-			m_Widget->m_VisualizationWidget3D->RemoveActor(hli->m_actor);
-		}
-
-		if (hli->isSelected())
-		{
-			numPoints += hli->m_actor->GetData()->GetNumberOfPoints();
-		}
-	}
-
-	// show number of points for selected history entries
-	m_Widget->m_LabelNumberOfPoints->setText(QString::number(numPoints));
-}
-void
-StitchingPlugin::HighlightActor(QListWidgetItem* item)
-{
-	HistoryListItem* hli = reinterpret_cast<HistoryListItem*>(item);
-
-	// toggle colormode
-	int mode = hli->m_actor->GetMapper()->GetColorMode();
-
-	if (mode == 0)
-	{
-		hli->m_actor->GetMapper()->ColorByArrayComponent(0, 1);
-		hli->m_actor->GetMapper()->SetColorModeToMapScalars();
-		//hli->setBackgroundColor(QColor(0, 0, 255, 100));
-		hli->setTextColor(QColor(0, 50, 255, 255));
-	} else
-	{
-		hli->m_actor->GetMapper()->SetColorModeToDefault();
-		//hli->setBackgroundColor(QColor(255, 255, 255, 255));
-		hli->setTextColor(QColor(0, 0, 0, 255));
-	}
-	emit UpdateGUI();
-}
-void
-StitchingPlugin::DeleteSelectedActors()
-{
-	int numSelected = m_Widget->m_ListWidgetHistory->selectedItems().count();
-	int counterProgressBar = 1;
-	emit initProgressBar(0, numSelected);
-	emit updateProgressBar(counterProgressBar);
-
-	// save all indices of list for actors that have to be deleted
-	std::vector<int> toDelete;
-
-	// delete all selected steps from history and from memory
-	for (int i = 0; i < m_Widget->m_ListWidgetHistory->count(); ++i)
-	{
-		HistoryListItem* hli = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
-		if (hli->isSelected())
-		{
-			std::cout << "deleting actor " << i << std::endl;
-
-			m_Widget->m_VisualizationWidget3D->RemoveActor(hli->m_actor);
-			toDelete.push_back(i);	
-
-			emit updateProgressBar(counterProgressBar++);
-		}
-	}
-
-	// run backwards through toDelete and delete those items from History and from memory
-	for (int i = toDelete.size() - 1; i >= 0; --i)
-	{
-		HistoryListItem* hli = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->takeItem(toDelete.at(i)));
-		delete hli;
-	}
-
-	// update previousTransform and previousFrame to be the last still existing frame in the history list
-	int size = m_Widget->m_ListWidgetHistory->count();
-	if (size == 0)
-	{
-		m_Widget->m_PushButtonLoadCleanStitch->setEnabled(false);
-		m_Widget->m_SpinBoxFrameStep->setEnabled(false);
-	}
-}
-void
-StitchingPlugin::MergeSelectedActors()
-{
-	if (m_Widget->m_ListWidgetHistory->selectedItems().size() <= 1)
-	{
-		std::cout << "nothing to be merged..." << std::endl;
-		return;
-	}
-
-	// append the whole history
-	vtkSmartPointer<vtkAppendPolyData> appendFilter =
-		vtkSmartPointer<vtkAppendPolyData>::New();
-
-	// create the merged history entry
-	HistoryListItem* hli = new HistoryListItem;
-	hli->setText(QDateTime::currentDateTime().time().toString("hh:mm:ss:zzz") + " (merged)");
-	hli->m_transform = vtkSmartPointer<vtkMatrix4x4>::New();
-	hli->m_actor = vtkSmartPointer<ritk::RImageActorPipeline>::New();
-	hli->setToolTip(QString("merged"));
-
-	// at this index, the merged points will be taken afterwards
-	int firstIndex = -1;
-
-	// add the data of each actor to the appendFilter and store the last transformation
-	for (int i = 0; i < m_Widget->m_ListWidgetHistory->count(); ++i)
-	{
-		HistoryListItem* hli2 = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
-
-		if (hli2->isSelected())
-		{
-			appendFilter->AddInput(hli2->m_actor->GetData());
-
-			hli->m_transform->DeepCopy(hli2->m_transform);
-
-			if (firstIndex == -1)
-			{
-				firstIndex = i;
-			}
-
-			std::cout << "merge - adding actor " << i << std::endl;
-		}
-	}
-
-	// nothing selected...
-	if (firstIndex == -1)
-	{
-		delete hli;
-		return;
-	}
-
-	appendFilter->Update();
-	hli->m_actor->SetData(appendFilter->GetOutput(), true);
-
-	// get rid of useless cells
-	vtkSmartPointer<vtkCellArray> cells =
-		vtkSmartPointer<vtkCellArray>::New();
-	for (vtkIdType i = 0; i < hli->m_actor->GetData()->GetNumberOfPoints(); i++)
-	{
-		cells->InsertNextCell(1, &i);
-	}
-	hli->m_actor->GetData()->SetVerts(cells);
-	hli->m_actor->GetData()->Update();
-
-	// and add the new merged history entry at a reasonable position
-	m_Widget->m_ListWidgetHistory->insertItem(firstIndex, hli);
-
-	// clean the selected history entries
-	DeleteSelectedActors();
-
-	// set the new element as selected
-	hli->setSelected(true);
-}
-void
-StitchingPlugin::CleanSelectedActors()
-{
-	int numSelected = m_Widget->m_ListWidgetHistory->selectedItems().count();
-	int counterProgressBar = 1;
-	emit initProgressBar(0, numSelected);
-	emit updateProgressBar(counterProgressBar);
-
-	int numPoints = 0;
-	for (int i = 0; i < m_Widget->m_ListWidgetHistory->count(); ++i)
-	{
-		HistoryListItem* hli = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
-		if (hli->isSelected())
-		{
-			std::cout << "cleaning actor " << i << std::endl;
-
-			Clean(hli->m_actor->GetData());
-			numPoints += hli->m_actor->GetData()->GetNumberOfPoints();
-			
-			emit updateProgressBar(++counterProgressBar);
-		}
-	}
-
-	// show number of points for selected history entries
-	m_Widget->m_LabelNumberOfPoints->setText(QString::number(numPoints));
-
-	emit UpdateGUI();
-}
-void
-StitchingPlugin::StitchSelectedActors()
-{
-	int numSelected = m_Widget->m_ListWidgetHistory->selectedItems().count();
-	int counterProgressBar = 1;
-	emit initProgressBar(0, numSelected);
-	emit updateProgressBar(counterProgressBar);
-
-	// stitch all selected actors to previous actor in list
-	// ignore the first one, because it can not be stitched to anything
-	for (int i = 1; i < m_Widget->m_ListWidgetHistory->count(); ++i)
-	{
-		HistoryListItem* hli = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
-		if (hli->isSelected())
-		{
-			std::cout << "stitching actor " << i << std::endl;
-
-			HistoryListItem* hli_prev = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i - 1));
-			Stitch(hli->m_actor->GetData(), hli_prev->m_actor->GetData(), hli_prev->m_transform, hli->m_actor->GetData(), hli->m_transform);
-
-			emit updateProgressBar(++counterProgressBar);
-		}
-	}
-
-	emit UpdateGUI();
-}
-void
-StitchingPlugin::UndoTransformForSelectedActors()
-{
-	int numSelected = m_Widget->m_ListWidgetHistory->selectedItems().count();
-	int counterProgressBar = 1;
-	emit initProgressBar(0, numSelected);
-	emit updateProgressBar(counterProgressBar);
-
-	// take the inverse of the transform s.t. we get the original data back (approximately)
-	for (int i = 1; i < m_Widget->m_ListWidgetHistory->count(); ++i)
-	{
-		HistoryListItem* hli = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
-		if (hli->isSelected())
-		{
-			std::cout << "undoing transform for actor " << i << std::endl;
-
-			// invert the transform
-			hli->m_transform->Invert();
-
-			// set up transform
-			vtkSmartPointer<vtkTransform> inverseTransform =
-				vtkSmartPointer<vtkTransform>::New();
-
-			inverseTransform->SetMatrix(hli->m_transform);
-			inverseTransform->Modified();
-
-			// set up transform filter
-			vtkSmartPointer<vtkTransformPolyDataFilter> inverseTransformFilter =
-				vtkSmartPointer<vtkTransformPolyDataFilter>::New();
-
-			inverseTransformFilter->SetInput(hli->m_actor->GetData());
-			inverseTransformFilter->SetTransform(inverseTransform);
-			inverseTransformFilter->Modified();
-			inverseTransformFilter->Update();
-
-			// update the data
-			hli->m_actor->GetData()->DeepCopy(inverseTransformFilter->GetOutput());
-
-			// set transform to identity
-			hli->m_transform->Identity();
-
-			emit updateProgressBar(++counterProgressBar);
-		}
-	}
-
-	emit UpdateGUI();
-}
-void
-StitchingPlugin::SaveSelectedActors()
-{
-	// get output file
-	QString outputFile = QFileDialog::getSaveFileName(m_Widget, QString("Save ") + 
-		QString::number(m_Widget->m_ListWidgetHistory->selectedItems().size()) + 
-		" selected actors in seperate VTK files", "D:/RITK/bin/release/Data/", "VTK files (*.vtk)");	
-	if (outputFile.isEmpty())
-		return;
-
-	// get rid of ".vtk"
-	outputFile.remove(outputFile.size() - 4, 4);
-
-
-	int numSelected = m_Widget->m_ListWidgetHistory->selectedItems().count();
-	int counterProgressBar = 1;
-	emit initProgressBar(0, numSelected);
-	emit updateProgressBar(counterProgressBar);
-
-
-	int fileCount = 0;
-	for (int i = 0; i < m_Widget->m_ListWidgetHistory->count(); ++i)
-	{
-		HistoryListItem* hli = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
-		if (hli->isSelected())
-		{
-			QString partFileName = outputFile + QString::number(fileCount++) + ".vtk";
-			std::cout << "saving actor " << i << " to " << partFileName.toStdString() << std::endl;
-			vtkSmartPointer<vtkPolyDataWriter> writer =
-				vtkSmartPointer<vtkPolyDataWriter>::New();
-			writer->SetFileName(partFileName.toStdString().c_str());
-			writer->SetInput(hli->m_actor->GetData());
-			writer->SetFileTypeToBinary();
-			writer->Update();
-
-			emit updateProgressBar(++counterProgressBar);
-		} 
-	}			
-}
-void
-StitchingPlugin::Delaunay2DSelectedActors()
-{
-	int numSelected = m_Widget->m_ListWidgetHistory->selectedItems().count();
-	int counterProgressBar = 1;
-	emit initProgressBar(0, numSelected);
-	emit updateProgressBar(counterProgressBar);
-
-	// triangulation for each selected history entry - may take some time...
-	for (int i = 0; i < m_Widget->m_ListWidgetHistory->count(); ++i)
-	{
-		HistoryListItem* hli = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
-		if (hli->isSelected())
-		{
-			vtkSmartPointer<vtkTransform> t = 
-				vtkSmartPointer<vtkTransform>::New();
-			vtkSmartPointer<vtkDelaunay2D> Delaunay2D = 
-				vtkSmartPointer<vtkDelaunay2D>::New();
-			Delaunay2D->SetInput(hli->m_actor->GetData());
-			Delaunay2D->SetTransform(t);
-			Delaunay2D->Update();
-			hli->m_actor->SetData(Delaunay2D->GetOutput(), true);
-
-			emit updateProgressBar(++counterProgressBar);
-		} 
-	}
-
-	emit UpdateGUI();
 }
 //----------------------------------------------------------------------------
 void
@@ -499,6 +141,352 @@ StitchingPlugin::ProcessEvent(ritk::Event::Pointer EventP)
 	{
 		LOG_DEB("Unknown event");
 	}
+}
+//----------------------------------------------------------------------------
+void
+StitchingPlugin::ShowHideActors()
+{
+	int numPoints = 0;
+	for (int i = 0; i < m_Widget->m_ListWidgetHistory->count(); ++i)
+	{
+		HistoryListItem* hli = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
+		if (hli->isSelected() && m_Widget->m_CheckBoxShowSelectedActors->isChecked())
+		{
+			m_Widget->m_VisualizationWidget3D->AddActor(hli->m_actor);
+		} else
+		{
+			m_Widget->m_VisualizationWidget3D->RemoveActor(hli->m_actor);
+		}
+
+		if (hli->isSelected())
+		{
+			numPoints += hli->m_actor->GetData()->GetNumberOfPoints();
+		}
+	}
+
+	// show number of points for selected history entries
+	m_Widget->m_LabelNumberOfPoints->setText(QString::number(numPoints));
+
+	m_Widget->m_CheckBoxShowSelectedActors->setText(QString("Show ") + QString::number(m_Widget->m_ListWidgetHistory->selectedItems().count()) + 
+		QString("/") + QString::number(m_Widget->m_ListWidgetHistory->count()) + " Actors");
+}
+void
+StitchingPlugin::HighlightActor(QListWidgetItem* item)
+{
+	HistoryListItem* hli = reinterpret_cast<HistoryListItem*>(item);
+
+	// toggle colormode
+	int mode = hli->m_actor->GetMapper()->GetColorMode();
+
+	if (mode == 0)
+	{
+		hli->m_actor->GetMapper()->ColorByArrayComponent(0, 1);
+		hli->m_actor->GetMapper()->SetColorModeToMapScalars();
+		//hli->setBackgroundColor(QColor(0, 0, 255, 100));
+		hli->setTextColor(QColor(0, 50, 255, 255));
+	} else
+	{
+		hli->m_actor->GetMapper()->SetColorModeToDefault();
+		//hli->setBackgroundColor(QColor(255, 255, 255, 255));
+		hli->setTextColor(QColor(0, 0, 0, 255));
+	}
+	emit UpdateGUI();
+}
+void
+StitchingPlugin::DeleteSelectedActors()
+{
+	int numSelected = m_Widget->m_ListWidgetHistory->selectedItems().count();
+	int counterProgressBar = 1;
+	emit InitProgressBar(0, numSelected);
+	emit UpdateProgressBar(counterProgressBar);
+
+	// save all indices of list for actors that have to be deleted
+	std::vector<int> toDelete;
+
+	// delete all selected steps from history and from memory
+	for (int i = 0; i < m_Widget->m_ListWidgetHistory->count(); ++i)
+	{
+		HistoryListItem* hli = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
+		if (hli->isSelected())
+		{
+			std::cout << "deleting actor " << i << std::endl;
+
+			m_Widget->m_VisualizationWidget3D->RemoveActor(hli->m_actor);
+			toDelete.push_back(i);	
+
+			emit UpdateProgressBar(counterProgressBar++);
+			QCoreApplication::processEvents();
+		}
+	}
+
+	// run backwards through toDelete and delete those items from History and from memory
+	for (int i = toDelete.size() - 1; i >= 0; --i)
+	{
+		HistoryListItem* hli = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->takeItem(toDelete.at(i)));
+		delete hli;
+	}
+
+	// update previousTransform and previousFrame to be the last still existing frame in the history list
+	int size = m_Widget->m_ListWidgetHistory->count();
+	if (size == 0)
+	{
+		m_Widget->m_PushButtonLoadCleanStitch->setEnabled(false);
+		m_Widget->m_SpinBoxFrameStep->setEnabled(false);
+	}
+}
+void
+StitchingPlugin::MergeSelectedActors()
+{
+	try
+	{
+		if (m_Widget->m_ListWidgetHistory->selectedItems().size() <= 1)
+		{
+			std::cout << "nothing to be merged..." << std::endl;
+			return;
+		}
+
+		// append the whole history
+		vtkSmartPointer<vtkAppendPolyData> appendFilter =
+			vtkSmartPointer<vtkAppendPolyData>::New();
+
+		// create the merged history entry
+		HistoryListItem* hli = new HistoryListItem;
+		hli->setText(QDateTime::currentDateTime().time().toString("hh:mm:ss:zzz") + " (merged)");
+		hli->m_transform = vtkSmartPointer<vtkMatrix4x4>::New();
+		hli->m_actor = vtkSmartPointer<ritk::RImageActorPipeline>::New();
+		hli->setToolTip(QString("merged"));
+
+		// at this index, the merged points will be taken afterwards
+		int firstIndex = -1;
+
+		// add the data of each actor to the appendFilter and store the last transformation
+		for (int i = 0; i < m_Widget->m_ListWidgetHistory->count(); ++i)
+		{
+			HistoryListItem* hli2 = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
+
+			if (hli2->isSelected())
+			{
+				appendFilter->AddInput(hli2->m_actor->GetData());
+
+				hli->m_transform->DeepCopy(hli2->m_transform);
+
+				if (firstIndex == -1)
+				{
+					firstIndex = i;
+				}
+
+				std::cout << "merge - adding actor " << i << std::endl;
+			}
+		}
+
+		// nothing selected...
+		if (firstIndex == -1)
+		{
+			delete hli;
+			return;
+		}
+
+		appendFilter->Update();
+		hli->m_actor->SetData(appendFilter->GetOutput(), true);
+
+		// get rid of useless cells
+		vtkSmartPointer<vtkCellArray> cells =
+			vtkSmartPointer<vtkCellArray>::New();
+		for (vtkIdType i = 0; i < hli->m_actor->GetData()->GetNumberOfPoints(); i++)
+		{
+			cells->InsertNextCell(1, &i);
+		}
+		hli->m_actor->GetData()->SetVerts(cells);
+		hli->m_actor->GetData()->Update();
+
+		// and add the new merged history entry at a reasonable position
+		m_Widget->m_ListWidgetHistory->insertItem(firstIndex, hli);
+
+		// clean the selected history entries
+		DeleteSelectedActors();
+
+		// set the new element as selected
+		hli->setSelected(true);
+
+	} catch (...)
+	{
+		QMessageBox msgBox(QMessageBox::Critical, "Error", "Try 'Clean' or selecting a smaller number of actors to merge!", QMessageBox::Ok);
+		msgBox.exec();
+	}
+}
+void
+StitchingPlugin::CleanSelectedActors()
+{
+	int numSelected = m_Widget->m_ListWidgetHistory->selectedItems().count();
+	int counterProgressBar = 1;
+	emit InitProgressBar(0, numSelected);
+	emit UpdateProgressBar(counterProgressBar);
+
+	int numPoints = 0;
+	for (int i = 0; i < m_Widget->m_ListWidgetHistory->count(); ++i)
+	{
+		HistoryListItem* hli = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
+		if (hli->isSelected())
+		{
+			std::cout << "cleaning actor " << i << std::endl;
+
+			Clean(hli->m_actor->GetData());
+			numPoints += hli->m_actor->GetData()->GetNumberOfPoints();
+			
+			emit UpdateProgressBar(++counterProgressBar);
+			QCoreApplication::processEvents();
+		}
+	}
+
+	// show number of points for selected history entries
+	m_Widget->m_LabelNumberOfPoints->setText(QString::number(numPoints));
+
+	emit UpdateGUI();
+}
+void
+StitchingPlugin::StitchSelectedActors()
+{
+	int numSelected = m_Widget->m_ListWidgetHistory->selectedItems().count();
+	int counterProgressBar = 1;
+	emit InitProgressBar(0, numSelected);
+	emit UpdateProgressBar(counterProgressBar);
+
+	// stitch all selected actors to previous actor in list
+	// ignore the first one, because it can not be stitched to anything
+	for (int i = 1; i < m_Widget->m_ListWidgetHistory->count(); ++i)
+	{
+		HistoryListItem* hli = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
+		if (hli->isSelected())
+		{
+			std::cout << "stitching actor " << i << std::endl;
+
+			HistoryListItem* hli_prev = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i - 1));
+			Stitch(hli->m_actor->GetData(), hli_prev->m_actor->GetData(), hli_prev->m_transform, hli->m_actor->GetData(), hli->m_transform);
+
+			emit UpdateProgressBar(++counterProgressBar);
+			QCoreApplication::processEvents();
+		}
+	}
+
+	emit UpdateGUI();
+}
+void
+StitchingPlugin::UndoTransformForSelectedActors()
+{
+	int numSelected = m_Widget->m_ListWidgetHistory->selectedItems().count();
+	int counterProgressBar = 1;
+	emit InitProgressBar(0, numSelected);
+	emit UpdateProgressBar(counterProgressBar);
+
+	// take the inverse of the transform s.t. we get the original data back (approximately)
+	for (int i = 1; i < m_Widget->m_ListWidgetHistory->count(); ++i)
+	{
+		HistoryListItem* hli = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
+		if (hli->isSelected())
+		{
+			std::cout << "undoing transform for actor " << i << std::endl;
+
+			// invert the transform
+			hli->m_transform->Invert();
+
+			// set up transform
+			vtkSmartPointer<vtkTransform> inverseTransform =
+				vtkSmartPointer<vtkTransform>::New();
+
+			inverseTransform->SetMatrix(hli->m_transform);
+			inverseTransform->Modified();
+
+			// set up transform filter
+			vtkSmartPointer<vtkTransformPolyDataFilter> inverseTransformFilter =
+				vtkSmartPointer<vtkTransformPolyDataFilter>::New();
+
+			inverseTransformFilter->SetInput(hli->m_actor->GetData());
+			inverseTransformFilter->SetTransform(inverseTransform);
+			inverseTransformFilter->Modified();
+			inverseTransformFilter->Update();
+
+			// update the data
+			hli->m_actor->GetData()->DeepCopy(inverseTransformFilter->GetOutput());
+
+			// set transform to identity
+			hli->m_transform->Identity();
+
+			emit UpdateProgressBar(++counterProgressBar);
+			QCoreApplication::processEvents();
+		}
+	}
+
+	emit UpdateGUI();
+}
+void
+StitchingPlugin::SaveSelectedActors()
+{
+	// get output file
+	QString outputFile = QFileDialog::getSaveFileName(m_Widget, QString("Save ") + 
+		QString::number(m_Widget->m_ListWidgetHistory->selectedItems().size()) + 
+		" selected actors in seperate VTK files", "D:/RITK/bin/release/Data/", "VTK files (*.vtk)");	
+	if (outputFile.isEmpty())
+		return;
+
+	// get rid of ".vtk"
+	outputFile.remove(outputFile.size() - 4, 4);
+
+
+	int numSelected = m_Widget->m_ListWidgetHistory->selectedItems().count();
+	int counterProgressBar = 1;
+	emit InitProgressBar(0, numSelected);
+	emit UpdateProgressBar(counterProgressBar);
+
+
+	int fileCount = 0;
+	for (int i = 0; i < m_Widget->m_ListWidgetHistory->count(); ++i)
+	{
+		HistoryListItem* hli = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
+		if (hli->isSelected())
+		{
+			QString partFileName = outputFile + QString::number(fileCount++) + ".vtk";
+			std::cout << "saving actor " << i << " to " << partFileName.toStdString() << std::endl;
+			vtkSmartPointer<vtkPolyDataWriter> writer =
+				vtkSmartPointer<vtkPolyDataWriter>::New();
+			writer->SetFileName(partFileName.toStdString().c_str());
+			writer->SetInput(hli->m_actor->GetData());
+			writer->SetFileTypeToBinary();
+			writer->Update();
+
+			emit UpdateProgressBar(++counterProgressBar);
+			QCoreApplication::processEvents();
+		} 
+	}			
+}
+void
+StitchingPlugin::Delaunay2DSelectedActors()
+{
+	int numSelected = m_Widget->m_ListWidgetHistory->selectedItems().count();
+	int counterProgressBar = 1;
+	emit InitProgressBar(0, numSelected);
+	emit UpdateProgressBar(counterProgressBar);
+
+	// triangulation for each selected history entry - may take some time...
+	for (int i = 0; i < m_Widget->m_ListWidgetHistory->count(); ++i)
+	{
+		HistoryListItem* hli = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
+		if (hli->isSelected())
+		{
+			vtkSmartPointer<vtkTransform> t = 
+				vtkSmartPointer<vtkTransform>::New();
+			vtkSmartPointer<vtkDelaunay2D> Delaunay2D = 
+				vtkSmartPointer<vtkDelaunay2D>::New();
+			Delaunay2D->SetInput(hli->m_actor->GetData());
+			Delaunay2D->SetTransform(t);
+			Delaunay2D->Update();
+			hli->m_actor->SetData(Delaunay2D->GetOutput(), true);
+
+			emit UpdateProgressBar(++counterProgressBar);
+			QCoreApplication::processEvents();
+		} 
+	}
+
+	emit UpdateGUI();
 }
 //----------------------------------------------------------------------------
 void
@@ -618,6 +606,37 @@ StitchingPlugin::Clip(vtkPolyData *toBeClipped)
 }
 //----------------------------------------------------------------------------
 void
+StitchingPlugin::ChangePointSize()
+{
+	for (int i = 0; i < m_Widget->m_ListWidgetHistory->count(); ++i)
+	{
+		HistoryListItem* hli = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
+		if (hli->isSelected())
+		{
+			hli->m_actor->GetProperty()->SetPointSize(m_Widget->m_HorizontalSliderPointSize->value());
+		}
+	}
+	
+	emit UpdateGUI();
+}
+void
+StitchingPlugin::ChangeBackgroundColor1()
+{
+	QColor color = QColorDialog::getColor();
+
+	m_Widget->m_VisualizationWidget3D->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->
+		SetBackground(color.red()/255., color.green()/255., color.blue()/255.);
+}
+void
+StitchingPlugin::ChangeBackgroundColor2()
+{
+	QColor color = QColorDialog::getColor();
+
+	m_Widget->m_VisualizationWidget3D->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->
+		SetBackground2(color.red()/255., color.green()/255., color.blue()/255.);
+}
+//----------------------------------------------------------------------------
+void
 StitchingPlugin::CleanFrame()
 {
 	Clean(m_Data);
@@ -674,7 +693,7 @@ StitchingPlugin::Stitch(vtkPolyData* toBeStitched, vtkPolyData* previousFrame,
 						vtkPolyData* outputStitchedPolyData,
 						vtkMatrix4x4* outputTransformationMatrix)
 {
-	// time
+	// time measurement
 	QTime time;
 	time.start();
 
@@ -764,7 +783,8 @@ StitchingPlugin::Stitch(vtkPolyData* toBeStitched, vtkPolyData* previousFrame,
 	// update debug information in GUI
 	m_Widget->m_LabelICPIterations->setText(QString::number(icp->GetNumIter()));
 	m_Widget->m_LabelICPError->setText(QString::number(icp->GetMeanDist()));
-	m_Widget->m_LabelStitchTime->setText(QString::number(time.elapsed()) + " ms");
+	int elapsedTime = time.elapsed();
+	m_Widget->m_LabelStitchTime->setText(QString::number(elapsedTime) + " ms (avg: " + QString::number(elapsedTime / icp->GetNumIter()) + " ms)");
 
 	// cleanup
 	delete cpf; // delete ClosestPointFinder

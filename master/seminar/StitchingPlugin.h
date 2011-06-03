@@ -43,8 +43,8 @@ public:
 
 signals:
 	void UpdateGUI();
-	void updateProgressBar(int val);
-	void initProgressBar(int from, int to);
+	void UpdateProgressBar(int val);
+	void InitProgressBar(int from, int to);
 
 protected slots:
 	void LoadCleanStitch();

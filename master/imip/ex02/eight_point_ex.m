@@ -143,7 +143,7 @@ disp('cond(A)')
 cond(A)
 
 % Compute the SVD of the Measurement matrix A
-[U D V] = svd(A);
+[~, ~, V] = svd(A);
 
 % Find Fundamental Matrix F: see nullspace
 f = V(:, 9);
@@ -151,7 +151,7 @@ f = V(:, 9);
 % ||f|| = 1; f is only defined up to scale; f = 0 should be not the
 % solution!
 disp('norm(f)')
-nf = norm(f)
+nf = norm(f);
 
 % if f has not length 1
 for i=1:9
@@ -182,7 +182,7 @@ left_image = double(rgb2gray(imread('left2.jpg')));
 right_image = double(rgb2gray(imread('right2.jpg')));
 
 % Size of the left image
-[s t] = size(left_image);
+[~, t] = size(left_image);
 
 figure(1);
 imagesc(left_image); 
@@ -212,15 +212,15 @@ for i=0:7
    
    % Compute the corresponding point in the right image
    % with the Fundamental matrix FM
-   % right_P = ???;
+   right_P = FM*left_P;
    
    % Create samples for the x-coordinate of the epipolar line in the right
    % image
-   right_epipolar_x=1:t;
+   right_epipolar_x = 1:t;
 
    % Use the equation of a line: ax + by + c = 0; 
    % y = (-c -ax) / b
-   % right_epipolar_y = ???;
+   right_epipolar_y = (-right_P(3,1) - right_P(1,1)*right_epipolar_x) / right_P(2,1);
    
    % Plot epipolar line in the right image
    figure(2);
@@ -230,16 +230,17 @@ for i=0:7
    % Compute the epipolar line in the left image    
    % We know that left epipole is the 3rd column of V. 
    % FM = FU FD FV'
-   [FU FD FV]= svd(FM); % transformations
+   [~, ~, FV]= svd(FM); % transformations
    
-   % left_epipole = ???;
+   left_epipole = FV(:,3);
    % Divide by the z-coordinate
    left_epipole = left_epipole/left_epipole(3);
     
    % Create samples for the x-coordinate of the epipolar line in the left
    % image
    left_epipolar_x = 1:t;
-   % left_epipolar_y = ???;
+   left_epipolar_y = left_y + (left_epipolar_x - left_x) * ...
+       (left_epipole(2) - left_y) / (left_epipole(1) - left_x);
    
    % Plot epipolar line in the left image
    figure(1);

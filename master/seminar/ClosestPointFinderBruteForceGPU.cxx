@@ -22,7 +22,6 @@ ClosestPointFinderBruteForceGPU::FindClosestPoints(PointCoords* sourceCoords, Po
 //----------------------------------------------------------------------------
 void ClosestPointFinderBruteForceGPU::SetTarget(PointCoords* targetCoords, PointColors* targetColors) 
 { 
-	
 	ClosestPointFinder::SetTarget( targetCoords, targetColors);
 	initGPU(targetCoords, targetColors, m_NrOfPoints);
 }

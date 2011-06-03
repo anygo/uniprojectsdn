@@ -39,16 +39,18 @@ void initGPU(PointCoords* targetCoords, PointColors* targetColors, int nrOfPoint
 	CUDA_SAFE_CALL(cudaMalloc((void**)&dev_distances, nrOfPoints*sizeof(float)));
 	CUDA_SAFE_CALL(cudaMalloc((void**)&dev_transformationMatrix, 16*sizeof(float)));
 	
-	//CUDA_SAFE_CALL(cudaMemcpy(dev_targetCoords, targetCoords, nrOfPoints*sizeof(PointCoords), cudaMemcpyHostToDevice));
+	CUDA_SAFE_CALL(cudaMemcpy(dev_targetCoords, targetCoords, nrOfPoints*sizeof(PointCoords), cudaMemcpyHostToDevice));
 	CUDA_SAFE_CALL(cudaMemcpy(dev_targetColors, targetColors, nrOfPoints*sizeof(PointColors), cudaMemcpyHostToDevice));
 	
 	
-	// new stuff
+	// texture stuff
     CUDA_SAFE_CALL (cudaMallocArray (&cuArray, &tex.channelDesc, nrOfPoints*3, 1));
     CUDA_SAFE_CALL (cudaBindTextureToArray (tex, cuArray));
 
-    tex.filterMode = cudaFilterModeLinear;
+    tex.filterMode = cudaFilterModePoint;
     tex.normalized = false;
+    tex.addressMode[0]=cudaAddressModeClamp;
+
     CUDA_SAFE_CALL( cudaMemcpyToArray(cuArray, 0, 0, targetCoords, sizeof(PointCoords)*nrOfPoints, cudaMemcpyHostToDevice) );
 
 }

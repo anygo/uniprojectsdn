@@ -43,12 +43,14 @@ public:
 
 signals:
 	void UpdateGUI();
+	void updateProgressBar(int val);
+	void initProgressBar(int from, int to);
 
 protected slots:
 	void LoadCleanStitch();
 	void LoadCleanInitialize();
-	void Delaunay2D();
-	void SaveVTKData();
+	void Delaunay2DSelectedActors();
+	void SaveSelectedActors();
 	void InitializeHistory();
 	void ChangePointSize();
 	void ChangeBackgroundColor1();

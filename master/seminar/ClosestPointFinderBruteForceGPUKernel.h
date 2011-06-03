@@ -24,9 +24,9 @@ void kernelWithRGB(int nrOfPoints, int metric, float weightRGB, unsigned short* 
 	unsigned short idx = 0;
 	
 	// fuckingly did it!! freaking texture crap 0.5 addition is damn important somehow :D
-	float x = tex1D(tex, float(tid*3.f + 0.5f));
-	float y = tex1D(tex, float(tid*3.f + 1.5f));
-	float z = tex1D(tex, float(tid*3.f + 2.5f));
+	float x = tex1Dfetch(tex, float(tid*3.f + 0.5f));
+	float y = tex1Dfetch(tex, float(tid*3.f + 1.5f));
+	float z = tex1Dfetch(tex, float(tid*3.f + 2.5f));
 	//targetCoords[tid].x = LLL;
 
 	for (int i = 0; i < nrOfPoints; ++i)
@@ -41,8 +41,8 @@ void kernelWithRGB(int nrOfPoints, int metric, float weightRGB, unsigned short* 
 		case LOG_ABSOLUTE_DISTANCE:
 			spaceDist = std::log(std::abs(source[tid].x - target[i].x) + std::abs(source[tid].y - target[i].y) + std::abs(source[tid].z - target[i].z) + 1.0); break;
 		case SQUARED_DISTANCE:*/
-			//spaceDist = ((sourceCoords[tid].x - targetCoords[i].x)*(sourceCoords[tid].x - targetCoords[i].x) + (sourceCoords[tid].y - targetCoords[i].y)*(sourceCoords[tid].y - targetCoords[i].y) + (sourceCoords[tid].z - targetCoords[i].z)*(sourceCoords[tid].z - targetCoords[i].z));
-			spaceDist = ((sourceCoords[tid].x - x)*(sourceCoords[tid].x - x) + (sourceCoords[tid].y - y)*(sourceCoords[tid].y - y) + (sourceCoords[tid].z -z)*(sourceCoords[tid].z - z));
+			spaceDist = ((sourceCoords[tid].x - targetCoords[i].x)*(sourceCoords[tid].x - targetCoords[i].x) + (sourceCoords[tid].y - targetCoords[i].y)*(sourceCoords[tid].y - targetCoords[i].y) + (sourceCoords[tid].z - targetCoords[i].z)*(sourceCoords[tid].z - targetCoords[i].z));
+			//spaceDist = ((sourceCoords[tid].x - x)*(sourceCoords[tid].x - x) + (sourceCoords[tid].y - y)*(sourceCoords[tid].y - y) + (sourceCoords[tid].z -z)*(sourceCoords[tid].z - z));
 
 		//}
 

@@ -9,7 +9,7 @@ extern "C"
 void cleanupGPU(); 
 
 extern "C"
-void FindClosestPointsCUDA(int nrOfPoints, int metric, bool useRGBData, double weightRGB, unsigned short* indices, PointCoords* sourceCoords, PointColors* sourceColors);
+void FindClosestPointsCUDA(int nrOfPoints, int metric, bool useRGBData, float weightRGB, unsigned short* indices, PointCoords* sourceCoords, PointColors* sourceColors);
 
 unsigned short*
 ClosestPointFinderBruteForceGPU::FindClosestPoints(PointCoords* sourceCoords, PointColors* sourceColors)
@@ -22,7 +22,7 @@ ClosestPointFinderBruteForceGPU::FindClosestPoints(PointCoords* sourceCoords, Po
 //----------------------------------------------------------------------------
 void ClosestPointFinderBruteForceGPU::SetTarget(PointCoords* targetCoords, PointColors* targetColors) 
 { 
-	ClosestPointFinder::SetTarget( targetCoords, targetColors);
+	ClosestPointFinder::SetTarget(targetCoords, targetColors);
 	initGPU(targetCoords, targetColors, m_NrOfPoints);
 }
 

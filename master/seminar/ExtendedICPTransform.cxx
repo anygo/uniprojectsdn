@@ -226,7 +226,7 @@ ExtendedICPTransform::InternalUpdate()
 		}
 
 		// move mesh and compute mean distance to previous iteration
-		totaldist = 0.0;
+		totaldist = 0.f;
 
 		// transform on gpu
 		if (m_ClosestPointFinder->usesGPU())
@@ -250,7 +250,7 @@ ExtendedICPTransform::InternalUpdate()
 			}
 		}
 
-		m_MeanDist = totaldist / (double)m_NumLandmarks;
+		m_MeanDist = totaldist / (float)m_NumLandmarks;
 		std::cout << "\rICP Iteration " << m_NumIter << ":\t mean distance = " << m_MeanDist << "\t\t";
 			
 		if (m_MeanDist <= m_MaxMeanDist)

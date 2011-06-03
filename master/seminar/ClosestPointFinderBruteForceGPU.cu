@@ -1,14 +1,7 @@
 #include "ClosestPointFinderBruteForceGPUKernel.h"
 #include "defs.h"
 
-#include <stdio.h>
-#include <cutil.h>
-#include <stdio.h>
 #include <cutil_inline.h>
-#include <cuda_runtime.h>
-#include <driver_types.h>
-#include <channel_descriptor.h>
-#include <cuda_runtime_api.h>
 
 
 // global pointers for gpu... 
@@ -17,6 +10,9 @@ PointCoords* dev_sourceCoords;
 PointColors* dev_sourceColors;
 PointCoords* dev_targetCoords;
 PointColors* dev_targetColors;
+
+cudaArray* cuArray;
+
 
 float* dev_distances;
 float* dev_transformationMatrix;
@@ -43,8 +39,18 @@ void initGPU(PointCoords* targetCoords, PointColors* targetColors, int nrOfPoint
 	CUDA_SAFE_CALL(cudaMalloc((void**)&dev_distances, nrOfPoints*sizeof(float)));
 	CUDA_SAFE_CALL(cudaMalloc((void**)&dev_transformationMatrix, 16*sizeof(float)));
 	
-	CUDA_SAFE_CALL(cudaMemcpy(dev_targetCoords, targetCoords, nrOfPoints*sizeof(PointCoords), cudaMemcpyHostToDevice));
+	//CUDA_SAFE_CALL(cudaMemcpy(dev_targetCoords, targetCoords, nrOfPoints*sizeof(PointCoords), cudaMemcpyHostToDevice));
 	CUDA_SAFE_CALL(cudaMemcpy(dev_targetColors, targetColors, nrOfPoints*sizeof(PointColors), cudaMemcpyHostToDevice));
+	
+	
+	// new stuff
+    CUDA_SAFE_CALL (cudaMallocArray (&cuArray, &tex.channelDesc, nrOfPoints*3, 1));
+    CUDA_SAFE_CALL (cudaBindTextureToArray (tex, cuArray));
+
+    tex.filterMode = cudaFilterModeLinear;
+    tex.normalized = false;
+    CUDA_SAFE_CALL( cudaMemcpyToArray(cuArray, 0, 0, targetCoords, sizeof(PointCoords)*nrOfPoints, cudaMemcpyHostToDevice) );
+
 }
 
 extern "C"
@@ -59,6 +65,10 @@ void cleanupGPU()
 	
 	CUDA_SAFE_CALL(cudaFree(dev_distances));
 	CUDA_SAFE_CALL(cudaFree(dev_transformationMatrix));
+	
+	// texture stuff	
+	CUDA_SAFE_CALL(cudaFreeArray(cuArray));
+	CUDA_SAFE_CALL(cudaUnbindTexture(tex));
 }
 
 extern "C"
@@ -78,6 +88,11 @@ void FindClosestPointsCUDA(int nrOfPoints, int metric, bool useRGBData, double w
 		kernelWithoutRGB<<<nrOfPoints,1>>>(nrOfPoints, metric, dev_indices, dev_sourceCoords, dev_targetCoords);
 		
 	CUT_CHECK_ERROR("Kernel execution failed (while trying to find closest points)");
+	//PointCoords* mod_targets = (PointCoords*)malloc(sizeof(PointCoords)*nrOfPoints);
+	
+	//CUDA_SAFE_CALL(cudaMemcpy(mod_targets, dev_targetCoords, nrOfPoints*sizeof(PointCoords), cudaMemcpyDeviceToHost));
+	//for(int i = 0; i < nrOfPoints; ++i)
+	//	printf("%f \n", mod_targets[i].x);
 			
 	// copy data from gpu to host
 	CUDA_SAFE_CALL(cudaMemcpy(indices, dev_indices, nrOfPoints*sizeof(unsigned short), cudaMemcpyDeviceToHost));

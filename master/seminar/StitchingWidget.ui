@@ -602,7 +602,7 @@
              <widget class="QListWidget" name="m_ListWidgetHistory">
               <property name="minimumSize">
                <size>
-                <width>0</width>
+                <width>144</width>
                 <height>0</height>
                </size>
               </property>

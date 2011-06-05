@@ -160,7 +160,6 @@ ExtendedICPTransform::vtkPolyDataToPointCoordsAndColors()
 void
 ExtendedICPTransform::InternalUpdate() 
 {
-
 	// transform vtkPolyData in our own structures
 	vtkPolyDataToPointCoordsAndColors();
 

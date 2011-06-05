@@ -40,15 +40,15 @@ void kernelWithRGB(int nrOfPoints, int metric, float weightRGB, unsigned short* 
 		float y_dist = sourceCoords[tid].y - targetCoords[i].y;
 		float z_dist = sourceCoords[tid].z - targetCoords[i].z;
 
-		//switch (metric)
-		//{
-		//case ABSOLUTE_DISTANCE:
-		//	spaceDist = std::abs(x_dist) + std::abs(y_dist) + std::abs(z_dist);
-		//case LOG_ABSOLUTE_DISTANCE:
-		//	spaceDist = std::log(spaceDist + 1.f); break;
-		//case SQUARED_DISTANCE:
+		switch (metric)
+		{
+		case ABSOLUTE_DISTANCE:
+			spaceDist = std::abs(x_dist) + std::abs(y_dist) + std::abs(z_dist);
+		case LOG_ABSOLUTE_DISTANCE:
+			spaceDist = std::log(spaceDist + 1.f); break;
+		case SQUARED_DISTANCE:
 			spaceDist = ((x_dist * x_dist) + (y_dist * y_dist) + (z_dist * z_dist));
-		//}
+		}
 
 		// always use euclidean distance for colors...
 		float r_dist = sourceColors[tid].r - targetColors[i].r; 

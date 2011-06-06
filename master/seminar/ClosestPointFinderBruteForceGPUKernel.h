@@ -10,60 +10,85 @@
 #include <channel_descriptor.h>
 #include <cuda_runtime_api.h>
 
-//texture<float, 1, cudaReadModeElementType> tex;
-
 __global__
 void kernelWithRGB(int nrOfPoints, int metric, float weightRGB, unsigned short* indices, PointCoords* sourceCoords, PointColors* sourceColors, PointCoords* targetCoords, PointColors* targetColors) 
 {
 	// get source[tid] for this thread
 	unsigned int tid = blockIdx.x;
-	//tid = blockIdx.x*blockDim.x + threadIdx.x;
 
 	float minDist = FLT_MAX;
-
-	unsigned short idx = 0;
+	unsigned short idx;
 	float spaceDist;
 	float colorDist;
 	float dist;
-	
-	// fuckingly did it!! freaking texture crap 0.5 addition is damn important somehow :D
-	/*float x = tex1Dfetch(tex, float(tid*3.f + 0.5f));
-	float y = tex1Dfetch(tex, float(tid*3.f + 1.5f));
-	float z = tex1Dfetch(tex, float(tid*3.f + 2.5f));*/
+	float x_dist, y_dist, z_dist;
+	float r_dist, g_dist, b_dist;
 
-	for (int i = 0; i < nrOfPoints; ++i)
+	switch (metric)
 	{
-		spaceDist = 0.f;
-		colorDist = 0.f;
-
-		float x_dist = sourceCoords[tid].x - targetCoords[i].x; 
-		float y_dist = sourceCoords[tid].y - targetCoords[i].y;
-		float z_dist = sourceCoords[tid].z - targetCoords[i].z;
-
-		switch (metric)
+	case ABSOLUTE_DISTANCE:
+		for (int i = 0; i < nrOfPoints; ++i)
 		{
-		case ABSOLUTE_DISTANCE:
-			spaceDist = std::abs(x_dist) + std::abs(y_dist) + std::abs(z_dist);
-		case LOG_ABSOLUTE_DISTANCE:
-			spaceDist = std::log(spaceDist + 1.f); break;
-		case SQUARED_DISTANCE:
+			x_dist = sourceCoords[tid].x - targetCoords[i].x; 
+			y_dist = sourceCoords[tid].y - targetCoords[i].y;
+			z_dist = sourceCoords[tid].z - targetCoords[i].z;
+			spaceDist = abs(x_dist) + abs(y_dist) + abs(z_dist);
+
+			// always use euclidean distance for colors...
+			r_dist = sourceColors[tid].r - targetColors[i].r; 
+			g_dist = sourceColors[tid].g - targetColors[i].g;
+			b_dist = sourceColors[tid].b - targetColors[i].b;
+			colorDist = (r_dist * r_dist) + (g_dist * g_dist) + (b_dist * b_dist);
+			dist = (1 - weightRGB) * spaceDist + weightRGB * colorDist;
+			if (dist < minDist)
+			{
+				minDist = dist;
+				idx = i;
+			}
+		} 
+		break;
+	case LOG_ABSOLUTE_DISTANCE:
+		for (int i = 0; i < nrOfPoints; ++i)
+		{
+			x_dist = sourceCoords[tid].x - targetCoords[i].x; 
+			y_dist = sourceCoords[tid].y - targetCoords[i].y;
+			z_dist = sourceCoords[tid].z - targetCoords[i].z;
+			spaceDist = log(abs(x_dist) + abs(y_dist) + abs(z_dist) + 1.f);
+
+			// always use euclidean distance for colors...
+			r_dist = sourceColors[tid].r - targetColors[i].r; 
+			g_dist = sourceColors[tid].g - targetColors[i].g;
+			b_dist = sourceColors[tid].b - targetColors[i].b;
+			colorDist = (r_dist * r_dist) + (g_dist * g_dist) + (b_dist * b_dist);
+			dist = (1 - weightRGB) * spaceDist + weightRGB * colorDist;
+			if (dist < minDist)
+			{
+				minDist = dist;
+				idx = i;
+			}
+		} 
+		break;
+	case SQUARED_DISTANCE:
+		for (int i = 0; i < nrOfPoints; ++i)
+		{
+			x_dist = sourceCoords[tid].x - targetCoords[i].x; 
+			y_dist = sourceCoords[tid].y - targetCoords[i].y;
+			z_dist = sourceCoords[tid].z - targetCoords[i].z;
 			spaceDist = ((x_dist * x_dist) + (y_dist * y_dist) + (z_dist * z_dist));
-		}
 
-		// always use euclidean distance for colors...
-		float r_dist = sourceColors[tid].r - targetColors[i].r; 
-		float g_dist = sourceColors[tid].g - targetColors[i].g;
-		float b_dist = sourceColors[tid].b - targetColors[i].b;
-		colorDist = (r_dist * r_dist) + (g_dist * g_dist) + (b_dist * b_dist);
-
-		
-		dist = (1 - weightRGB) * spaceDist + weightRGB * colorDist;
-
-		if (dist < minDist)
-		{
-			minDist = dist;
-			idx = i;
-		}
+			// always use euclidean distance for colors...
+			r_dist = sourceColors[tid].r - targetColors[i].r; 
+			g_dist = sourceColors[tid].g - targetColors[i].g;
+			b_dist = sourceColors[tid].b - targetColors[i].b;
+			colorDist = (r_dist * r_dist) + (g_dist * g_dist) + (b_dist * b_dist);
+			dist = (1 - weightRGB) * spaceDist + weightRGB * colorDist;
+			if (dist < minDist)
+			{
+				minDist = dist;
+				idx = i;
+			}
+		} 
+		break;
 	}
 
 	indices[tid] = idx;
@@ -76,37 +101,61 @@ void kernelWithoutRGB(int nrOfPoints, int metric, unsigned short* indices, Point
 	unsigned int tid = blockIdx.x;
 
 	float minDist = FLT_MAX;
-
-	unsigned short idx = 0;
+	unsigned short idx;
 	float spaceDist;
+	float x_dist, y_dist, z_dist;
 
-
-	for (int i = 0; i < nrOfPoints; ++i)
+	switch (metric)
 	{
-		spaceDist = 0.f;
-
-		/*switch (metric)
+	case ABSOLUTE_DISTANCE:
+		for (int i = 0; i < nrOfPoints; ++i)
 		{
-		case ABSOLUTE_DISTANCE:
-			spaceDist = std::abs(source[tid].x - target[i].x) + std::abs(source[tid].y - target[i].y) + std::abs(source[tid].z - target[i].z); break;
-		case LOG_ABSOLUTE_DISTANCE:
-			spaceDist = std::log(std::abs(source[tid].x - target[i].x) + std::abs(source[tid].y - target[i].y) + std::abs(source[tid].z - target[i].z) + 1.0); break;
-		case SQUARED_DISTANCE:*/
-			spaceDist = ((sourceCoords[tid].x - targetCoords[i].x)*(sourceCoords[tid].x - targetCoords[i].x) + (sourceCoords[tid].y - targetCoords[i].y)*(sourceCoords[tid].y - targetCoords[i].y) + (sourceCoords[tid].z - targetCoords[i].z)*(sourceCoords[tid].z - targetCoords[i].z));
-		//}
-
-		if (spaceDist < minDist)
+			x_dist = sourceCoords[tid].x - targetCoords[i].x; 
+			y_dist = sourceCoords[tid].y - targetCoords[i].y;
+			z_dist = sourceCoords[tid].z - targetCoords[i].z;
+			spaceDist = abs(x_dist) + abs(y_dist) + abs(z_dist);
+			if (spaceDist < minDist)
+			{
+				minDist = spaceDist;
+				idx = i;
+			}
+		} 
+		break;
+	case LOG_ABSOLUTE_DISTANCE:
+		for (int i = 0; i < nrOfPoints; ++i)
 		{
-			minDist = spaceDist;
-			idx = i;
-		}
+			x_dist = sourceCoords[tid].x - targetCoords[i].x; 
+			y_dist = sourceCoords[tid].y - targetCoords[i].y;
+			z_dist = sourceCoords[tid].z - targetCoords[i].z;
+			spaceDist = log(abs(x_dist) + abs(y_dist) + abs(z_dist) + 1.f);
+			if (spaceDist < minDist)
+			{
+				minDist = spaceDist;
+				idx = i;
+			}
+		} 
+		break;
+	case SQUARED_DISTANCE:
+		for (int i = 0; i < nrOfPoints; ++i)
+		{
+			x_dist = sourceCoords[tid].x - targetCoords[i].x; 
+			y_dist = sourceCoords[tid].y - targetCoords[i].y;
+			z_dist = sourceCoords[tid].z - targetCoords[i].z;
+			spaceDist = ((x_dist * x_dist) + (y_dist * y_dist) + (z_dist * z_dist));
+			if (spaceDist < minDist)
+			{
+				minDist = spaceDist;
+				idx = i;
+			}
+		} 
+		break;
 	}
 
 	indices[tid] = idx;
 }
 
 __global__
-void kernelTransformPoints(PointCoords* sourceCoords, float* m, float* distances)
+void kernelTransformPointsAndComputeDistance(PointCoords* sourceCoords, float* m, float* distances)
 {
 	// get source[tid] for this thread
 	unsigned int tid = blockIdx.x;
@@ -131,6 +180,15 @@ void kernelTransformPoints(PointCoords* sourceCoords, float* m, float* distances
 	sourceCoords[tid].z = z;
 }
 
+
+
+
+// fuckingly did it!! freaking texture crap 0.5 addition is damn important somehow :D
+	/*float x = tex1Dfetch(tex, float(tid*3.f + 0.5f));
+	float y = tex1Dfetch(tex, float(tid*3.f + 1.5f));
+	float z = tex1Dfetch(tex, float(tid*3.f + 2.5f));*/
+
+//texture<float, 1, cudaReadModeElementType> tex;
 
 
 #endif // ClosestPointFinderBruteForceGPUKernel_H__

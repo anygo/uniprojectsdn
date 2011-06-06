@@ -34,7 +34,6 @@
 #include <ClosestPointFinderBruteForceGPU.h>
 #include <defs.h>
 
-
 StitchingPlugin::StitchingPlugin()
 {
 	// create the widget

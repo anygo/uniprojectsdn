@@ -125,7 +125,7 @@ void TransformPointsDirectlyOnGPU(int nrOfPoints, double transformationMatrix[4]
 	CUDA_SAFE_CALL(cudaMemcpy(dev_transformationMatrix, tmp, 16*sizeof(float), cudaMemcpyHostToDevice));
 	
 	// compute transformations
-	kernelTransformPoints<<<nrOfPoints,1>>>(dev_sourceCoords, dev_transformationMatrix, dev_distances);
+	kernelTransformPointsAndComputeDistance<<<nrOfPoints,1>>>(dev_sourceCoords, dev_transformationMatrix, dev_distances);
 	CUT_CHECK_ERROR("Kernel execution failed (while transforming points)");
 	
 	// copy distance array to host

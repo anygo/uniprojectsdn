@@ -100,11 +100,13 @@ SET(SRCS
 
 SET(CUDA_HDRS
 	ClosestPointFinderBruteForceGPUKernel.h
+	TransformationOnGPUKernel.h
 )
 
 
 SET(CUDA_SRCS
 	ClosestPointFinderBruteForceGPU.cu
+	TransformationOnGPU.cu
 )
 
 #-----------------------------------------------------------------------------

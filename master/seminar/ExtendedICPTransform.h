@@ -10,6 +10,13 @@
 #include "defs.h"
 #include "ClosestPointFinder.h"
 
+/**	@class		ExtendedICPTransform
+ *	@brief		Adaption of vtkIterativeClosestPointTransform
+ *	@author		Felix Lugauer and Dominik Neumann
+ *
+ *	@details
+ *	Class that encapsulates the ICP Algorithm, adapted from VTK
+ */
 class ExtendedICPTransform : public vtkLinearTransform
 {
 public:

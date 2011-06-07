@@ -21,7 +21,6 @@ vtkStandardNewMacro(ExtendedICPTransform);
 extern "C"
 void TransformPointsDirectlyOnGPU(int nrOfPoints, double transformationMatrix[4][4], PointCoords* writeTo, float* distances);
 
-//----------------------------------------------------------------------------
 ExtendedICPTransform::ExtendedICPTransform() : vtkLinearTransform()
 {
 	m_Source = vtkSmartPointer<vtkPolyData>::New();

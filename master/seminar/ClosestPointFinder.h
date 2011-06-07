@@ -3,9 +3,16 @@
 
 #include "defs.h"
 
+/**	@class		ClosestPointFinder
+ *	@brief		Interface for all ClosestPointFinders
+ *	@author		Felix Lugauer and Dominik Neumann
+ *
+ *	@details
+ *	Abstract class/Interface for the ClosestPointFinders implemented
+ *  for the Stitching Plugin
+ */
 class ClosestPointFinder
 {
-
 public:
 	ClosestPointFinder(int nrPoints) : m_NrOfPoints(nrPoints), m_Indices(new unsigned short[nrPoints]) {}
 	virtual ~ClosestPointFinder() { delete[] m_Indices; }

@@ -11,16 +11,17 @@
 #include <cuda_runtime_api.h>
 
 // global pointers for gpu... 
- unsigned short* dev_indices;
- PointCoords* dev_sourceCoords;
- PointColors* dev_sourceColors;
- PointCoords* dev_targetCoords;
- PointColors* dev_targetColors;
+unsigned short* dev_indices;
+PointCoords* dev_sourceCoords;
+PointColors* dev_sourceColors;
+PointCoords* dev_targetCoords;
+PointColors* dev_targetColors;
 
-//cudaArray* cuArray;
+cudaArray* cuArray;
+texture<float, 1, cudaReadModeElementType> tex;
 
- float* dev_distances;
- __device__ __constant__ float dev_transformationMatrix[16];
+float* dev_distances;
+__device__ __constant__ float dev_transformationMatrix[16];
 
 
 
@@ -43,9 +44,9 @@ void kernelWithRGB(int nrOfPoints, int metric, float weightRGB, unsigned short* 
 	case ABSOLUTE_DISTANCE:
 		for (int i = 0; i < nrOfPoints; ++i)
 		{
-			x_dist = sourceCoords[tid].x - targetCoords[i].x; 
-			y_dist = sourceCoords[tid].y - targetCoords[i].y;
-			z_dist = sourceCoords[tid].z - targetCoords[i].z;
+			x_dist = sourceCoords[tid].x - tex1D(tex, i*3.f + 0.5f); 
+			y_dist = sourceCoords[tid].y - tex1D(tex, i*3.f + 1.5f);
+			z_dist = sourceCoords[tid].z - tex1D(tex, i*3.f + 2.5f);
 			spaceDist = abs(x_dist) + abs(y_dist) + abs(z_dist);
 
 			// always use euclidean distance for colors...
@@ -64,9 +65,9 @@ void kernelWithRGB(int nrOfPoints, int metric, float weightRGB, unsigned short* 
 	case LOG_ABSOLUTE_DISTANCE:
 		for (int i = 0; i < nrOfPoints; ++i)
 		{
-			x_dist = sourceCoords[tid].x - targetCoords[i].x; 
-			y_dist = sourceCoords[tid].y - targetCoords[i].y;
-			z_dist = sourceCoords[tid].z - targetCoords[i].z;
+			x_dist = sourceCoords[tid].x - tex1D(tex, float(i*3.f + 0.5f)); 
+			y_dist = sourceCoords[tid].y - tex1D(tex, float(i*3.f + 1.5f));
+			z_dist = sourceCoords[tid].z - tex1D(tex, float(i*3.f + 2.5f));
 			spaceDist = log(abs(x_dist) + abs(y_dist) + abs(z_dist) + 1.f);
 
 			// always use euclidean distance for colors...
@@ -85,9 +86,10 @@ void kernelWithRGB(int nrOfPoints, int metric, float weightRGB, unsigned short* 
 	case SQUARED_DISTANCE:
 		for (int i = 0; i < nrOfPoints; ++i)
 		{
-			x_dist = sourceCoords[tid].x - targetCoords[i].x; 
-			y_dist = sourceCoords[tid].y - targetCoords[i].y;
-			z_dist = sourceCoords[tid].z - targetCoords[i].z;
+			float bla = i*3.f;
+			x_dist = sourceCoords[tid].x - tex1D(tex, bla + 0.5f); 
+			y_dist = sourceCoords[tid].y - tex1D(tex, bla + 1.5f);
+			z_dist = sourceCoords[tid].z - tex1D(tex, bla + 2.5f);
 			spaceDist = ((x_dist * x_dist) + (y_dist * y_dist) + (z_dist * z_dist));
 
 			// always use euclidean distance for colors...
@@ -124,9 +126,9 @@ void kernelWithoutRGB(int nrOfPoints, int metric, unsigned short* indices, Point
 	case ABSOLUTE_DISTANCE:
 		for (int i = 0; i < nrOfPoints; ++i)
 		{
-			x_dist = sourceCoords[tid].x - targetCoords[i].x; 
-			y_dist = sourceCoords[tid].y - targetCoords[i].y;
-			z_dist = sourceCoords[tid].z - targetCoords[i].z;
+			x_dist = sourceCoords[tid].x - tex1D(tex, float(i*3.f + 0.5f)); 
+			y_dist = sourceCoords[tid].y - tex1D(tex, float(i*3.f + 1.5f));
+			z_dist = sourceCoords[tid].z - tex1D(tex, float(i*3.f + 2.5f));
 			spaceDist = abs(x_dist) + abs(y_dist) + abs(z_dist);
 			if (spaceDist < minDist)
 			{
@@ -138,9 +140,9 @@ void kernelWithoutRGB(int nrOfPoints, int metric, unsigned short* indices, Point
 	case LOG_ABSOLUTE_DISTANCE:
 		for (int i = 0; i < nrOfPoints; ++i)
 		{
-			x_dist = sourceCoords[tid].x - targetCoords[i].x; 
-			y_dist = sourceCoords[tid].y - targetCoords[i].y;
-			z_dist = sourceCoords[tid].z - targetCoords[i].z;
+			x_dist = sourceCoords[tid].x - tex1D(tex, float(i*3.f + 0.5f)); 
+			y_dist = sourceCoords[tid].y - tex1D(tex, float(i*3.f + 1.5f));
+			z_dist = sourceCoords[tid].z - tex1D(tex, float(i*3.f + 2.5f));
 			spaceDist = log(abs(x_dist) + abs(y_dist) + abs(z_dist) + 1.f);
 			if (spaceDist < minDist)
 			{
@@ -152,9 +154,9 @@ void kernelWithoutRGB(int nrOfPoints, int metric, unsigned short* indices, Point
 	case SQUARED_DISTANCE:
 		for (int i = 0; i < nrOfPoints; ++i)
 		{
-			x_dist = sourceCoords[tid].x - targetCoords[i].x; 
-			y_dist = sourceCoords[tid].y - targetCoords[i].y;
-			z_dist = sourceCoords[tid].z - targetCoords[i].z;
+			x_dist = sourceCoords[tid].x - tex1D(tex, float(i*3.f + 0.5f)); 
+			y_dist = sourceCoords[tid].y - tex1D(tex, float(i*3.f + 1.5f));
+			z_dist = sourceCoords[tid].z - tex1D(tex, float(i*3.f + 2.5f));
 			spaceDist = ((x_dist * x_dist) + (y_dist * y_dist) + (z_dist * z_dist));
 			if (spaceDist < minDist)
 			{

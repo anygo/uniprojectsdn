@@ -13,7 +13,15 @@ typedef RImageType::Pointer				RImagePointer;
 typedef RImageType::ConstPointer		RImageConstPointer;
 
 
-// defs
+/**	@class		HistoryListItem
+ *	@brief		Extended QListWidgetItem for the history
+ *	@author		Felix Lugauer and Dominik Neumann
+ *
+ *	@details
+ *	Class that extends QListWidgetItem and holds additional data, in particular
+ *	the actual point data inside a RImageActorPipeline and a pointer to the
+ *	transformation matrix that was applied to modify the data (during stitching)
+ */
 class HistoryListItem : public QListWidgetItem
 {
 public:
@@ -21,7 +29,14 @@ public:
 	vtkSmartPointer<vtkMatrix4x4>				m_transform;
 };
 
-
+/**	@class		StitchingPlugin
+ *	@brief		RITK Plugin for (real time) stitching of 3D point clouds
+ *	@author		Felix Lugauer and Dominik Neumann
+ *
+ *	@details
+ *	Class that extends ritk::ApplicationPlugin. It controls all user interaction
+ *	and encapsulates the whole algorithmic part.
+ */
 class StitchingPlugin : public ritk::ApplicationPlugin
 {
 	Q_OBJECT

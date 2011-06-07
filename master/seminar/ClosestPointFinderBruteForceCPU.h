@@ -4,7 +4,15 @@
 #include "ClosestPointFinder.h"
 #include "QThread.h"
 
-
+/**	@class		ClosestPointFinderBruteForceCPU
+ *	@brief		BruteForce ClosestPointFinder on CPU (multithreaded)
+ *	@author		Felix Lugauer and Dominik Neumann
+ *
+ *	@details
+ *	Class that implements the ClosestPointFinder and tries all combinations of
+ *	points to find the closest points in two point clouds. Ability to split
+ *	the task into many parts and process them parallely on different threads.
+ */
 class ClosestPointFinderBruteForceCPU : public ClosestPointFinder
 {
 public:

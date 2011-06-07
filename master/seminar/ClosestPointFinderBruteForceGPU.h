@@ -3,7 +3,15 @@
 
 #include "ClosestPointFinder.h"
 
-
+/**	@class		ClosestPointFinderBruteForceGPU
+ *	@brief		BruteForce ClosestPointFinder on GPU (CUDA)
+ *	@author		Felix Lugauer and Dominik Neumann
+ *
+ *	@details
+ *	Class that implements the ClosestPointFinder and tries all combinations of
+ *	points to find the closest points in two point clouds. Massively parallelized
+ *	using a CUDA graphics card
+ */
 class ClosestPointFinderBruteForceGPU : public ClosestPointFinder
 {
 public:

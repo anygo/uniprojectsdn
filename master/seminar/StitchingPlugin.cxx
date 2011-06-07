@@ -694,7 +694,7 @@ StitchingPlugin::Stitch(vtkPolyData* toBeStitched, vtkPolyData* previousFrame,
 						vtkPolyData* outputStitchedPolyData,
 						vtkMatrix4x4* outputTransformationMatrix)
 {
-	// time measurement
+	// time measurement for stitching
 	QTime time;
 	time.start();
 
@@ -751,6 +751,10 @@ StitchingPlugin::Stitch(vtkPolyData* toBeStitched, vtkPolyData* previousFrame,
 	}
 	cpf->SetMetric(metric);
 
+	// time measurement for ICP
+	QTime timeICP;
+	timeICP.start();
+
 	// configure icp
 	icp->SetSource(voi);
 	icp->SetTarget(previousFrame);
@@ -761,6 +765,10 @@ StitchingPlugin::Stitch(vtkPolyData* toBeStitched, vtkPolyData* previousFrame,
 	icp->SetClosestPointFinder(cpf);
 	icp->Modified();
 	icp->Update();
+
+	// update icp runtime
+	int elapsedTimeICP = timeICP.elapsed();
+	m_Widget->m_LabelICPRuntime->setText(QString::number(elapsedTimeICP) + " ms (avg: " + QString::number(elapsedTimeICP / icp->GetNumIter()) + " ms)");
 
 	// update output parameter
 	outputTransformationMatrix->DeepCopy(icp->GetMatrix());
@@ -785,7 +793,7 @@ StitchingPlugin::Stitch(vtkPolyData* toBeStitched, vtkPolyData* previousFrame,
 	m_Widget->m_LabelICPIterations->setText(QString::number(icp->GetNumIter()));
 	m_Widget->m_LabelICPError->setText(QString::number(icp->GetMeanDist()));
 	int elapsedTime = time.elapsed();
-	m_Widget->m_LabelStitchTime->setText(QString::number(elapsedTime) + " ms (avg: " + QString::number(elapsedTime / icp->GetNumIter()) + " ms)");
+	m_Widget->m_LabelStitchTime->setText(QString::number(elapsedTime) + " ms");
 
 	// cleanup
 	delete cpf; // delete ClosestPointFinder

@@ -842,6 +842,23 @@
              </widget>
             </item>
             <item row="3" column="1">
+             <widget class="QLabel" name="m_LabelICPRuntime">
+              <property name="frameShadow">
+               <enum>QFrame::Plain</enum>
+              </property>
+              <property name="text">
+               <string>0 ms</string>
+              </property>
+             </widget>
+            </item>
+            <item row="4" column="0">
+             <widget class="QLabel" name="label_16">
+              <property name="text">
+               <string>Stitching Runtime</string>
+              </property>
+             </widget>
+            </item>
+            <item row="4" column="1">
              <widget class="QLabel" name="m_LabelStitchTime">
               <property name="frameShadow">
                <enum>QFrame::Plain</enum>

@@ -10,6 +10,20 @@
 #include <channel_descriptor.h>
 #include <cuda_runtime_api.h>
 
+// global pointers for gpu... 
+ unsigned short* dev_indices;
+ PointCoords* dev_sourceCoords;
+ PointColors* dev_sourceColors;
+ PointCoords* dev_targetCoords;
+ PointColors* dev_targetColors;
+
+//cudaArray* cuArray;
+
+ float* dev_distances;
+ __device__ __constant__ float dev_transformationMatrix[16];
+
+
+
 __global__
 void kernelWithRGB(int nrOfPoints, int metric, float weightRGB, unsigned short* indices, PointCoords* sourceCoords, PointColors* sourceColors, PointCoords* targetCoords, PointColors* targetColors) 
 {
@@ -154,17 +168,18 @@ void kernelWithoutRGB(int nrOfPoints, int metric, unsigned short* indices, Point
 	indices[tid] = idx;
 }
 
+
 __global__
-void kernelTransformPointsAndComputeDistance(PointCoords* sourceCoords, float* m, float* distances)
+void kernelTransformPointsAndComputeDistance(PointCoords* sourceCoords, float* distances)
 {
 	// get source[tid] for this thread
 	unsigned int tid = blockIdx.x;
 
 	// compute homogeneous transformation
-	float x = m[0]*sourceCoords[tid].x + m[1]*sourceCoords[tid].y + m[2]*sourceCoords[tid].z + m[3];
-	float y = m[4]*sourceCoords[tid].x + m[5]*sourceCoords[tid].y + m[6]*sourceCoords[tid].z + m[7];
-	float z = m[8]*sourceCoords[tid].x + m[9]*sourceCoords[tid].y + m[10]*sourceCoords[tid].z + m[11];
-	float w = m[12]*sourceCoords[tid].x + m[13]*sourceCoords[tid].y + m[14]*sourceCoords[tid].z + m[15];
+	float x = dev_transformationMatrix[0]*sourceCoords[tid].x + dev_transformationMatrix[1]*sourceCoords[tid].y + dev_transformationMatrix[2]*sourceCoords[tid].z + dev_transformationMatrix[3];
+	float y = dev_transformationMatrix[4]*sourceCoords[tid].x + dev_transformationMatrix[5]*sourceCoords[tid].y + dev_transformationMatrix[6]*sourceCoords[tid].z + dev_transformationMatrix[7];
+	float z = dev_transformationMatrix[8]*sourceCoords[tid].x + dev_transformationMatrix[9]*sourceCoords[tid].y + dev_transformationMatrix[10]*sourceCoords[tid].z + dev_transformationMatrix[11];
+	float w = dev_transformationMatrix[12]*sourceCoords[tid].x + dev_transformationMatrix[13]*sourceCoords[tid].y + dev_transformationMatrix[14]*sourceCoords[tid].z + dev_transformationMatrix[15];
 
 	// divide by the last component
 	x = x/w;

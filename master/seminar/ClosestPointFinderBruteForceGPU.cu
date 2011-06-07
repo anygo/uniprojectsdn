@@ -4,18 +4,6 @@
 #include <cutil_inline.h>
 
 
-// global pointers for gpu... 
-unsigned short* dev_indices;
-PointCoords* dev_sourceCoords;
-PointColors* dev_sourceColors;
-PointCoords* dev_targetCoords;
-PointColors* dev_targetColors;
-
-//cudaArray* cuArray;
-
-
-float* dev_distances;
-float* dev_transformationMatrix;
 
 // we have to copy the source points only once, because they will be
 // transformed directly on the gpu! unfortunately, we do not yet have
@@ -66,7 +54,7 @@ void cleanupGPU()
 	CUDA_SAFE_CALL(cudaFree(dev_targetColors));
 	
 	CUDA_SAFE_CALL(cudaFree(dev_distances));
-	CUDA_SAFE_CALL(cudaFree(dev_transformationMatrix));
+	//CUDA_SAFE_CALL(cudaFree(dev_transformationMatrix));
 	
 	// texture stuff	
 	//CUDA_SAFE_CALL(cudaFreeArray(cuArray));
@@ -122,10 +110,10 @@ void TransformPointsDirectlyOnGPU(int nrOfPoints, double transformationMatrix[4]
 	tmp[14] = (float)transformationMatrix[3][2];
 	tmp[15] = (float)transformationMatrix[3][3];
 	
-	CUDA_SAFE_CALL(cudaMemcpy(dev_transformationMatrix, tmp, 16*sizeof(float), cudaMemcpyHostToDevice));
+	CUDA_SAFE_CALL(cudaMemcpyToSymbol(dev_transformationMatrix, tmp, 16*sizeof(float), 0));
 	
 	// compute transformations
-	kernelTransformPointsAndComputeDistance<<<nrOfPoints,1>>>(dev_sourceCoords, dev_transformationMatrix, dev_distances);
+	kernelTransformPointsAndComputeDistance<<<nrOfPoints,1>>>(dev_sourceCoords, dev_distances);
 	CUT_CHECK_ERROR("Kernel execution failed (while transforming points)");
 	
 	// copy distance array to host

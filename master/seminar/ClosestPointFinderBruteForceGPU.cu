@@ -4,7 +4,6 @@
 #include <cutil_inline.h>
 
 
-
 // we have to copy the source points only once, because they will be
 // transformed directly on the gpu! unfortunately, we do not yet have
 // the source points, hence we use that boolean to determine whether
@@ -23,24 +22,10 @@ void initGPU(PointCoords* targetCoords, PointColors* targetColors, int nrOfPoint
 	CUDA_SAFE_CALL(cudaMalloc((void**)&dev_targetCoords, nrOfPoints*sizeof(PointCoords)));
 	CUDA_SAFE_CALL(cudaMalloc((void**)&dev_sourceColors, nrOfPoints*sizeof(PointColors)));
 	CUDA_SAFE_CALL(cudaMalloc((void**)&dev_targetColors, nrOfPoints*sizeof(PointColors)));
-	
 	CUDA_SAFE_CALL(cudaMalloc((void**)&dev_distances, nrOfPoints*sizeof(float)));
-	CUDA_SAFE_CALL(cudaMalloc((void**)&dev_transformationMatrix, 16*sizeof(float)));
 	
 	CUDA_SAFE_CALL(cudaMemcpy(dev_targetCoords, targetCoords, nrOfPoints*sizeof(PointCoords), cudaMemcpyHostToDevice));
 	CUDA_SAFE_CALL(cudaMemcpy(dev_targetColors, targetColors, nrOfPoints*sizeof(PointColors), cudaMemcpyHostToDevice));
-	
-	
-	// texture stuff
-    //CUDA_SAFE_CALL (cudaMallocArray (&cuArray, &tex.channelDesc, nrOfPoints*3, 1));
-    //CUDA_SAFE_CALL (cudaBindTextureToArray (tex, cuArray));
-
-    //tex.filterMode = cudaFilterModePoint;
-    //tex.normalized = false;
-    //tex.addressMode[0]=cudaAddressModeClamp;
-
-    //CUDA_SAFE_CALL(cudaMemcpyToArray(cuArray, 0, 0, targetCoords, sizeof(PointCoords)*nrOfPoints, cudaMemcpyHostToDevice));
-
 }
 
 extern "C"
@@ -54,11 +39,6 @@ void cleanupGPU()
 	CUDA_SAFE_CALL(cudaFree(dev_targetColors));
 	
 	CUDA_SAFE_CALL(cudaFree(dev_distances));
-	//CUDA_SAFE_CALL(cudaFree(dev_transformationMatrix));
-	
-	// texture stuff	
-	//CUDA_SAFE_CALL(cudaFreeArray(cuArray));
-	//CUDA_SAFE_CALL(cudaUnbindTexture(tex));
 }
 
 extern "C"
@@ -71,7 +51,7 @@ void FindClosestPointsCUDA(int nrOfPoints, int metric, bool useRGBData, float we
 		CUDA_SAFE_CALL(cudaMemcpy(dev_sourceColors, sourceColors, nrOfPoints*sizeof(PointColors), cudaMemcpyHostToDevice));	
 	sourceCopied = true;
 
-	// execution
+	// find the closest point for each pixel
 	if (useRGBData)
 		kernelWithRGB<<<nrOfPoints,1>>>(nrOfPoints, metric, weightRGB, dev_indices, dev_sourceCoords, dev_sourceColors, dev_targetCoords, dev_targetColors);
 	else
@@ -79,10 +59,6 @@ void FindClosestPointsCUDA(int nrOfPoints, int metric, bool useRGBData, float we
 		
 	CUT_CHECK_ERROR("Kernel execution failed (while trying to find closest points)");
 	//PointCoords* mod_targets = (PointCoords*)malloc(sizeof(PointCoords)*nrOfPoints);
-	
-	//CUDA_SAFE_CALL(cudaMemcpy(mod_targets, dev_targetCoords, nrOfPoints*sizeof(PointCoords), cudaMemcpyDeviceToHost));
-	//for(int i = 0; i < nrOfPoints; ++i)
-	//	printf("%f \n", mod_targets[i].x);
 			
 	// copy data from gpu to host
 	CUDA_SAFE_CALL(cudaMemcpy(indices, dev_indices, nrOfPoints*sizeof(unsigned short), cudaMemcpyDeviceToHost));

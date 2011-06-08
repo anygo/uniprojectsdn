@@ -224,7 +224,6 @@ ExtendedICPTransform::InternalUpdate()
 			for(int i = 0; i < m_NumLandmarks; ++i)
 				if(dists[i] * m_LandmarksToTrim <= mean) 
 					++number;
-			std::cout << " " << number << std::endl;
 
 			// Calling Modified() is necessary otherwise object properties won't change
 			closestp->SetNumberOfPoints(number);
@@ -300,11 +299,10 @@ ExtendedICPTransform::InternalUpdate()
 			break;
 		}
 
-		// swapping
+		// swap
 		temp = a;
 		a = b;
 		b = temp;
-
 
 		if (!m_ClosestPointFinder->usesGPU()) {
 			vtkPolyDataToPointCoords(a, m_SourceCoords);

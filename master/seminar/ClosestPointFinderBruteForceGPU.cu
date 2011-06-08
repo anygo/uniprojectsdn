@@ -58,7 +58,6 @@ void FindClosestPointsCUDA(int nrOfPoints, int metric, bool useRGBData, float we
 		kernelWithoutRGB<<<nrOfPoints,1>>>(nrOfPoints, metric, dev_indices, dev_sourceCoords, dev_targetCoords, dev_distances);
 		
 	CUT_CHECK_ERROR("Kernel execution failed (while trying to find closest points)");
-	//PointCoords* mod_targets = (PointCoords*)malloc(sizeof(PointCoords)*nrOfPoints);
 			
 	// copy data from gpu to host
 	CUDA_SAFE_CALL(cudaMemcpy(indices, dev_indices, nrOfPoints*sizeof(unsigned short), cudaMemcpyDeviceToHost));

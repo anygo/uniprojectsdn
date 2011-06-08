@@ -46,7 +46,6 @@
              <verstretch>0</verstretch>
             </sizepolicy>
            </property>
-           <zorder>m_CheckBoxUseRGBData</zorder>
           </widget>
          </item>
         </layout>
@@ -206,7 +205,7 @@
                   </size>
                  </property>
                  <property name="currentIndex">
-                  <number>0</number>
+                  <number>3</number>
                  </property>
                  <item>
                   <property name="text">
@@ -221,6 +220,11 @@
                  <item>
                   <property name="text">
                    <string>BruteForce CPU (mt)</string>
+                  </property>
+                 </item>
+                 <item>
+                  <property name="text">
+                   <string>RandomBallCover CPU</string>
                   </property>
                  </item>
                 </widget>

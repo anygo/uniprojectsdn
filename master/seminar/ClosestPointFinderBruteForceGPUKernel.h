@@ -16,9 +16,6 @@
  __device__ PointColors* dev_sourceColors;
  __device__ PointCoords* dev_targetCoords;
  __device__ PointColors* dev_targetColors;
-
-//cudaArray* cuArray;
-
  __device__ float* dev_distances;
  __device__ __constant__ float dev_transformationMatrix[16];
 
@@ -104,6 +101,7 @@ void kernelWithRGB(int nrOfPoints, int metric, float weightRGB, unsigned short* 
 		} 
 		break;
 	}
+
 	distances[tid] = minDist;
 	indices[tid] = idx;
 }
@@ -164,6 +162,7 @@ void kernelWithoutRGB(int nrOfPoints, int metric, unsigned short* indices, Point
 		} 
 		break;
 	}
+
 	distances[tid] = minDist;
 	indices[tid] = idx;
 }
@@ -194,16 +193,6 @@ void kernelTransformPointsAndComputeDistance(PointCoords* sourceCoords, float* d
 	sourceCoords[tid].y = y;
 	sourceCoords[tid].z = z;
 }
-
-
-
-
-// fuckingly did it!! freaking texture crap 0.5 addition is damn important somehow :D
-	/*float x = tex1Dfetch(tex, float(tid*3.f + 0.5f));
-	float y = tex1Dfetch(tex, float(tid*3.f + 1.5f));
-	float z = tex1Dfetch(tex, float(tid*3.f + 2.5f));*/
-
-//texture<float, 1, cudaReadModeElementType> tex;
 
 
 #endif // ClosestPointFinderBruteForceGPUKernel_H__

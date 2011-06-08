@@ -46,6 +46,7 @@
              <verstretch>0</verstretch>
             </sizepolicy>
            </property>
+           <zorder>m_CheckBoxUseRGBData</zorder>
           </widget>
          </item>
         </layout>
@@ -423,6 +424,23 @@
                  </property>
                  <property name="value">
                   <double>0.500000000000000</double>
+                 </property>
+                </widget>
+               </item>
+               <item row="5" column="1">
+                <widget class="QDoubleSpinBox" name="m_DoubleSpinBoxTrimLandmarks">
+                 <property name="maximum">
+                  <double>100.000000000000000</double>
+                 </property>
+                 <property name="singleStep">
+                  <double>0.050000000000000</double>
+                 </property>
+                </widget>
+               </item>
+               <item row="5" column="0">
+                <widget class="QLabel" name="label_17">
+                 <property name="text">
+                  <string>Trim Percentage of Landmarks</string>
                  </property>
                 </widget>
                </item>
@@ -916,8 +934,8 @@
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>720</x>
-     <y>258</y>
+     <x>633</x>
+     <y>287</y>
     </hint>
     <hint type="destinationlabel">
      <x>813</x>

@@ -11,21 +11,21 @@
 #include <cuda_runtime_api.h>
 
 // global pointers for gpu... 
- unsigned short* dev_indices;
- PointCoords* dev_sourceCoords;
- PointColors* dev_sourceColors;
- PointCoords* dev_targetCoords;
- PointColors* dev_targetColors;
+ __device__ unsigned short* dev_indices;
+ __device__ PointCoords* dev_sourceCoords;
+ __device__ PointColors* dev_sourceColors;
+ __device__ PointCoords* dev_targetCoords;
+ __device__ PointColors* dev_targetColors;
 
 //cudaArray* cuArray;
 
- float* dev_distances;
+ __device__ float* dev_distances;
  __device__ __constant__ float dev_transformationMatrix[16];
 
 
 
 __global__
-void kernelWithRGB(int nrOfPoints, int metric, float weightRGB, unsigned short* indices, PointCoords* sourceCoords, PointColors* sourceColors, PointCoords* targetCoords, PointColors* targetColors) 
+void kernelWithRGB(int nrOfPoints, int metric, float weightRGB, unsigned short* indices, PointCoords* sourceCoords, PointColors* sourceColors, PointCoords* targetCoords, PointColors* targetColors, float* distances) 
 {
 	// get source[tid] for this thread
 	unsigned int tid = blockIdx.x;
@@ -104,12 +104,12 @@ void kernelWithRGB(int nrOfPoints, int metric, float weightRGB, unsigned short* 
 		} 
 		break;
 	}
-
+	distances[tid] = minDist;
 	indices[tid] = idx;
 }
 
 __global__
-void kernelWithoutRGB(int nrOfPoints, int metric, unsigned short* indices, PointCoords* sourceCoords, PointCoords* targetCoords) 
+void kernelWithoutRGB(int nrOfPoints, int metric, unsigned short* indices, PointCoords* sourceCoords, PointCoords* targetCoords, float* distances) 
 {
 	// get source[tid] for this thread
 	unsigned int tid = blockIdx.x;
@@ -164,7 +164,7 @@ void kernelWithoutRGB(int nrOfPoints, int metric, unsigned short* indices, Point
 		} 
 		break;
 	}
-
+	distances[tid] = minDist;
 	indices[tid] = idx;
 }
 

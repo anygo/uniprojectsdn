@@ -7,8 +7,6 @@ unsigned short*
 ClosestPointFinderBruteForceCPU::FindClosestPoints(PointCoords* sourceCoords, PointColors* sourceColors) {
 	
 	// create some worker threads and do the job
-
-	
 	int numThreads = 1;
 	if (m_Multithreaded)
 	{
@@ -32,7 +30,8 @@ ClosestPointFinderBruteForceCPU::FindClosestPoints(PointCoords* sourceCoords, Po
 			sourceCoords,
 			sourceColors,
 			m_TargetCoords,
-			m_TargetColors
+			m_TargetColors,
+			m_Distances
 			);
 
 		// start the thread
@@ -106,5 +105,6 @@ ClosestPointFinderBruteForceCPUWorker::run()
 		}
 
 		m_Indices[j] = idx;
+		m_Distances[j] = minDist;
 	}
 }

@@ -170,13 +170,13 @@ ExtendedICPTransform::InternalUpdate()
 		vtkSmartPointer<vtkPoints>::New();
 	points1->SetNumberOfPoints(m_NumLandmarks);
 
-	vtkSmartPointer<vtkPoints> closestp =
-		vtkSmartPointer<vtkPoints>::New();
-	closestp->SetNumberOfPoints(m_NumLandmarks);
-
 	vtkSmartPointer<vtkPoints> points2 =
 		vtkSmartPointer<vtkPoints>::New();
 	points2->SetNumberOfPoints(m_NumLandmarks);
+
+	vtkSmartPointer<vtkPoints> closestp =
+		vtkSmartPointer<vtkPoints>::New();
+	closestp->SetNumberOfPoints(m_NumLandmarks);
 
 	vtkSmartPointer<vtkTransform> accumulate =
 		vtkTransform::New();
@@ -185,6 +185,7 @@ ExtendedICPTransform::InternalUpdate()
 	double p1[3], p2[3];
 	// for gpu based distance computation
 	float* distances = new float[m_NumLandmarks];
+	unsigned short* indices;
 
 	for (int i = 0; i < m_NumLandmarks; i++)
 	{
@@ -192,6 +193,11 @@ ExtendedICPTransform::InternalUpdate()
 	}
 
 	// go
+	vtkSmartPointer<vtkPoints> a2;
+	if(m_LandmarksToTrim != 0.0) {
+		a2 = vtkSmartPointer<vtkPoints>::New();
+	}
+
 	vtkSmartPointer<vtkPoints> temp;
 	vtkSmartPointer<vtkPoints> a = points1;
 	vtkSmartPointer<vtkPoints> b = points2;
@@ -202,22 +208,60 @@ ExtendedICPTransform::InternalUpdate()
 	while (true)
 	{
 		// Set locators source points and perfom nearest neighbor search
-		unsigned short* indices = m_ClosestPointFinder->FindClosestPoints(m_SourceCoords, m_SourceColors);
-		for(int i = 0; i < m_NumLandmarks; ++i)
-		{
-			int index = indices[i];
-			closestp->SetPoint(i, m_TargetCoords[index].x, m_TargetCoords[index].y, m_TargetCoords[index].z );
+		indices = m_ClosestPointFinder->FindClosestPoints(m_SourceCoords, m_SourceColors);
+
+		if( m_LandmarksToTrim != 0.0) {
+
+			float* dists = m_ClosestPointFinder->GetDistances();
+			float mean = 0.f;
+			for(int i = 0; i < m_NumLandmarks; ++i)
+			{
+				mean += dists[i];
+			}
+			mean = mean / (float)m_NumLandmarks;
+		
+			int number = 0;
+			for(int i = 0; i < m_NumLandmarks; ++i)
+				if(dists[i] * m_LandmarksToTrim <= mean) 
+					++number;
+			std::cout << " " << number << std::endl;
+
+			// Calling Modified() is necessary otherwise object properties won't change
+			closestp->SetNumberOfPoints(number);
+			a2->SetNumberOfPoints(number);
+			closestp->Modified();
+			a2->Modified();
+
+			int count = 0;
+			for(int i = 0; i < m_NumLandmarks; ++i)
+			{
+				if(dists[i] * m_LandmarksToTrim <= mean) 
+				{
+					int index = indices[i];
+					closestp->SetPoint(count, m_TargetCoords[index].x, m_TargetCoords[index].y, m_TargetCoords[index].z);
+					a2->SetPoint(count, m_SourceCoords[i].x, m_SourceCoords[i].y, m_SourceCoords[i].z);
+					++count;
+				}
+			}
+			m_LandmarkTransform->SetSourceLandmarks(a2);
+
+		} else {
+			for(int i = 0; i < m_NumLandmarks; ++i)
+			{
+				int index = indices[i];
+				closestp->SetPoint(i, m_TargetCoords[index].x, m_TargetCoords[index].y, m_TargetCoords[index].z);
+			}
+			m_LandmarkTransform->SetSourceLandmarks(a);
 		}
 
 		// build the landmark transform
-		m_LandmarkTransform->SetSourceLandmarks(a);
 		m_LandmarkTransform->SetTargetLandmarks(closestp);
 		m_LandmarkTransform->Update();
 
 		// concatenate transformation matrices
 		accumulate->Concatenate(m_LandmarkTransform->GetMatrix());
 
-		m_NumIter++;
+		++m_NumIter;
 		if (m_NumIter >= m_MaxIter) 
 		{
 			break;

@@ -10,19 +10,19 @@ clc;
 im = imread('Lenna.png');
 im = im2bw(im);
 im = imresize(im, 0.5);
-subplot(2, 2, 1);
+subplot(3, 2, 1);
 imagesc(im);
 title('input image');
 colormap gray;
 drawnow;
 
-for theta = pi/3:pi/8:3*pi/2
-    for lambda = 0.4:0.2:4
+for theta = 0.001:(pi+0.001)/8:2*(pi+0.001)
+    for lambda = 0.4:0.2:2.6
         % compute the gabor filter mask
         %lambda = 1.4;
         %theta = 7;
-        sigma = 8;
         kernel_size = 25;
+        sigma = kernel_size/3;
         kernel_size_half = floor(kernel_size/2);
         kernel = ones(kernel_size);
         for y = -kernel_size_half:kernel_size_half
@@ -35,16 +35,14 @@ for theta = pi/3:pi/8:3*pi/2
                     cos(x_prime / lambda);
             end
         end
-        subplot(2, 2, [3 4]);
+        subplot(3, 2, [3 4 5 6]);
         [X Y] = meshgrid(-kernel_size_half:kernel_size_half, -kernel_size_half:kernel_size_half);
-        surf(X, Y, kernel);
-        colormap gray;
+        surf(X, Y, kernel);    
 
         % convolve the image with the gabor kernel
         im_filtered = imfilter(im, kernel);
-        subplot(2, 2, 2);
+        subplot(3, 2, 2);
         imagesc(im_filtered);
         drawnow;
-        %pause(0.01);
     end
 end

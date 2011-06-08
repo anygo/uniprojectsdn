@@ -95,6 +95,7 @@ ClosestPointFinderRBCCPU::DistanceTargetTarget(unsigned short i, unsigned short 
 	double y_dist = m_TargetCoords[i].y - m_TargetCoords[j].y;
 	double z_dist = m_TargetCoords[i].z - m_TargetCoords[j].z;
 	double spaceDist; 
+
 	switch (m_Metric)
 	{
 	case ABSOLUTE_DISTANCE: spaceDist = abs(x_dist) + abs(y_dist) + abs(z_dist); break;
@@ -118,7 +119,14 @@ ClosestPointFinderRBCCPU::DistanceSourceTarget(PointCoords sourceCoords, PointCo
 	double x_dist = sourceCoords.x - m_TargetCoords[targetIndex].x; 
 	double y_dist = sourceCoords.y - m_TargetCoords[targetIndex].y;
 	double z_dist = sourceCoords.z - m_TargetCoords[targetIndex].z;
-	double spaceDist = (x_dist * x_dist) + (y_dist * y_dist) + (z_dist * z_dist);
+	double spaceDist;
+
+	switch (m_Metric)
+	{
+	case ABSOLUTE_DISTANCE: spaceDist = abs(x_dist) + abs(y_dist) + abs(z_dist); break;
+	case LOG_ABSOLUTE_DISTANCE: spaceDist = log(abs(x_dist) + abs(y_dist) + abs(z_dist) + 1.0); break;
+	case SQUARED_DISTANCE: spaceDist = (x_dist * x_dist) + (y_dist * y_dist) + (z_dist * z_dist); break;
+	}
 
 	// always use euclidean distance for colors...
 	double r_dist = sourceColors.r - m_TargetColors[targetIndex].r; 

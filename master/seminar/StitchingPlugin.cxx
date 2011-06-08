@@ -111,7 +111,7 @@ StitchingPlugin::ProcessEvent(ritk::Event::Pointer EventP)
 			m_CurrentFrame = NewFrameEventP->RImage;
 
 			// run autostitching for each frame if checkbox is checked
-			if (m_Widget->m_SpinBoxFrameStep->value() != 0 && ++m_FramesProcessed % m_Widget->m_SpinBoxFrameStep->value() == 0)
+			if (m_Widget->m_CheckBoxRecord->isChecked() && ++m_FramesProcessed % m_Widget->m_SpinBoxFrameStep->value() == 0)
 			{
 				LoadFrame();
 

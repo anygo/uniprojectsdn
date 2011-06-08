@@ -40,7 +40,8 @@ public:
 					PointCoords* sourceCoords,
 					PointColors* sourceColors,
 					PointCoords* targetCoords,
-					PointColors* targetColors
+					PointColors* targetColors,
+					float* distances
 				  ) 
 	{
 		m_From = from;
@@ -54,6 +55,7 @@ public:
 		m_TargetCoords = targetCoords;
 		m_SourceColors = sourceColors;
 		m_TargetColors = targetColors;
+		m_Distances = distances;
 	}
 
 protected:
@@ -70,6 +72,7 @@ protected:
 	PointColors* m_SourceColors;
 	PointCoords* m_TargetCoords;
 	PointColors* m_TargetColors;
+	float* m_Distances;
 };
 
 

@@ -38,6 +38,7 @@ public:
 	inline int GetNumLandmarks() { return m_MaxIter; }
 	inline void SetMaxMeanDist(double dist) { m_MaxMeanDist = dist; }
 	inline int GetMaxMeanDist() { return m_MaxMeanDist; }
+	inline void SetLandmarksToTrim(double percentage) { m_LandmarksToTrim = percentage; }
 	inline void SetClosestPointFinder(ClosestPointFinder* cpf) { m_ClosestPointFinder = cpf; }
 
 	inline int GetNumIter() { return m_NumIter; }
@@ -66,6 +67,7 @@ protected:
 	int m_MaxIter;
 	int m_NumLandmarks;
 	double m_MaxMeanDist;
+	double m_LandmarksToTrim;
 
 	int m_NumIter;
 	double m_MeanDist;

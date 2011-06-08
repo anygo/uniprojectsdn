@@ -762,6 +762,9 @@ StitchingPlugin::Stitch(vtkPolyData* toBeStitched, vtkPolyData* previousFrame,
 	icp->SetMaxMeanDist(m_Widget->m_DoubleSpinBoxMaxRMS->value());
 	icp->SetNumLandmarks(m_Widget->m_SpinBoxLandmarks->value());
 	icp->SetMaxIter(m_Widget->m_SpinBoxMaxIterations->value());
+
+	icp->SetLandmarksToTrim(m_Widget->m_DoubleSpinBoxTrimLandmarks->value());
+
 	icp->SetClosestPointFinder(cpf);
 	icp->Modified();
 	icp->Update();

@@ -17,6 +17,7 @@ class ClosestPointFinderBruteForceCPU : public ClosestPointFinder
 {
 public:
 	ClosestPointFinderBruteForceCPU(int NrOfPoints, bool multithreaded) : m_Multithreaded(multithreaded), ClosestPointFinder(NrOfPoints) { }
+	inline bool usesGPU() { return false; }
 
 	unsigned short* FindClosestPoints(PointCoords* sourceCoords, PointColors* sourceColors);
 

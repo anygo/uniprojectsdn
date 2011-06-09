@@ -216,7 +216,10 @@ void kernelWithoutRGBBruteForce(int nrOfPoints, int metric, unsigned short* indi
 ///////////////////////////////////////////////////////////////////////////////
 // Random Ball Cover
 ///////////////////////////////////////////////////////////////////////////////
+__global__ void kernelRBCEMULATION(int nrOfPoints, int nrOfReps, int metric, float weightRGB, unsigned short* indices, PointCoords* sourceCoords, PointColors* sourceColors, PointCoords* targetCoords, PointColors* targetColors, float* distances, unsigned short* representatives, unsigned short* pointToRep) 
+{
 
+}
 __global__
 void kernelRBC(int nrOfPoints, int nrOfReps, int metric, float weightRGB, unsigned short* indices, PointCoords* sourceCoords, PointColors* sourceColors, PointCoords* targetCoords, PointColors* targetColors, float* distances, unsigned short* representatives, unsigned short* pointToRep) 
 {
@@ -225,7 +228,6 @@ void kernelRBC(int nrOfPoints, int nrOfReps, int metric, float weightRGB, unsign
 
 	float minDist = FLT_MAX;
 	unsigned short nearestRepresentative = 0;
-
 
 	// step 1: search nearest representative
 	for (int i = 0; i < nrOfReps; ++i)

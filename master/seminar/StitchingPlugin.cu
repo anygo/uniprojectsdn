@@ -146,7 +146,7 @@ void cleanupGPURBC()
 }
 
 extern "C"
-void FindClosestPointsRBC(int nrOfPoints, int nrOfReps, int metric, bool useRGBData, float weightRGB, unsigned short* indices, PointCoords* sourceCoords, PointColors* sourceColors, float* distances, unsigned short* representatives, unsigned short* pointToRep)
+void FindClosestPointsRBC(int nrOfPoints, int nrOfReps, int metric, float weightRGB, unsigned short* indices, PointCoords* sourceCoords, PointColors* sourceColors, float* distances, unsigned short* representatives, unsigned short* pointToRep)
 {
 	// copy data from host to gpu only if it is not yet copied
 	// copy only once, because the data is transformed directly on the gpu!
@@ -158,12 +158,14 @@ void FindClosestPointsRBC(int nrOfPoints, int nrOfReps, int metric, bool useRGBD
 	sourceCopied = true;
 
 	// find the closest point for each pixel
-	kernelRBC<<<nrOfPoints,1>>>(nrOfPoints, nrOfReps, metric, weightRGB, dev_indices, dev_sourceCoords, dev_sourceColors, dev_targetCoords, dev_targetColors, dev_distances, representatives, pointToRep);	
+	kernelRBC<<<nrOfPoints,1>>>(nrOfPoints, nrOfReps, metric, weightRGB, dev_indices, dev_sourceCoords, dev_sourceColors, dev_targetCoords, dev_targetColors, dev_distances, dev_representatives, dev_pointToRep);	
 	//kernelWithRGBBruteForce<<<nrOfPoints,1>>>(nrOfPoints, metric, weightRGB, dev_indices, dev_sourceCoords, dev_sourceColors, dev_targetCoords, dev_targetColors, dev_distances);
+
 
 	CUT_CHECK_ERROR("Kernel execution failed (while trying to find closest points)");
 			
 	// copy data from gpu to host
 	CUDA_SAFE_CALL(cudaMemcpy(indices, dev_indices, nrOfPoints*sizeof(unsigned short), cudaMemcpyDeviceToHost));
 	CUDA_SAFE_CALL(cudaMemcpy(distances, dev_distances, nrOfPoints*sizeof(float), cudaMemcpyDeviceToHost));
+	
 }

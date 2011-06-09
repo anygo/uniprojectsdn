@@ -1,5 +1,5 @@
-#ifndef ClosestPointFinderBruteForceGPUKernel_H__
-#define ClosestPointFinderBruteForceGPUKernel_H__
+#ifndef StitchingPluginKernel_H__
+#define StitchingPluginKernel_H__
 
 #include "defs.h"
 #include "float.h"
@@ -11,13 +11,15 @@
 #include <cuda_runtime_api.h>
 
 // global pointers for gpu... 
- __device__ unsigned short* dev_indices;
- __device__ PointCoords* dev_sourceCoords;
- __device__ PointColors* dev_sourceColors;
- __device__ PointCoords* dev_targetCoords;
- __device__ PointColors* dev_targetColors;
- __device__ float* dev_distances;
- __device__ __constant__ float dev_transformationMatrix[16];
+unsigned short* dev_indices;
+PointCoords* dev_sourceCoords;
+PointColors* dev_sourceColors;
+PointCoords* dev_targetCoords;
+PointColors* dev_targetColors;
+unsigned short* dev_representatives;
+unsigned short* dev_pointToRep;
+float* dev_distances;
+__constant__ float dev_transformationMatrix[16];
 
 
 
@@ -195,4 +197,88 @@ void kernelTransformPointsAndComputeDistance(PointCoords* sourceCoords, float* d
 }
 
 
-#endif // ClosestPointFinderBruteForceGPUKernel_H__
+
+
+
+__global__
+void kernelRBC(int nrOfPoints, int nrOfReps, int metric, float weightRGB, unsigned short* indices, PointCoords* sourceCoords, PointColors* sourceColors, PointCoords* targetCoords, PointColors* targetColors, float* distances, unsigned short* representatives, unsigned short* pointToRep) 
+{
+	// get source[tid] for this thread
+	unsigned int tid = blockIdx.x;
+
+	float minDist = FLT_MAX;
+	unsigned short nearestRepresentative = 0;
+
+
+	// step 1: search nearest representative
+	for (int i = 0; i < nrOfReps; ++i)
+	{
+		float x_dist = sourceCoords[tid].x - targetCoords[representatives[i]].x; 
+		float y_dist = sourceCoords[tid].y - targetCoords[representatives[i]].y;
+		float z_dist = sourceCoords[tid].z - targetCoords[representatives[i]].z;
+		float spaceDist;
+
+		switch (metric)
+		{
+		case ABSOLUTE_DISTANCE: spaceDist = abs(x_dist) + abs(y_dist) + abs(z_dist); break;
+		case LOG_ABSOLUTE_DISTANCE: spaceDist = log(abs(x_dist) + abs(y_dist) + abs(z_dist) + 1.0); break;
+		case SQUARED_DISTANCE: spaceDist = (x_dist * x_dist) + (y_dist * y_dist) + (z_dist * z_dist); break;
+		}
+
+
+		// always use euclidean distance for colors...
+		float r_dist = sourceColors[tid].r - targetColors[representatives[i]].r; 
+		float g_dist = sourceColors[tid].g - targetColors[representatives[i]].g;
+		float b_dist = sourceColors[tid].b - targetColors[representatives[i]].b;
+		float colorDist = (r_dist * r_dist) + (g_dist * g_dist) + (b_dist * b_dist);
+		float dist = (1 - weightRGB) * spaceDist + weightRGB * colorDist;
+
+		if (dist < minDist)
+		{
+			minDist = dist;
+			nearestRepresentative = i;
+		}
+	}
+
+
+	// step 2: search nearest neighbor in list of representatives
+	minDist = FLT_MAX;
+	int nearestNeigborIndex = 0;
+
+	for (int i = 0; i < nrOfPoints; ++i)
+	{
+		if (pointToRep[i] == nearestRepresentative)
+		{
+			float x_dist = sourceCoords[tid].x - targetCoords[i].x; 
+			float y_dist = sourceCoords[tid].y - targetCoords[i].y;
+			float z_dist = sourceCoords[tid].z - targetCoords[i].z;
+			float spaceDist;
+
+			switch (metric)
+			{
+			case ABSOLUTE_DISTANCE: spaceDist = abs(x_dist) + abs(y_dist) + abs(z_dist); break;
+			case LOG_ABSOLUTE_DISTANCE: spaceDist = log(abs(x_dist) + abs(y_dist) + abs(z_dist) + 1.0); break;
+			case SQUARED_DISTANCE: spaceDist = (x_dist * x_dist) + (y_dist * y_dist) + (z_dist * z_dist); break;
+			}
+
+			// always use euclidean distance for colors...
+			float r_dist = sourceColors[tid].r - targetColors[i].r; 
+			float g_dist = sourceColors[tid].g - targetColors[i].g;
+			float b_dist = sourceColors[tid].b - targetColors[i].b;
+			float colorDist = (r_dist * r_dist) + (g_dist * g_dist) + (b_dist * b_dist);
+			float dist = (1 - weightRGB) * spaceDist + weightRGB * colorDist;
+
+			if (dist < minDist)
+			{
+				minDist = dist;
+				nearestNeigborIndex = i;
+			}
+		}
+	}
+
+	distances[tid] = minDist;
+	indices[tid] = nearestNeigborIndex;
+}
+
+
+#endif // StitchingPluginKernel_H__

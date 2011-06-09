@@ -13,9 +13,9 @@
 // global pointers for gpu... 
 unsigned short* dev_indices;
 PointCoords* dev_sourceCoords;
-PointColors* dev_sourceColors;
-PointCoords* dev_targetCoords;
-PointColors* dev_targetColors;
+__constant__ PointColors* dev_sourceColors;
+__constant__ PointCoords* dev_targetCoords;
+__constant__ PointColors* dev_targetColors;
 unsigned short* dev_representatives;
 unsigned short* dev_pointToRep;
 float* dev_distances;
@@ -240,7 +240,7 @@ void kernelRBC(int nrOfPoints, int nrOfReps, int metric, float weightRGB, unsign
 		switch (metric)
 		{
 		case ABSOLUTE_DISTANCE: spaceDist = abs(x_dist) + abs(y_dist) + abs(z_dist); break;
-		case LOG_ABSOLUTE_DISTANCE: spaceDist = log(abs(x_dist) + abs(y_dist) + abs(z_dist) + 1.0); break;
+		case LOG_ABSOLUTE_DISTANCE: spaceDist = log(abs(x_dist) + abs(y_dist) + abs(z_dist) + 1.f); break;
 		case SQUARED_DISTANCE: spaceDist = (x_dist * x_dist) + (y_dist * y_dist) + (z_dist * z_dist); break;
 		}
 
@@ -262,7 +262,7 @@ void kernelRBC(int nrOfPoints, int nrOfReps, int metric, float weightRGB, unsign
 
 	// step 2: search nearest neighbor in list of representatives
 	minDist = FLT_MAX;
-	int nearestNeigborIndex = 0;
+	int nearestNeighborIndex = 0;
 
 	for (int i = 0; i < nrOfPoints; ++i)
 	{
@@ -276,7 +276,7 @@ void kernelRBC(int nrOfPoints, int nrOfReps, int metric, float weightRGB, unsign
 			switch (metric)
 			{
 			case ABSOLUTE_DISTANCE: spaceDist = abs(x_dist) + abs(y_dist) + abs(z_dist); break;
-			case LOG_ABSOLUTE_DISTANCE: spaceDist = log(abs(x_dist) + abs(y_dist) + abs(z_dist) + 1.0); break;
+			case LOG_ABSOLUTE_DISTANCE: spaceDist = log(abs(x_dist) + abs(y_dist) + abs(z_dist) + 1.f); break;
 			case SQUARED_DISTANCE: spaceDist = (x_dist * x_dist) + (y_dist * y_dist) + (z_dist * z_dist); break;
 			}
 
@@ -290,13 +290,13 @@ void kernelRBC(int nrOfPoints, int nrOfReps, int metric, float weightRGB, unsign
 			if (dist < minDist)
 			{
 				minDist = dist;
-				nearestNeigborIndex = i;
+				nearestNeighborIndex = i;
 			}
 		}
 	}
 
 	distances[tid] = minDist;
-	indices[tid] = nearestNeigborIndex;
+	indices[tid] = nearestNeighborIndex;
 }
 
 

@@ -14,6 +14,7 @@
 #include "vtkPointData.h"
 
 #include <complex>
+#include <algorithm>
 
 vtkStandardNewMacro(ExtendedICPTransform);
 
@@ -26,12 +27,6 @@ ExtendedICPTransform::ExtendedICPTransform() : vtkLinearTransform()
 	m_Source = vtkSmartPointer<vtkPolyData>::New();
 	m_Target = vtkSmartPointer<vtkPolyData>::New();
 	m_LandmarkTransform = vtkSmartPointer<vtkLandmarkTransform>::New();
-	m_MaxIter = 500;
-	m_MaxMeanDist = 0.0001;
-	m_NumLandmarks = 1000;
-
-	m_NumIter = 0;
-	m_MeanDist = 0.0;
 }
 
 ExtendedICPTransform::~ExtendedICPTransform() {}
@@ -194,7 +189,8 @@ ExtendedICPTransform::InternalUpdate()
 
 	// go
 	vtkSmartPointer<vtkPoints> a2;
-	if(m_LandmarksToTrim != 0.0) {
+	if (m_RemoveOutliers && m_OutlierRate > 0.0)
+	{
 		a2 = vtkSmartPointer<vtkPoints>::New();
 	}
 
@@ -210,22 +206,23 @@ ExtendedICPTransform::InternalUpdate()
 		// Set locators source points and perfom nearest neighbor search
 		indices = m_ClosestPointFinder->FindClosestPoints(m_SourceCoords, m_SourceColors);
 
-		if( m_LandmarksToTrim != 0.0) {
-
+		if (m_RemoveOutliers && m_OutlierRate > 0.0)
+		{
+			std::vector<float> sortedDistances;
 			float* dists = m_ClosestPointFinder->GetDistances();
-			float mean = 0.f;
 			for(int i = 0; i < m_NumLandmarks; ++i)
 			{
-				mean += dists[i];
+				sortedDistances.push_back(dists[i]);
 			}
-			mean = mean / (float)m_NumLandmarks;
-		
-			int number = 0;
-			for(int i = 0; i < m_NumLandmarks; ++i)
-				if(dists[i] * m_LandmarksToTrim <= mean) 
-					++number;
 
-			// Calling Modified() is necessary otherwise object properties won't change
+			std::sort(sortedDistances.begin(), sortedDistances.end());
+
+			int thresholdIdx = floor((1.0 - m_OutlierRate) * static_cast<double>(sortedDistances.size() - 1));
+			float threshold = sortedDistances[thresholdIdx];
+		
+			int number = thresholdIdx + 1;
+
+			// calling Modified() is necessary otherwise object properties won't change
 			closestp->SetNumberOfPoints(number);
 			a2->SetNumberOfPoints(number);
 			closestp->Modified();
@@ -234,7 +231,7 @@ ExtendedICPTransform::InternalUpdate()
 			int count = 0;
 			for(int i = 0; i < m_NumLandmarks; ++i)
 			{
-				if(dists[i] * m_LandmarksToTrim <= mean) 
+				if(dists[i] <= threshold) 
 				{
 					int index = indices[i];
 					closestp->SetPoint(count, m_TargetCoords[index].x, m_TargetCoords[index].y, m_TargetCoords[index].z);
@@ -244,7 +241,8 @@ ExtendedICPTransform::InternalUpdate()
 			}
 			m_LandmarkTransform->SetSourceLandmarks(a2);
 
-		} else {
+		} else
+		{
 			for(int i = 0; i < m_NumLandmarks; ++i)
 			{
 				int index = indices[i];
@@ -304,7 +302,8 @@ ExtendedICPTransform::InternalUpdate()
 		a = b;
 		b = temp;
 
-		if (!m_ClosestPointFinder->usesGPU()) {
+		if (!m_ClosestPointFinder->usesGPU())
+		{
 			vtkPolyDataToPointCoords(a, m_SourceCoords);
 		}
 	} 
@@ -315,5 +314,5 @@ ExtendedICPTransform::InternalUpdate()
 	this->Matrix->DeepCopy(accumulate->GetMatrix());
 
 	// cleanup data structure for gpu version
-	delete [] distances;
+	delete[] distances;
 }

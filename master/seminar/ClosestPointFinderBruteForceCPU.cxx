@@ -74,7 +74,7 @@ ClosestPointFinderBruteForceCPUWorker::run()
 			case ABSOLUTE_DISTANCE:
 				spaceDist = std::abs(coords.x - m_TargetCoords[i].x) + std::abs(coords.y - m_TargetCoords[i].y) + std::abs(coords.z - m_TargetCoords[i].z); break;
 			case LOG_ABSOLUTE_DISTANCE:
-				spaceDist = std::log(std::abs(coords.x - m_TargetCoords[i].x) + std::abs(coords.y - m_TargetCoords[i].y) + std::abs(coords.z - m_TargetCoords[i].z) + 1.0); break;
+				spaceDist = std::log(std::abs(coords.x - m_TargetCoords[i].x) + std::abs(coords.y - m_TargetCoords[i].y) + std::abs(coords.z - m_TargetCoords[i].z) + 1.f); break;
 			case SQUARED_DISTANCE:
 				spaceDist = (coords.x - m_TargetCoords[i].x)*(coords.x - m_TargetCoords[i].x) + (coords.y - m_TargetCoords[i].y)*(coords.y - m_TargetCoords[i].y) + (coords.z - m_TargetCoords[i].z)*(coords.z - m_TargetCoords[i].z);
 			}
@@ -86,7 +86,7 @@ ClosestPointFinderBruteForceCPUWorker::run()
 				case ABSOLUTE_DISTANCE:
 					colorDist = std::abs(colors.r - m_TargetColors[i].r) + std::abs(colors.g - m_TargetColors[i].g) + std::abs(colors.b - m_TargetColors[i].b); break;
 				case LOG_ABSOLUTE_DISTANCE:
-					colorDist = std::log(std::abs(colors.r - m_TargetColors[i].r) + std::abs(colors.g - m_TargetColors[i].g) + std::abs(colors.b - m_TargetColors[i].b) + 1.0); break;
+					colorDist = std::log(std::abs(colors.r - m_TargetColors[i].r) + std::abs(colors.g - m_TargetColors[i].g) + std::abs(colors.b - m_TargetColors[i].b) + 1.f); break;
 				case SQUARED_DISTANCE:
 					colorDist = (colors.r - m_TargetColors[i].r)*(colors.r - m_TargetColors[i].r) + (colors.g - m_TargetColors[i].g)*(colors.g - m_TargetColors[i].g) + (colors.b - m_TargetColors[i].b)*(colors.b - m_TargetColors[i].b);
 				}

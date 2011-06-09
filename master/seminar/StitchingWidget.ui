@@ -251,17 +251,17 @@
                  </property>
                  <item>
                   <property name="text">
-                   <string>log(abs. dist.)</string>
+                   <string>logarithmic L1</string>
                   </property>
                  </item>
                  <item>
                   <property name="text">
-                   <string>abs. dist.</string>
+                   <string>L1</string>
                   </property>
                  </item>
                  <item>
                   <property name="text">
-                   <string>squared dist.</string>
+                   <string>L2</string>
                   </property>
                  </item>
                 </widget>
@@ -973,7 +973,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>936</x>
-     <y>299</y>
+     <y>287</y>
     </hint>
     <hint type="destinationlabel">
      <x>813</x>
@@ -988,8 +988,8 @@
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>481</x>
-     <y>300</y>
+     <x>936</x>
+     <y>306</y>
     </hint>
     <hint type="destinationlabel">
      <x>807</x>

@@ -296,7 +296,7 @@
                <item>
                 <widget class="QCheckBox" name="m_CheckBoxRemoveOutliers">
                  <property name="text">
-                  <string>Remove Outliers</string>
+                  <string>Remove / Ignore Outliers</string>
                  </property>
                  <property name="checked">
                   <bool>true</bool>
@@ -623,6 +623,9 @@
                 <width>144</width>
                 <height>0</height>
                </size>
+              </property>
+              <property name="mouseTracking">
+               <bool>true</bool>
               </property>
               <property name="dragEnabled">
                <bool>false</bool>

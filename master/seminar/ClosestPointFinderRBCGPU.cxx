@@ -62,11 +62,11 @@ ClosestPointFinderRBCGPU::initRBC()
 		m_PointToRep[i] = best;
 	}
 
-	std::cout << "Random Ball Cover initialized (" << m_NrOfReps << " Representatives)." << std::endl;
+	DBG << "Random Ball Cover initialized (" << m_NrOfReps << " Representatives)." << std::endl;
 
 	initGPURBC(m_TargetCoords, m_TargetColors, m_Representatives, m_PointToRep, m_NrOfPoints, m_NrOfReps);
 
-	std::cout << "GPU initialized." << std::endl;
+	DBG << "GPU initialized." << std::endl;
 }
 
 float

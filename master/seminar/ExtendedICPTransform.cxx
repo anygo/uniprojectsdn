@@ -290,7 +290,7 @@ ExtendedICPTransform::InternalUpdate()
 		}
 
 		m_MeanDist = totaldist / (float)m_NumLandmarks;
-		std::cout << "\rICP Iteration " << m_NumIter << ":\t mean distance = " << m_MeanDist << "\t\t";
+		DBG << "\rICP Iteration " << m_NumIter << ":\t mean distance = " << m_MeanDist << "\t\t";
 			
 		if (m_MeanDist <= m_MaxMeanDist)
 		{
@@ -308,7 +308,7 @@ ExtendedICPTransform::InternalUpdate()
 		}
 	} 
 
-	std::cout << std::endl;
+	DBG << std::endl;
 
 	// now recover accumulated result
 	this->Matrix->DeepCopy(accumulate->GetMatrix());

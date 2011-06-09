@@ -214,7 +214,7 @@ StitchingPlugin::DeleteSelectedActors()
 		HistoryListItem* hli = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
 		if (hli->isSelected())
 		{
-			std::cout << "deleting actor " << i << std::endl;
+			DBG << "deleting actor " << i << std::endl;
 
 			m_Widget->m_VisualizationWidget3D->RemoveActor(hli->m_actor);
 			toDelete.push_back(i);	
@@ -279,7 +279,7 @@ StitchingPlugin::MergeSelectedActors()
 					firstIndex = i;
 				}
 
-				std::cout << "merge - adding actor " << i << std::endl;
+				DBG << "merge - adding actor " << i << std::endl;
 			}
 		}
 
@@ -332,7 +332,7 @@ StitchingPlugin::CleanSelectedActors()
 		HistoryListItem* hli = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
 		if (hli->isSelected())
 		{
-			std::cout << "cleaning actor " << i << std::endl;
+			DBG << "cleaning actor " << i << std::endl;
 
 			Clean(hli->m_actor->GetData());
 			numPoints += hli->m_actor->GetData()->GetNumberOfPoints();
@@ -362,12 +362,17 @@ StitchingPlugin::StitchSelectedActors()
 		HistoryListItem* hli = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
 		if (hli->isSelected())
 		{
-			std::cout << "stitching actor " << i << std::endl;
+			DBG << "stitching actor " << i << std::endl;
+			HighlightActor(hli);
+			emit UpdateGUI();
+			QCoreApplication::processEvents();
 
 			HistoryListItem* hli_prev = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i - 1));
 			Stitch(hli->m_actor->GetData(), hli_prev->m_actor->GetData(), hli_prev->m_transform, hli->m_actor->GetData(), hli->m_transform);
 
+			HighlightActor(hli);
 			emit UpdateProgressBar(++counterProgressBar);
+			emit UpdateGUI();
 			QCoreApplication::processEvents();
 		}
 	}
@@ -388,7 +393,7 @@ StitchingPlugin::UndoTransformForSelectedActors()
 		HistoryListItem* hli = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
 		if (hli->isSelected())
 		{
-			std::cout << "undoing transform for actor " << i << std::endl;
+			DBG << "undoing transform for actor " << i << std::endl;
 
 			// invert the transform
 			hli->m_transform->Invert();
@@ -416,6 +421,7 @@ StitchingPlugin::UndoTransformForSelectedActors()
 			hli->m_transform->Identity();
 
 			emit UpdateProgressBar(++counterProgressBar);
+			emit UpdateGUI();
 			QCoreApplication::processEvents();
 		}
 	}
@@ -449,7 +455,7 @@ StitchingPlugin::SaveSelectedActors()
 		if (hli->isSelected())
 		{
 			QString partFileName = outputFile + QString::number(fileCount++) + ".vtk";
-			std::cout << "saving actor " << i << " to " << partFileName.toStdString() << std::endl;
+			DBG << "saving actor " << i << " to " << partFileName.toStdString() << std::endl;
 			vtkSmartPointer<vtkPolyDataWriter> writer =
 				vtkSmartPointer<vtkPolyDataWriter>::New();
 			writer->SetFileName(partFileName.toStdString().c_str());

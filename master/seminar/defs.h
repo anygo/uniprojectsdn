@@ -23,5 +23,14 @@ enum ICP_METRIC
 	SQUARED_DISTANCE
 };
 
+// debug macro
+//#define DEBUG
+
+#ifdef DEBUG
+#define DBG ( std::cout )
+#else
+#define DBG if (false) ( std::cout )
+#endif
+
 
 #endif // defs_H__

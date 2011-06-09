@@ -85,7 +85,7 @@ ClosestPointFinderRBCCPU::initRBC()
 		rep->points.push_back(i);
 	}
 
-	std::cout << "Random Ball Cover initialized (" << nrOfReps << " Representatives)." << std::endl;
+	DBG << "Random Ball Cover initialized (" << nrOfReps << " Representatives)." << std::endl;
 }
 
 float
@@ -103,14 +103,20 @@ ClosestPointFinderRBCCPU::DistanceTargetTarget(unsigned short i, unsigned short 
 	case SQUARED_DISTANCE: spaceDist = (x_dist * x_dist) + (y_dist * y_dist) + (z_dist * z_dist); break;
 	}
 
-	// always use euclidean distance for colors...
-	double r_dist = m_TargetColors[i].r - m_TargetColors[j].r; 
-	double g_dist = m_TargetColors[i].g - m_TargetColors[j].g;
-	double b_dist = m_TargetColors[i].b - m_TargetColors[j].b;
-	double colorDist = (r_dist * r_dist) + (g_dist * g_dist) + (b_dist * b_dist);
-	double dist = (1 - m_WeightRGB) * spaceDist + m_WeightRGB * colorDist;
-
-	return static_cast<float>(dist);
+	if (m_UseRGBData)
+	{
+		// always use euclidean distance for colors...
+		double r_dist = m_TargetColors[i].r - m_TargetColors[j].r; 
+		double g_dist = m_TargetColors[i].g - m_TargetColors[j].g;
+		double b_dist = m_TargetColors[i].b - m_TargetColors[j].b;
+		double colorDist = (r_dist * r_dist) + (g_dist * g_dist) + (b_dist * b_dist);
+		double dist = (1 - m_WeightRGB) * spaceDist + m_WeightRGB * colorDist;
+		
+		return static_cast<float>(dist);
+	} else
+	{
+		return static_cast<float>(spaceDist);
+	}
 }
 
 float
@@ -128,12 +134,18 @@ ClosestPointFinderRBCCPU::DistanceSourceTarget(PointCoords sourceCoords, PointCo
 	case SQUARED_DISTANCE: spaceDist = (x_dist * x_dist) + (y_dist * y_dist) + (z_dist * z_dist); break;
 	}
 
-	// always use euclidean distance for colors...
-	double r_dist = sourceColors.r - m_TargetColors[targetIndex].r; 
-	double g_dist = sourceColors.g - m_TargetColors[targetIndex].g;
-	double b_dist = sourceColors.b - m_TargetColors[targetIndex].b;
-	double colorDist = (r_dist * r_dist) + (g_dist * g_dist) + (b_dist * b_dist);
-	double dist = (1 - m_WeightRGB) * spaceDist + m_WeightRGB * colorDist;
+	if (m_UseRGBData)
+	{
+		// always use euclidean distance for colors...
+		double r_dist = sourceColors.r - m_TargetColors[targetIndex].r; 
+		double g_dist = sourceColors.g - m_TargetColors[targetIndex].g;
+		double b_dist = sourceColors.b - m_TargetColors[targetIndex].b;
+		double colorDist = (r_dist * r_dist) + (g_dist * g_dist) + (b_dist * b_dist);
+		double dist = (1 - m_WeightRGB) * spaceDist + m_WeightRGB * colorDist;
 
-	return static_cast<float>(dist);
+		return static_cast<float>(dist);
+	} else
+	{
+		return static_cast<float>(spaceDist);
+	}
 }

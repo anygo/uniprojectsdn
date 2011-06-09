@@ -29,6 +29,7 @@ public:
 
 	unsigned short* FindClosestPoints(PointCoords* sourceCoords, PointColors* sourceColors);
 	void SetTarget(PointCoords* targetCoords, PointColors* targetColors) { ClosestPointFinder::SetTarget(targetCoords, targetColors); initRBC(); }
+	inline bool usesGPU() { return false; }
 
 protected:
 	void initRBC();

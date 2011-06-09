@@ -8,14 +8,15 @@ extern "C"
 void initGPURBC(PointCoords* targetCoords, PointColors* targetColors, unsigned short* representatives, unsigned short* pointToRep, int nrOfPoints, int nrOfReps);
 
 extern "C"
-void FindClosestPointsRBC(int nrOfPoints, int nrOfReps, int metric, bool useRGBData, float weightRGB, unsigned short* indices, PointCoords* sourceCoords, PointColors* sourceColors, float* distances, unsigned short* representatives, unsigned short* pointToRep);
+void FindClosestPointsRBC(int nrOfPoints, int nrOfReps, int metric, float weightRGB, unsigned short* indices, PointCoords* sourceCoords, PointColors* sourceColors, float* distances, unsigned short* representatives, unsigned short* pointToRep);
+
 
 
 unsigned short*
 ClosestPointFinderRBCGPU::FindClosestPoints(PointCoords* sourceCoords, PointColors* sourceColors)
 {
-	FindClosestPointsRBC(m_NrOfPoints, m_NrOfReps, m_Metric, m_UseRGBData, m_WeightRGB, m_Indices, sourceCoords, sourceColors, m_Distances, m_Representatives, m_PointToRep);
-	std::cout << "Nach Cuda" << std::endl;
+	FindClosestPointsRBC(m_NrOfPoints, m_NrOfReps, m_Metric, m_WeightRGB, m_Indices, sourceCoords, sourceColors, m_Distances, m_Representatives, m_PointToRep);
+
 	// return the indices which will then be used in the icp algorithm
 	return m_Indices;
 }

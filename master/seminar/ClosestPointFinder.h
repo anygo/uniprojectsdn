@@ -24,7 +24,7 @@ public:
 	virtual inline void SetWeightRGB(float weight) { m_WeightRGB = weight; }
 	virtual inline void SetMetric(int metric) { m_Metric = metric; }
 	virtual inline float* GetDistances() { return m_Distances; }
-	virtual inline bool usesGPU() { return false; }
+	virtual inline bool usesGPU() = 0;
 
 
 protected:

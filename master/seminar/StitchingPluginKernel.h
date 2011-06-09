@@ -23,8 +23,48 @@ __constant__ float dev_transformationMatrix[16];
 
 
 
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Common
+///////////////////////////////////////////////////////////////////////////////
+
 __global__
-void kernelWithRGB(int nrOfPoints, int metric, float weightRGB, unsigned short* indices, PointCoords* sourceCoords, PointColors* sourceColors, PointCoords* targetCoords, PointColors* targetColors, float* distances) 
+void kernelTransformPointsAndComputeDistance(PointCoords* sourceCoords, float* distances)
+{
+	// get source[tid] for this thread
+	unsigned int tid = blockIdx.x;
+
+	// compute homogeneous transformation
+	float x = dev_transformationMatrix[0]*sourceCoords[tid].x + dev_transformationMatrix[1]*sourceCoords[tid].y + dev_transformationMatrix[2]*sourceCoords[tid].z + dev_transformationMatrix[3];
+	float y = dev_transformationMatrix[4]*sourceCoords[tid].x + dev_transformationMatrix[5]*sourceCoords[tid].y + dev_transformationMatrix[6]*sourceCoords[tid].z + dev_transformationMatrix[7];
+	float z = dev_transformationMatrix[8]*sourceCoords[tid].x + dev_transformationMatrix[9]*sourceCoords[tid].y + dev_transformationMatrix[10]*sourceCoords[tid].z + dev_transformationMatrix[11];
+	float w = dev_transformationMatrix[12]*sourceCoords[tid].x + dev_transformationMatrix[13]*sourceCoords[tid].y + dev_transformationMatrix[14]*sourceCoords[tid].z + dev_transformationMatrix[15];
+
+	// divide by the last component
+	x = x/w;
+	y = y/w;
+	z = z/w;
+
+	// compute distance to previous point
+	distances[tid] = (sourceCoords[tid].x - x)*(sourceCoords[tid].x - x) + (sourceCoords[tid].y - y)*(sourceCoords[tid].y - y) + (sourceCoords[tid].z - z)*(sourceCoords[tid].z - z);
+
+	// set new coordinates
+	sourceCoords[tid].x = x;
+	sourceCoords[tid].y = y;
+	sourceCoords[tid].z = z;
+}
+
+
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Brute Force
+///////////////////////////////////////////////////////////////////////////////
+
+__global__
+void kernelWithRGBBruteForce(int nrOfPoints, int metric, float weightRGB, unsigned short* indices, PointCoords* sourceCoords, PointColors* sourceColors, PointCoords* targetCoords, PointColors* targetColors, float* distances) 
 {
 	// get source[tid] for this thread
 	unsigned int tid = blockIdx.x;
@@ -109,7 +149,7 @@ void kernelWithRGB(int nrOfPoints, int metric, float weightRGB, unsigned short* 
 }
 
 __global__
-void kernelWithoutRGB(int nrOfPoints, int metric, unsigned short* indices, PointCoords* sourceCoords, PointCoords* targetCoords, float* distances) 
+void kernelWithoutRGBBruteForce(int nrOfPoints, int metric, unsigned short* indices, PointCoords* sourceCoords, PointCoords* targetCoords, float* distances) 
 {
 	// get source[tid] for this thread
 	unsigned int tid = blockIdx.x;
@@ -170,35 +210,12 @@ void kernelWithoutRGB(int nrOfPoints, int metric, unsigned short* indices, Point
 }
 
 
-__global__
-void kernelTransformPointsAndComputeDistance(PointCoords* sourceCoords, float* distances)
-{
-	// get source[tid] for this thread
-	unsigned int tid = blockIdx.x;
-
-	// compute homogeneous transformation
-	float x = dev_transformationMatrix[0]*sourceCoords[tid].x + dev_transformationMatrix[1]*sourceCoords[tid].y + dev_transformationMatrix[2]*sourceCoords[tid].z + dev_transformationMatrix[3];
-	float y = dev_transformationMatrix[4]*sourceCoords[tid].x + dev_transformationMatrix[5]*sourceCoords[tid].y + dev_transformationMatrix[6]*sourceCoords[tid].z + dev_transformationMatrix[7];
-	float z = dev_transformationMatrix[8]*sourceCoords[tid].x + dev_transformationMatrix[9]*sourceCoords[tid].y + dev_transformationMatrix[10]*sourceCoords[tid].z + dev_transformationMatrix[11];
-	float w = dev_transformationMatrix[12]*sourceCoords[tid].x + dev_transformationMatrix[13]*sourceCoords[tid].y + dev_transformationMatrix[14]*sourceCoords[tid].z + dev_transformationMatrix[15];
-
-	// divide by the last component
-	x = x/w;
-	y = y/w;
-	z = z/w;
-
-	// compute distance to previous point
-	distances[tid] = (sourceCoords[tid].x - x)*(sourceCoords[tid].x - x) + (sourceCoords[tid].y - y)*(sourceCoords[tid].y - y) + (sourceCoords[tid].z - z)*(sourceCoords[tid].z - z);
-
-	// set new coordinates
-	sourceCoords[tid].x = x;
-	sourceCoords[tid].y = y;
-	sourceCoords[tid].z = z;
-}
 
 
 
-
+///////////////////////////////////////////////////////////////////////////////
+// Random Ball Cover
+///////////////////////////////////////////////////////////////////////////////
 
 __global__
 void kernelRBC(int nrOfPoints, int nrOfReps, int metric, float weightRGB, unsigned short* indices, PointCoords* sourceCoords, PointColors* sourceColors, PointCoords* targetCoords, PointColors* targetColors, float* distances, unsigned short* representatives, unsigned short* pointToRep) 

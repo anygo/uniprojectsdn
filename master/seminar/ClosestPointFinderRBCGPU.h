@@ -3,9 +3,9 @@
 
 #include "ClosestPointFinder.h"
 
-
 extern "C"
 void cleanupGPURBC(); 
+
 
 /**	@class		ClosestPointFinderRBCGPU
  *	@brief		
@@ -31,6 +31,7 @@ protected:
 
 	unsigned short* m_Representatives;
 	unsigned short* m_PointToRep;
+	int m_NrOfReps; 
 	
 };
 

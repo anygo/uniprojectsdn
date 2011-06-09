@@ -8,14 +8,13 @@ extern "C"
 void initGPURBC(PointCoords* targetCoords, PointColors* targetColors, unsigned short* representatives, unsigned short* pointToRep, int nrOfPoints, int nrOfReps);
 
 extern "C"
-void FindClosestPointsRBC(int nrOfPoints, int metric, bool useRGBData, float weightRGB, unsigned short* indices, PointCoords* sourceCoords, PointColors* sourceColors, float* distances, unsigned short* representatives, unsigned short* pointToRep);
-
+void FindClosestPointsRBC(int nrOfPoints, int nrOfReps, int metric, bool useRGBData, float weightRGB, unsigned short* indices, PointCoords* sourceCoords, PointColors* sourceColors, float* distances, unsigned short* representatives, unsigned short* pointToRep);
 
 
 unsigned short*
 ClosestPointFinderRBCGPU::FindClosestPoints(PointCoords* sourceCoords, PointColors* sourceColors)
 {
-	FindClosestPointsRBC(m_NrOfPoints, m_Metric, m_UseRGBData, m_WeightRGB, m_Indices, sourceCoords, sourceColors, m_Distances, m_Representatives, m_PointToRep);
+	FindClosestPointsRBC(m_NrOfPoints, m_NrOfReps, m_Metric, m_UseRGBData, m_WeightRGB, m_Indices, sourceCoords, sourceColors, m_Distances, m_Representatives, m_PointToRep);
 	std::cout << "Nach Cuda" << std::endl;
 	// return the indices which will then be used in the icp algorithm
 	return m_Indices;
@@ -24,10 +23,10 @@ ClosestPointFinderRBCGPU::FindClosestPoints(PointCoords* sourceCoords, PointColo
 void
 ClosestPointFinderRBCGPU::initRBC()
 {
-	int nrOfReps = static_cast<int>(sqrt(static_cast<double>(m_NrOfPoints)));
-	m_Representatives = new unsigned short[nrOfReps];
+	m_NrOfReps = static_cast<int>(sqrt(static_cast<double>(m_NrOfPoints)));
+	m_Representatives = new unsigned short[m_NrOfReps];
 
-	for (int i = 0; i < nrOfReps; ++i)
+	for (int i = 0; i < m_NrOfReps; ++i)
 	{
 		int rep = rand() % m_NrOfPoints;
 
@@ -50,7 +49,7 @@ ClosestPointFinderRBCGPU::initRBC()
 	{
 		float minDist = FLT_MAX;
 		unsigned short best;
-		for(int j = 0; j < nrOfReps; ++j) {
+		for(int j = 0; j < m_NrOfReps; ++j) {
 
 			float dist = DistanceTargetTarget(m_Representatives[j], i);
 			if (dist < minDist)
@@ -62,9 +61,9 @@ ClosestPointFinderRBCGPU::initRBC()
 		m_PointToRep[i] = best;
 	}
 
-	std::cout << "Random Ball Cover initialized (" << nrOfReps << " Representatives)." << std::endl;
+	std::cout << "Random Ball Cover initialized (" << m_NrOfReps << " Representatives)." << std::endl;
 
-	initGPURBC(m_TargetCoords, m_TargetColors, m_Representatives, m_PointToRep, m_NrOfPoints, nrOfReps);
+	initGPURBC(m_TargetCoords, m_TargetColors, m_Representatives, m_PointToRep, m_NrOfPoints, m_NrOfReps);
 
 	std::cout << "GPU initialized." << std::endl;
 }

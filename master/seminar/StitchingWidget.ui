@@ -208,7 +208,7 @@
                   </size>
                  </property>
                  <property name="currentIndex">
-                  <number>4</number>
+                  <number>3</number>
                  </property>
                  <item>
                   <property name="text">
@@ -269,24 +269,41 @@
               </layout>
              </item>
              <item>
-              <widget class="QCheckBox" name="m_CheckBoxUseRGBData">
-               <property name="text">
-                <string>Use RGB Data</string>
+              <layout class="QVBoxLayout" name="verticalLayout_3">
+               <property name="spacing">
+                <number>0</number>
                </property>
-               <property name="checked">
-                <bool>true</bool>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QCheckBox" name="m_CheckBoxUsePreviousTransformation">
-               <property name="text">
-                <string>Initialize ICP with previous Transform</string>
-               </property>
-               <property name="checked">
-                <bool>true</bool>
-               </property>
-              </widget>
+               <item>
+                <widget class="QCheckBox" name="m_CheckBoxUsePreviousTransformation">
+                 <property name="text">
+                  <string>Initialize ICP with previous Transform</string>
+                 </property>
+                 <property name="checked">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QCheckBox" name="m_CheckBoxUseRGBData">
+                 <property name="text">
+                  <string>Use RGB Data</string>
+                 </property>
+                 <property name="checked">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QCheckBox" name="m_CheckBoxRemoveOutliers">
+                 <property name="text">
+                  <string>Remove Outliers</string>
+                 </property>
+                 <property name="checked">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+              </layout>
              </item>
             </layout>
            </widget>
@@ -440,19 +457,25 @@
                 </widget>
                </item>
                <item row="5" column="1">
-                <widget class="QDoubleSpinBox" name="m_DoubleSpinBoxTrimLandmarks">
+                <widget class="QDoubleSpinBox" name="m_DoubleSpinBoxOutlierRate">
+                 <property name="decimals">
+                  <number>6</number>
+                 </property>
                  <property name="maximum">
-                  <double>100.000000000000000</double>
+                  <double>0.990000000000000</double>
                  </property>
                  <property name="singleStep">
                   <double>0.050000000000000</double>
+                 </property>
+                 <property name="value">
+                  <double>0.100000000000000</double>
                  </property>
                 </widget>
                </item>
                <item row="5" column="0">
                 <widget class="QLabel" name="label_17">
                  <property name="text">
-                  <string>Trim Percentage of Landmarks</string>
+                  <string>Assumed Rate of Outliers</string>
                  </property>
                 </widget>
                </item>
@@ -946,12 +969,28 @@
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>633</x>
-     <y>287</y>
+     <x>936</x>
+     <y>299</y>
     </hint>
     <hint type="destinationlabel">
      <x>813</x>
      <y>275</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>m_CheckBoxRemoveOutliers</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>m_DoubleSpinBoxOutlierRate</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>481</x>
+     <y>300</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>807</x>
+     <y>303</y>
     </hint>
    </hints>
   </connection>

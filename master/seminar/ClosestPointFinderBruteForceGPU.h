@@ -3,6 +3,9 @@
 
 #include "ClosestPointFinder.h"
 
+extern "C"
+void cleanupGPUBruteForce(); 
+
 /**	@class		ClosestPointFinderBruteForceGPU
  *	@brief		BruteForce ClosestPointFinder on GPU (CUDA)
  *	@author		Felix Lugauer and Dominik Neumann
@@ -16,7 +19,7 @@ class ClosestPointFinderBruteForceGPU : public ClosestPointFinder
 {
 public:
 	ClosestPointFinderBruteForceGPU(int NrOfPoints) : ClosestPointFinder(NrOfPoints) { }
-	~ClosestPointFinderBruteForceGPU();
+	~ClosestPointFinderBruteForceGPU() { cleanupGPUBruteForce(); }
 
 	void SetTarget(PointCoords* targetCoords, PointColors* targetColors); 
 	unsigned short* FindClosestPoints(PointCoords* sourceCoords, PointColors* sourceColors);

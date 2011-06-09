@@ -28,7 +28,6 @@ __constant__ float dev_transformationMatrix[16];
 ///////////////////////////////////////////////////////////////////////////////
 // Common
 ///////////////////////////////////////////////////////////////////////////////
-
 __global__
 void kernelTransformPointsAndComputeDistance(PointCoords* sourceCoords, float* distances)
 {
@@ -62,7 +61,6 @@ void kernelTransformPointsAndComputeDistance(PointCoords* sourceCoords, float* d
 ///////////////////////////////////////////////////////////////////////////////
 // Brute Force
 ///////////////////////////////////////////////////////////////////////////////
-
 __global__
 void kernelWithRGBBruteForce(int nrOfPoints, int metric, float weightRGB, unsigned short* indices, PointCoords* sourceCoords, PointColors* sourceColors, PointCoords* targetCoords, PointColors* targetColors, float* distances) 
 {
@@ -216,10 +214,6 @@ void kernelWithoutRGBBruteForce(int nrOfPoints, int metric, unsigned short* indi
 ///////////////////////////////////////////////////////////////////////////////
 // Random Ball Cover
 ///////////////////////////////////////////////////////////////////////////////
-__global__ void kernelRBCEMULATION(int nrOfPoints, int nrOfReps, int metric, float weightRGB, unsigned short* indices, PointCoords* sourceCoords, PointColors* sourceColors, PointCoords* targetCoords, PointColors* targetColors, float* distances, unsigned short* representatives, unsigned short* pointToRep) 
-{
-
-}
 __global__
 void kernelRBC(int nrOfPoints, int nrOfReps, int metric, float weightRGB, unsigned short* indices, PointCoords* sourceCoords, PointColors* sourceColors, PointCoords* targetCoords, PointColors* targetColors, float* distances, unsigned short* representatives, unsigned short* pointToRep) 
 {

@@ -144,7 +144,7 @@ if(ISO_SCALING)
     % (3) This transformation is applied to each of the images independently
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%     
      for i=1:numberOfFrames
-        i
+        %i
         pts = zeros(3, numberOfTrackedPoints);
         pts(1,:) = points(:,i,1);
         pts(2,:) = points(:,i,2);
@@ -165,10 +165,10 @@ if(ISO_SCALING)
         points(:,i,2) = pts(2,:);
         
         a=sqrt(points(:,i,1).*points(:,i,1) + points(:,i,2).*points(:,i,2));
-        avglength=(1/numberOfTrackedPoints).*(sum(sum(a)))
+        %avglength=(1/numberOfTrackedPoints).*(sum(sum(a)));
         
-        originX=(1/numberOfTrackedPoints).*sum(sum(points(:,i,1)))
-        originY=(1/numberOfTrackedPoints).*sum(sum(points(:,i,2)))
+        %originX=(1/numberOfTrackedPoints).*sum(sum(points(:,i,1)));
+        %originY=(1/numberOfTrackedPoints).*sum(sum(points(:,i,2)));
     end
 end
 
@@ -185,9 +185,9 @@ lambda = ones(numberOfFrames, numberOfTrackedPoints);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 n = 1;
 for i=1:numberOfFrames
-%     measurementMatrix(n,:) = ???;
-%     measurementMatrix(n+1,:) = ???;  
-%     measurementMatrix(n+2,:) = ???;
+    measurementMatrix(n,:) = points(:, i, 1);
+    measurementMatrix(n+1,:) = points(:, i, 2);  
+    measurementMatrix(n+2,:) = 1;
     n = n + 3;
 end
 
@@ -200,13 +200,13 @@ oldLambda = 2000;
 
 while(abs(lambdaChange-oldLambda) > lc) 
     %for lo = 1:5 % fixed number of iterations
-        change = abs(lambdaChange-oldLambda)
+        change = abs(lambdaChange-oldLambda);
 
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         % (7) Normalizing rows, use Frobenius-norm
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         for i=1:numberOfFrames
-%             lambda(i,:) = ???
+            lambda(i,:) = lambda(i,:) / norm(lambda(i,:), 'fro');
         end
         
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -221,9 +221,9 @@ while(abs(lambdaChange-oldLambda) > lc)
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         j = 1;
         for i=1:numberOfFrames
-%             measurementMatrix(j,:) = ???;
-%             measurementMatrix(j+1,:) = ???;
-%             measurementMatrix(j+2,:) = ???;
+            measurementMatrix(j,:) = W(j,:).*lambda(i,:);
+            measurementMatrix(j+1,:) = W(j+1,:).*lambda(i,:);
+            measurementMatrix(j+2,:) = W(j+1,:).*lambda(i,:);
             j = j + 3;
         end
       
@@ -232,26 +232,26 @@ while(abs(lambdaChange-oldLambda) > lc)
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         % (9) Compute the SVD
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%         [U,S,V] = ???;
+        [U,S,V] = svd(measurementMatrix);
         
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         % (10) Find its nearest rank-4 approximation using the SVD
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%         for ???
-%             ???
-%         end
+        for i = 5:min(size(S))
+            S(i,i) = 0;
+        end
         oldM = measurementMatrix;
 
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         % (11) Get the motion (camera movement)
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         Ssq = sqrt(S);
-%         Pfac = ???;
+        Pfac = U*Ssq;
 
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         % (11) Get the structure (3D points)
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%         Xfac = ???;
+        Xfac = Ssq*V';
         
         figure(3); 
         plot3(Xfac(1,:), Xfac(2,:), Xfac(3,:), '.'); 
@@ -266,7 +266,7 @@ while(abs(lambdaChange-oldLambda) > lc)
         % (12) Reproject the 3D points into each image to obtain new 
         %      estimates of the depths
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%         measurementMatrix = ???;
+        measurementMatrix = U*S*V';
 
         measurementMatrix = measurementMatrix ./ W;
         
@@ -276,14 +276,14 @@ while(abs(lambdaChange-oldLambda) > lc)
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         j = 1;
         for i=1:numberOfFrames
-%             lambdaMean = ???;
+            lambdaMean = 1/3 * measurementMatrix(j,:)+measurementMatrix(j+1,:)+measurementMatrix(j+2,:);
             lambda(i,:) = lambdaMean;
             j = j + 3;
         end
         
         oldLambda = lambdaChange;
         lambdaChange = norm(measurementMatrix - oldM, 'fro');
-        lambdaChange
+        lambdaChange;
     %end
 end
 
@@ -318,7 +318,7 @@ title('Projective reconstruction');
 % (16) Compute the homography
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 x0 = eye(4,4);
-xdata = Xfac([1:4],:); % projective reconstruction
+xdata = Xfac(1:4,:); % projective reconstruction
 ydata = x4d;
 size(xdata)
 size(ydata)
@@ -329,7 +329,7 @@ size(ydata)
 % non-linear function homography; @ means can be specified as a 
 % function handle
 
-% lsqcurvefit ???
+[h, resnorm] = lsqcurvefit(@homography, x0, xdata, ydata);
 
 % homography
 h 
@@ -339,7 +339,7 @@ resnorm
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % (17) Jump to the metric space
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% XMetric = ???;
+XMetric = h*xdata;
 XMetric(1,:) = XMetric(1,:) ./ XMetric(4,:);
 XMetric(2,:) = XMetric(2,:) ./ XMetric(4,:);
 XMetric(3,:) = XMetric(3,:) ./ XMetric(4,:);

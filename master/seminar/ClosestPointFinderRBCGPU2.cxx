@@ -3,10 +3,19 @@
 #include <limits>
 #include <iostream>
 #include <algorithm>
+#include <QTime>
 
+// stupid MS C++ warning - we know what we are doing
+#pragma warning( disable : 4996 )
+
+extern "C"
+void initGPUBruteForce(PointCoords* targetCoords, PointColors* targetColors, int nrOfPoints);
 
 extern "C"
 void initGPURBC2(PointCoords* targetCoords, PointColors* targetColors, int nrOfPoints, int nrOfReps, RepGPU* repsGPU);
+
+extern "C"
+void PointsToReps(int nrOfPoints, int nrOfReps, int metric, float weightRGB, unsigned short* pointToRep, unsigned short* reps);
 
 extern "C"
 void cleanupGPURBC2(int nrOfReps, RepGPU* repsGPU);
@@ -41,6 +50,12 @@ ClosestPointFinderRBCGPU2::initRBC()
 {
 	m_NrOfReps = static_cast<int>(sqrt(static_cast<double>(m_NrOfPoints)));
 
+	// initialize GPU for RBC initialization
+	initGPUBruteForce(m_TargetCoords, m_TargetColors, m_NrOfPoints);
+	unsigned short* reps = new unsigned short[m_NrOfReps];
+	unsigned short* pointToRep = new unsigned short[m_NrOfPoints];
+
+
 	for (int i = 0; i < m_NrOfReps; ++i)
 	{
 		int rep = rand() % m_NrOfPoints;
@@ -59,24 +74,21 @@ ClosestPointFinderRBCGPU2::initRBC()
 		Representative r;
 		r.index = rep;
 		m_Representatives.push_back(r);
+
+
+		reps[i] = rep;
 	}
+
+	// find closest representative to each point on gpu
+	PointsToReps(m_NrOfPoints, m_NrOfReps, m_Metric, m_WeightRGB, pointToRep, reps);
 
 	for (int i = 0; i < m_NrOfPoints; ++i)
 	{
-		float minDist = FLT_MAX;
-		Representative* rep;
-		for(std::vector<Representative>::iterator it = m_Representatives.begin(); it != m_Representatives.end(); ++it) {
-
-			float dist = DistanceTargetTarget((*it).index, i);
-			
-			if (dist < minDist)
-			{
-				minDist = dist;
-				rep = &(*it);
-			}
-		}
-		rep->points.push_back(i);
+		m_Representatives[pointToRep[i]].points.push_back(i);
 	}
+
+	delete[] pointToRep;
+	delete[] reps;
 
 	DBG << "Random Ball Cover initialized (" << m_NrOfReps << " Representatives)." << std::endl;
 
@@ -85,15 +97,14 @@ ClosestPointFinderRBCGPU2::initRBC()
 	
 	for (int i = 0; i < m_NrOfReps; ++i)
 	{
-		m_RepsGPU[i].index = m_Representatives[i].index; 
+		m_RepsGPU[i].index = m_Representatives[i].index;
 		m_RepsGPU[i].nrOfPoints = m_Representatives[i].points.size();
 		m_RepsGPU[i].points = new unsigned short[m_RepsGPU[i].nrOfPoints];
-		std::copy( m_Representatives[i].points.begin(), m_Representatives[i].points.end(), m_RepsGPU[i].points);
+		std::copy(m_Representatives[i].points.begin(), m_Representatives[i].points.end(), m_RepsGPU[i].points);
 	}
 
 	DBG << "Copying data to gpu..." << std::endl;
 	initGPURBC2(m_TargetCoords, m_TargetColors, m_NrOfPoints, m_NrOfReps, m_RepsGPU);
-	DBG << "Initialized! DUDE!" << std::endl;
 }
 
 float

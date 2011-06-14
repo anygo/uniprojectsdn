@@ -18,6 +18,9 @@ __constant__ PointCoords* dev_targetCoords;
 __constant__ PointColors* dev_targetColors;
 unsigned short* dev_representatives;
 unsigned short* dev_pointToRep;
+
+RepGPU* dev_repsGPU;
+
 float* dev_distances;
 __constant__ float dev_transformationMatrix[16];
 
@@ -292,6 +295,82 @@ void kernelRBC(int nrOfPoints, int nrOfReps, int metric, float weightRGB, unsign
 	distances[tid] = minDist;
 	indices[tid] = nearestNeighborIndex;
 }
+///////////////////////////////////////////////////////////////////////////////
+// Random Ball Cover 2
+///////////////////////////////////////////////////////////////////////////////
+__global__
+void kernelRBC2(int nrOfPoints, int nrOfReps, int metric, float weightRGB, unsigned short* indices, PointCoords* sourceCoords, PointColors* sourceColors, PointCoords* targetCoords, PointColors* targetColors, float* distances, RepGPU* dev_repsGPU) 
+{
+	// get source[tid] for this thread
+	unsigned int tid = blockIdx.x;
 
+	float minDist = FLT_MAX;
+	int nearestRepresentative;
+
+	// step 1: search nearest representative
+	for (int i = 0; i < nrOfReps; ++i)
+	{
+		float x_dist = sourceCoords[tid].x - targetCoords[dev_repsGPU[i].index].x; 
+		float y_dist = sourceCoords[tid].y - targetCoords[dev_repsGPU[i].index].y;
+		float z_dist = sourceCoords[tid].z - targetCoords[dev_repsGPU[i].index].z;
+		float spaceDist;
+
+		switch (metric)
+		{
+		case ABSOLUTE_DISTANCE: spaceDist = abs(x_dist) + abs(y_dist) + abs(z_dist); break;
+		case LOG_ABSOLUTE_DISTANCE: spaceDist = log(abs(x_dist) + abs(y_dist) + abs(z_dist) + 1.f); break;
+		case SQUARED_DISTANCE: spaceDist = (x_dist * x_dist) + (y_dist * y_dist) + (z_dist * z_dist); break;
+		}
+
+
+		// always use euclidean distance for colors...
+		float r_dist = sourceColors[tid].r - targetColors[dev_repsGPU[i].index].r; 
+		float g_dist = sourceColors[tid].g - targetColors[dev_repsGPU[i].index].g;
+		float b_dist = sourceColors[tid].b - targetColors[dev_repsGPU[i].index].b;
+		float colorDist = (r_dist * r_dist) + (g_dist * g_dist) + (b_dist * b_dist);
+		float dist = (1 - weightRGB) * spaceDist + weightRGB * colorDist;
+
+		if (dist < minDist)
+		{
+			minDist = dist;
+			nearestRepresentative = i;
+		}
+	}
+
+	// step 2: search nearest neighbor in list of representative
+	minDist = FLT_MAX;
+	int nearestNeighborIndex = 0;
+	for (int i = 0; i < dev_repsGPU[nearestRepresentative].nrOfPoints; ++i)
+	{
+		float x_dist = sourceCoords[tid].x - targetCoords[dev_repsGPU[nearestRepresentative].dev_points[i]].x; 
+		float y_dist = sourceCoords[tid].y - targetCoords[dev_repsGPU[nearestRepresentative].dev_points[i]].y;
+		float z_dist = sourceCoords[tid].z - targetCoords[dev_repsGPU[nearestRepresentative].dev_points[i]].z;
+		float spaceDist;
+
+		switch (metric)
+		{
+		case ABSOLUTE_DISTANCE: spaceDist = abs(x_dist) + abs(y_dist) + abs(z_dist); break;
+		case LOG_ABSOLUTE_DISTANCE: spaceDist = log(abs(x_dist) + abs(y_dist) + abs(z_dist) + 1.f); break;
+		case SQUARED_DISTANCE: spaceDist = (x_dist * x_dist) + (y_dist * y_dist) + (z_dist * z_dist); break;
+		}
+
+
+		// always use euclidean distance for colors...
+		float r_dist = sourceColors[tid].r - targetColors[dev_repsGPU[nearestRepresentative].dev_points[i]].r; 
+		float g_dist = sourceColors[tid].g - targetColors[dev_repsGPU[nearestRepresentative].dev_points[i]].g;
+		float b_dist = sourceColors[tid].b - targetColors[dev_repsGPU[nearestRepresentative].dev_points[i]].b;
+		float colorDist = (r_dist * r_dist) + (g_dist * g_dist) + (b_dist * b_dist);
+		float dist = (1 - weightRGB) * spaceDist + weightRGB * colorDist;
+
+		if (dist < minDist)
+		{
+			minDist = dist;
+			nearestNeighborIndex = dev_repsGPU[nearestRepresentative].dev_points[i];
+		}
+	}
+
+	distances[tid] = minDist;
+	indices[tid] = nearestNeighborIndex;
+}
 
 #endif // StitchingPluginKernel_H__

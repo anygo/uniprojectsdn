@@ -15,6 +15,15 @@ typedef struct PointColors
 }
 PointColors;
 
+// rbc specific structure
+typedef struct RepGPU
+{
+	unsigned short index;
+	unsigned short nrOfPoints;
+	unsigned short* points;
+	unsigned short* dev_points;
+} RepGPU;
+
 // enum that includes all implemented distance metrics used during ICP
 enum ICP_METRIC
 {
@@ -24,7 +33,7 @@ enum ICP_METRIC
 };
 
 // debug macro
-//#define DEBUG
+#define DEBUG
 
 #ifdef DEBUG
 #define DBG ( std::cout )

@@ -166,3 +166,65 @@ void FindClosestPointsRBC(int nrOfPoints, int nrOfReps, int metric, float weight
 	CUDA_SAFE_CALL(cudaMemcpy(distances, dev_distances, nrOfPoints*sizeof(float), cudaMemcpyDeviceToHost));
 	
 }
+
+///////////////////////////////////////////////////////////////////////////////
+// Random Ball Cover 2
+///////////////////////////////////////////////////////////////////////////////
+
+extern "C"
+void initGPURBC2(PointCoords* targetCoords, PointColors* targetColors, int nrOfPoints, int nrOfReps, RepGPU* repsGPU)
+{
+	// same as with BruteForce method
+	initGPUBruteForce(targetCoords, targetColors, nrOfPoints);
+	
+	// plus RBC-specific stuff
+	for(int i = 0; i < nrOfReps; ++i)
+	{
+		unsigned short* dev_points;
+		
+		CUDA_SAFE_CALL(cudaMalloc((void**)&dev_points, repsGPU[i].nrOfPoints*sizeof(unsigned short)));
+		CUDA_SAFE_CALL(cudaMemcpy(dev_points, repsGPU[i].points, repsGPU[i].nrOfPoints*sizeof(unsigned short), cudaMemcpyHostToDevice));
+		
+		repsGPU[i].dev_points = dev_points; 
+	}
+	
+	CUDA_SAFE_CALL(cudaMalloc((void**)&dev_repsGPU, nrOfReps*sizeof(RepGPU)));
+	CUDA_SAFE_CALL(cudaMemcpy(dev_repsGPU, repsGPU, nrOfReps*sizeof(RepGPU), cudaMemcpyHostToDevice));
+}
+
+extern "C"
+void cleanupGPURBC2(int nrOfReps, RepGPU* repsGPU) 
+{
+	// same as with BruteForce method
+	cleanupGPUBruteForce();
+	
+	// plus RBC-specific cleanup
+	for(int i = 0; i < nrOfReps; ++i)
+	{
+		CUDA_SAFE_CALL(cudaFree(repsGPU[i].dev_points)); 
+	}
+	CUDA_SAFE_CALL(cudaFree(dev_repsGPU));
+}
+
+extern "C"
+void FindClosestPointsRBC2(int nrOfPoints, int nrOfReps, int metric, float weightRGB, unsigned short* indices, PointCoords* sourceCoords, PointColors* sourceColors, float* distances)
+{
+	// copy data from host to gpu only if it is not yet copied
+	// copy only once, because the data is transformed directly on the gpu!
+	if (!sourceCopied)
+	{
+		CUDA_SAFE_CALL(cudaMemcpy(dev_sourceCoords, sourceCoords, nrOfPoints*sizeof(PointCoords), cudaMemcpyHostToDevice));	
+		CUDA_SAFE_CALL(cudaMemcpy(dev_sourceColors, sourceColors, nrOfPoints*sizeof(PointColors), cudaMemcpyHostToDevice));
+		sourceCopied = true;
+	}
+
+	// find the closest point for each pixel
+	kernelRBC2<<<nrOfPoints,1>>>(nrOfPoints, nrOfReps, metric, weightRGB, dev_indices, dev_sourceCoords, dev_sourceColors, dev_targetCoords, dev_targetColors, dev_distances, dev_repsGPU);	
+
+	CUT_CHECK_ERROR("Kernel execution failed (while trying to find closest points)");
+			
+	// copy data from gpu to host
+	CUDA_SAFE_CALL(cudaMemcpy(indices, dev_indices, nrOfPoints*sizeof(unsigned short), cudaMemcpyDeviceToHost));
+	CUDA_SAFE_CALL(cudaMemcpy(distances, dev_distances, nrOfPoints*sizeof(float), cudaMemcpyDeviceToHost));
+	
+}

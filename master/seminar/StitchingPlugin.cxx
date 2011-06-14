@@ -618,8 +618,6 @@ StitchingPlugin::ExtractValidPoints()
 	m_Data->SetPoints(points);
 	m_Data->GetPointData()->SetScalars(colors);
 	m_Data->SetVerts(cells);
-	m_Data->RemoveDeletedCells();
-	m_Data->BuildLinks();
 	m_Data->Update();
 }
 //----------------------------------------------------------------------------

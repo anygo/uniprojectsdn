@@ -46,7 +46,7 @@ ClosestPointFinderRBCCPU::FindClosestPoints(PointCoords* sourceCoords, PointColo
 void
 ClosestPointFinderRBCCPU::initRBC()
 {
-	int nrOfReps = std::min(MAX_REPRESENTATIVES, static_cast<int>(sqrt(static_cast<double>(m_NrOfPoints))));
+	int nrOfReps = std::min(MAX_REPRESENTATIVES, static_cast<int>(m_NrOfRepsFactor * sqrt(static_cast<double>(m_NrOfPoints))));
 
 	for (int i = 0; i < nrOfReps; ++i)
 	{

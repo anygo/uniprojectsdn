@@ -315,12 +315,13 @@ void kernelRBC2(int nrOfPoints, int nrOfReps, int metric, float weightRGB, unsig
 		float z_dist = sourceCoords[tid].z - targetCoords[dev_repsGPU[i].index].z;
 		float spaceDist;
 
-		switch (metric)
-		{
-		case ABSOLUTE_DISTANCE: spaceDist = abs(x_dist) + abs(y_dist) + abs(z_dist); break;
-		case LOG_ABSOLUTE_DISTANCE: spaceDist = log(abs(x_dist) + abs(y_dist) + abs(z_dist) + 1.f); break;
-		case SQUARED_DISTANCE: spaceDist = (x_dist * x_dist) + (y_dist * y_dist) + (z_dist * z_dist); break;
-		}
+		//switch (metric)
+		//{
+		//case ABSOLUTE_DISTANCE: spaceDist = abs(x_dist) + abs(y_dist) + abs(z_dist); break;
+		//case LOG_ABSOLUTE_DISTANCE: spaceDist = log(abs(x_dist) + abs(y_dist) + abs(z_dist) + 1.f); break;
+		//case SQUARED_DISTANCE: 
+			spaceDist = (x_dist * x_dist) + (y_dist * y_dist) + (z_dist * z_dist); //break;
+		//}
 
 
 		// always use euclidean distance for colors...
@@ -337,7 +338,7 @@ void kernelRBC2(int nrOfPoints, int nrOfReps, int metric, float weightRGB, unsig
 		}
 	}
 
-	// step 2: search nearest neighbor in list of representative
+	// step 2: search nearest neighbor in list of representatives
 	minDist = FLT_MAX;
 	int nearestNeighborIndex = 0;
 	for (int i = 0; i < dev_repsGPU[nearestRepresentative].nrOfPoints; ++i)
@@ -347,12 +348,13 @@ void kernelRBC2(int nrOfPoints, int nrOfReps, int metric, float weightRGB, unsig
 		float z_dist = sourceCoords[tid].z - targetCoords[dev_repsGPU[nearestRepresentative].dev_points[i]].z;
 		float spaceDist;
 
-		switch (metric)
-		{
-		case ABSOLUTE_DISTANCE: spaceDist = abs(x_dist) + abs(y_dist) + abs(z_dist); break;
-		case LOG_ABSOLUTE_DISTANCE: spaceDist = log(abs(x_dist) + abs(y_dist) + abs(z_dist) + 1.f); break;
-		case SQUARED_DISTANCE: spaceDist = (x_dist * x_dist) + (y_dist * y_dist) + (z_dist * z_dist); break;
-		}
+		//switch (metric)
+		//{
+		//case ABSOLUTE_DISTANCE: spaceDist = abs(x_dist) + abs(y_dist) + abs(z_dist); break;
+		//case LOG_ABSOLUTE_DISTANCE: spaceDist = log(abs(x_dist) + abs(y_dist) + abs(z_dist) + 1.f); break;
+		//case SQUARED_DISTANCE: 
+		spaceDist = (x_dist * x_dist) + (y_dist * y_dist) + (z_dist * z_dist); //break;
+		//}
 
 
 		// always use euclidean distance for colors...

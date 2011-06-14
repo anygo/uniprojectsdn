@@ -23,7 +23,7 @@ class ClosestPointFinderRBCGPU2 : public ClosestPointFinder
 	} Representative;
 
 public:
-	ClosestPointFinderRBCGPU2(int NrOfPoints) : ClosestPointFinder(NrOfPoints) { }
+	ClosestPointFinderRBCGPU2(int NrOfPoints, double nrOfRepsFactor) : ClosestPointFinder(NrOfPoints), m_NrOfRepsFactor(nrOfRepsFactor) { }
 	~ClosestPointFinderRBCGPU2();
 
 	unsigned short* FindClosestPoints(PointCoords* sourceCoords, PointColors* sourceColors);
@@ -37,7 +37,7 @@ protected:
 	int m_NrOfReps;
 	std::vector<Representative> m_Representatives;
 	RepGPU* m_RepsGPU;
-	
+	double m_NrOfRepsFactor;
 };
 
 

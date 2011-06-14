@@ -1,6 +1,8 @@
 #ifndef defs_H__
 #define	defs_H__
 
+#define MAX_REPRESENTATIVES 1024
+
 // structure that holds the spatial information of a single point
 typedef struct PointCoords
 {
@@ -33,7 +35,7 @@ enum ICP_METRIC
 };
 
 // debug macro
-#define DEBUG
+//#define DEBUG
 
 #ifdef DEBUG
 #define DBG ( std::cout )

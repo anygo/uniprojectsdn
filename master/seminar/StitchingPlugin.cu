@@ -175,7 +175,7 @@ extern "C"
 void initGPURBC2(PointCoords* targetCoords, PointColors* targetColors, int nrOfPoints, int nrOfReps, RepGPU* repsGPU)
 {
 	// same as with BruteForce method
-	initGPUBruteForce(targetCoords, targetColors, nrOfPoints);
+	//initGPUBruteForce(targetCoords, targetColors, nrOfPoints);
 	
 	// plus RBC-specific stuff
 	for(int i = 0; i < nrOfReps; ++i)
@@ -188,8 +188,9 @@ void initGPURBC2(PointCoords* targetCoords, PointColors* targetColors, int nrOfP
 		repsGPU[i].dev_points = dev_points; 
 	}
 	
-	CUDA_SAFE_CALL(cudaMalloc((void**)&dev_repsGPU, nrOfReps*sizeof(RepGPU)));
-	CUDA_SAFE_CALL(cudaMemcpy(dev_repsGPU, repsGPU, nrOfReps*sizeof(RepGPU), cudaMemcpyHostToDevice));
+	//CUDA_SAFE_CALL(cudaMalloc((void**)&dev_repsGPU, nrOfReps*sizeof(RepGPU)));
+	//CUDA_SAFE_CALL(cudaMemcpy(dev_repsGPU, repsGPU, nrOfReps*sizeof(RepGPU), cudaMemcpyHostToDevice));
+	CUDA_SAFE_CALL(cudaMemcpyToSymbol(dev_repsGPU, repsGPU, nrOfReps*sizeof(RepGPU), 0));
 }
 
 extern "C"
@@ -203,7 +204,7 @@ void cleanupGPURBC2(int nrOfReps, RepGPU* repsGPU)
 	{
 		CUDA_SAFE_CALL(cudaFree(repsGPU[i].dev_points)); 
 	}
-	CUDA_SAFE_CALL(cudaFree(dev_repsGPU));
+//	CUDA_SAFE_CALL(cudaFree(dev_repsGPU));
 }
 
 extern "C"
@@ -219,12 +220,28 @@ void FindClosestPointsRBC2(int nrOfPoints, int nrOfReps, int metric, float weigh
 	}
 
 	// find the closest point for each pixel
-	kernelRBC2<<<nrOfPoints,1>>>(nrOfPoints, nrOfReps, metric, weightRGB, dev_indices, dev_sourceCoords, dev_sourceColors, dev_targetCoords, dev_targetColors, dev_distances, dev_repsGPU);	
+	kernelRBC2<<<nrOfPoints,1>>>(nrOfPoints, nrOfReps, metric, weightRGB, dev_indices, dev_sourceCoords, dev_sourceColors, dev_targetCoords, dev_targetColors, dev_distances);	
 
 	CUT_CHECK_ERROR("Kernel execution failed (while trying to find closest points)");
 			
 	// copy data from gpu to host
 	CUDA_SAFE_CALL(cudaMemcpy(indices, dev_indices, nrOfPoints*sizeof(unsigned short), cudaMemcpyDeviceToHost));
 	CUDA_SAFE_CALL(cudaMemcpy(distances, dev_distances, nrOfPoints*sizeof(float), cudaMemcpyDeviceToHost));
+}
+
+extern "C"
+void PointsToReps(int nrOfPoints, int nrOfReps, int metric, float weightRGB, unsigned short* pointToRep, unsigned short* reps)
+{
+	unsigned short* dev_pointToRep;
+	unsigned short* dev_reps;
+	CUDA_SAFE_CALL(cudaMalloc((void**)&dev_pointToRep, nrOfPoints*sizeof(unsigned short)));
+	CUDA_SAFE_CALL(cudaMalloc((void**)&dev_reps, nrOfPoints*sizeof(unsigned short)));
+	CUDA_SAFE_CALL(cudaMemcpy(dev_reps, reps, nrOfReps*sizeof(unsigned short), cudaMemcpyHostToDevice));
 	
+	
+	kernelPointsToReps<<<nrOfPoints,1>>>(nrOfPoints, nrOfReps, metric, weightRGB, dev_pointToRep, dev_reps, dev_targetCoords, dev_targetColors);
+	
+	CUDA_SAFE_CALL(cudaMemcpy(pointToRep, dev_pointToRep, nrOfPoints*sizeof(unsigned short), cudaMemcpyDeviceToHost));
+	CUDA_SAFE_CALL(cudaFree(dev_pointToRep));
+	CUDA_SAFE_CALL(cudaFree(dev_reps));
 }

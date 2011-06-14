@@ -1,7 +1,7 @@
 #ifndef defs_H__
 #define	defs_H__
 
-#define MAX_REPRESENTATIVES 1024
+#define MAX_REPRESENTATIVES 4096
 
 // structure that holds the spatial information of a single point
 typedef struct PointCoords

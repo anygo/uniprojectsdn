@@ -48,7 +48,7 @@ ClosestPointFinderRBCGPU2::FindClosestPoints(PointCoords* sourceCoords, PointCol
 void
 ClosestPointFinderRBCGPU2::initRBC()
 {
-	m_NrOfReps = static_cast<int>(sqrt(static_cast<double>(m_NrOfPoints)));
+	m_NrOfReps = std::min(MAX_REPRESENTATIVES, static_cast<int>(m_NrOfRepsFactor * sqrt(static_cast<double>(m_NrOfPoints))));
 
 	// initialize GPU for RBC initialization
 	initGPUBruteForce(m_TargetCoords, m_TargetColors, m_NrOfPoints);

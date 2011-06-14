@@ -25,7 +25,7 @@ class ClosestPointFinderRBCCPU : public ClosestPointFinder
 
 
 public:
-	ClosestPointFinderRBCCPU(int NrOfPoints) : ClosestPointFinder(NrOfPoints) { }
+	ClosestPointFinderRBCCPU(int NrOfPoints, double nrOfRepsFactor) : ClosestPointFinder(NrOfPoints), m_NrOfRepsFactor(nrOfRepsFactor) { }
 
 	unsigned short* FindClosestPoints(PointCoords* sourceCoords, PointColors* sourceColors);
 	void SetTarget(PointCoords* targetCoords, PointColors* targetColors) { ClosestPointFinder::SetTarget(targetCoords, targetColors); initRBC(); }
@@ -37,7 +37,7 @@ protected:
 	float DistanceSourceTarget(PointCoords sourceCoords, PointColors sourceColors, unsigned short j);
 
 	std::vector<Representative> m_Representatives;
-	
+	double m_NrOfRepsFactor;
 };
 
 

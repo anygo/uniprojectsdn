@@ -158,8 +158,6 @@ void FindClosestPointsRBC(int nrOfPoints, int nrOfReps, int metric, float weight
 
 	// find the closest point for each pixel
 	kernelRBC<<<nrOfPoints,1>>>(nrOfPoints, nrOfReps, metric, weightRGB, dev_indices, dev_sourceCoords, dev_sourceColors, dev_targetCoords, dev_targetColors, dev_distances, dev_representatives, dev_pointToRep);	
-	//kernelWithRGBBruteForce<<<nrOfPoints,1>>>(nrOfPoints, metric, weightRGB, dev_indices, dev_sourceCoords, dev_sourceColors, dev_targetCoords, dev_targetColors, dev_distances);
-
 
 	CUT_CHECK_ERROR("Kernel execution failed (while trying to find closest points)");
 			

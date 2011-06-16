@@ -13,9 +13,23 @@ PointCoords;
 // structure that holds the color information of a single point
 typedef struct PointColors
 {
-	short r, g, b;
+	float r, g, b;
 }
 PointColors;
+
+// gpu config (avoid too many parameters in gpu-code)
+typedef struct GPUConfig
+{
+	float weightRGB;
+	int metric;
+	int nrOfPoints;
+	PointCoords* targetCoords;
+	PointColors* targetColors;
+	PointCoords* sourceCoords;
+	PointColors* sourceColors;
+	unsigned short* indices;
+	float* distances;
+} GPUConfig;
 
 // rbc specific structure
 typedef struct RepGPU

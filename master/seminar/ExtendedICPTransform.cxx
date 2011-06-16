@@ -217,7 +217,7 @@ ExtendedICPTransform::InternalUpdate()
 
 			std::sort(sortedDistances.begin(), sortedDistances.end());
 
-			int thresholdIdx = floor((1.0 - m_OutlierRate) * static_cast<double>(sortedDistances.size() - 1));
+			int thresholdIdx = floor((1.0 - m_OutlierRate) * static_cast<float>(sortedDistances.size() - 1));
 			float threshold = sortedDistances[thresholdIdx];
 		
 			int number = thresholdIdx + 1;

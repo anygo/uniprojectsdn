@@ -11,25 +11,10 @@
 #include <cuda_runtime_api.h>
 
 
-// gpu config (avoid too many parameters)
-typedef struct GPUConfig
-{
-	float weightRGB;
-	int metric;
-	int nrOfPoints;
-	PointCoords* targetCoords;
-	PointColors* targetColors;
-	PointCoords* sourceCoords;
-	PointColors* sourceColors;
-	unsigned short* indices;
-	float* distances;
-} GPUConfig;
-
-
 // global pointers for gpu... 
 __constant__ float dev_transformationMatrix[16];
 __constant__ GPUConfig dev_conf[1];
-__constant__ GPUConfig host_conf[1];
+GPUConfig host_conf[1];
 
 // RBC
 unsigned short* dev_representatives;
@@ -65,10 +50,6 @@ void kernelTransformPointsAndComputeDistance()
 	dev_conf->sourceCoords[tid].y = y;
 	dev_conf->sourceCoords[tid].z = z;
 }
-
-
-
-
 
 __device__
 float kernelComputeDistanceSourceTarget(int idx1, int idx2)

@@ -6,12 +6,13 @@
 #include <vector>
 
 
-/**	@class		ClosestPointFinderRBCGPU
- *	@brief		
+/**	@class		ClosestPointFinderRBCCPU
+ *	@brief		RandomBallCover ClosestPointFinder on GPU (CUDA)
  *	@author		Felix Lugauer and Dominik Neumann
  *
  *	@details
- *	
+ *	Class that implements the ClosestPointFinder Interface by using
+ *	the Random Ball Cover acceleration structure. Runs on GPU.
  */
 class ClosestPointFinderRBCGPU : public ClosestPointFinder
 {

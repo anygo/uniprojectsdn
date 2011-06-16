@@ -7,11 +7,12 @@
 
 
 /**	@class		ClosestPointFinderRBCCPU
- *	@brief		
+ *	@brief		RandomBallCover ClosestPointFinder on CPU
  *	@author		Felix Lugauer and Dominik Neumann
  *
  *	@details
- *	
+ *	Class that implements the ClosestPointFinder Interface by using
+ *	the Random Ball Cover acceleration structure.
  */
 class ClosestPointFinderRBCCPU : public ClosestPointFinder
 {

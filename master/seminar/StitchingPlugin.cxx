@@ -33,7 +33,6 @@
 #include <ClosestPointFinderBruteForceCPU.h>
 #include <ClosestPointFinderBruteForceGPU.h>
 #include <ClosestPointFinderRBCCPU.h>
-#include <ClosestPointFinderRBCGPU.h>
 #include <ClosestPointFinderRBCGPU2.h>
 #include <defs.h>
 
@@ -47,8 +46,8 @@ StitchingPlugin::StitchingPlugin()
 	connect(this, SIGNAL(UpdateGUI()), m_Widget->m_VisualizationWidget3D,	SLOT(UpdateGUI()));
 
 	// our signals and slots
-	connect(m_Widget->m_PushButtonLoadCleanStitch,			SIGNAL(clicked()),								this, SLOT(LoadCleanStitch()));
-	connect(m_Widget->m_PushButtonInitialize,				SIGNAL(clicked()),								this, SLOT(LoadCleanInitialize()));
+	connect(m_Widget->m_PushButtonLoadCleanStitch,			SIGNAL(clicked()),								this, SLOT(LoadStitch()));
+	connect(m_Widget->m_PushButtonInitialize,				SIGNAL(clicked()),								this, SLOT(LoadInitialize()));
 	connect(m_Widget->m_PushButtonDelaunay2D,				SIGNAL(clicked()),								this, SLOT(Delaunay2DSelectedActors()));
 	connect(m_Widget->m_PushButtonSaveVTKData,				SIGNAL(clicked()),								this, SLOT(SaveSelectedActors()));
 	connect(m_Widget->m_HorizontalSliderPointSize,			SIGNAL(valueChanged(int)),						this, SLOT(ChangePointSize()));
@@ -534,16 +533,16 @@ StitchingPlugin::Delaunay2DSelectedActors()
 }
 //----------------------------------------------------------------------------
 void
-StitchingPlugin::LoadCleanInitialize()
+StitchingPlugin::LoadInitialize()
 {
 	LoadFrame();
-	CleanFrame();
+	//CleanFrame();
 	InitializeHistory();
 
 	emit UpdateGUI();
 }
 void
-StitchingPlugin::LoadCleanStitch()
+StitchingPlugin::LoadStitch()
 {
 	// get last entry in history to determine previousTransformationMatrix and previousFrame
 	int listSize = m_Widget->m_ListWidgetHistory->count();
@@ -555,7 +554,7 @@ StitchingPlugin::LoadCleanStitch()
 
 	// load and clean the new frame
 	LoadFrame();
-	CleanFrame();
+	//CleanFrame();
 
 	// create new history entry
 	HistoryListItem* hli = new HistoryListItem();
@@ -783,10 +782,8 @@ StitchingPlugin::Stitch(vtkPolyData* toBeStitched, vtkPolyData* previousFrame,
 	case 1: cpf = new ClosestPointFinderBruteForceCPU(m_Widget->m_SpinBoxLandmarks->value(), false); break;
 	case 2: cpf = new ClosestPointFinderBruteForceCPU(m_Widget->m_SpinBoxLandmarks->value(), true); break;
 	case 3: cpf = new ClosestPointFinderRBCCPU(m_Widget->m_SpinBoxLandmarks->value(), m_Widget->m_DoubleSpinBoxNrOfRepsFactor->value()); break;
-	case 4: cpf = new ClosestPointFinderRBCGPU(m_Widget->m_SpinBoxLandmarks->value()); break;
-	case 5: cpf = new ClosestPointFinderRBCGPU2(m_Widget->m_SpinBoxLandmarks->value(), m_Widget->m_DoubleSpinBoxNrOfRepsFactor->value()); break;
+	case 4: cpf = new ClosestPointFinderRBCGPU2(m_Widget->m_SpinBoxLandmarks->value(), m_Widget->m_DoubleSpinBoxNrOfRepsFactor->value()); break;
 	}
-	cpf->SetUseRGBData(m_Widget->m_CheckBoxUseRGBData->isChecked());
 	cpf->SetWeightRGB(m_Widget->m_DoubleSpinBoxRGBWeight->value());
 	int metric;
 	switch (m_Widget->m_ComboBoxMetric->currentIndex())

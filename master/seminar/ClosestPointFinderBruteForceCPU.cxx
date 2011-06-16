@@ -24,7 +24,6 @@ ClosestPointFinderBruteForceCPU::FindClosestPoints(PointCoords* sourceCoords, Po
 			(i+1)*m_NrOfPoints/numThreads,
 			m_NrOfPoints,
 			m_Metric,
-			m_UseRGBData,
 			m_WeightRGB,
 			m_Indices,
 			sourceCoords,
@@ -79,19 +78,17 @@ ClosestPointFinderBruteForceCPUWorker::run()
 				spaceDist = (coords.x - m_TargetCoords[i].x)*(coords.x - m_TargetCoords[i].x) + (coords.y - m_TargetCoords[i].y)*(coords.y - m_TargetCoords[i].y) + (coords.z - m_TargetCoords[i].z)*(coords.z - m_TargetCoords[i].z);
 			}
 
-			if (m_UseRGBData)
+			switch (m_Metric)
 			{
-				switch (m_Metric)
-				{
-				case ABSOLUTE_DISTANCE:
-					colorDist = std::abs(colors.r - m_TargetColors[i].r) + std::abs(colors.g - m_TargetColors[i].g) + std::abs(colors.b - m_TargetColors[i].b); break;
-				case LOG_ABSOLUTE_DISTANCE:
-					colorDist = std::log(std::abs(colors.r - m_TargetColors[i].r) + std::abs(colors.g - m_TargetColors[i].g) + std::abs(colors.b - m_TargetColors[i].b) + 1.f); break;
-				case SQUARED_DISTANCE:
-					colorDist = (colors.r - m_TargetColors[i].r)*(colors.r - m_TargetColors[i].r) + (colors.g - m_TargetColors[i].g)*(colors.g - m_TargetColors[i].g) + (colors.b - m_TargetColors[i].b)*(colors.b - m_TargetColors[i].b);
-				}
-
+			case ABSOLUTE_DISTANCE:
+				colorDist = std::abs(colors.r - m_TargetColors[i].r) + std::abs(colors.g - m_TargetColors[i].g) + std::abs(colors.b - m_TargetColors[i].b); break;
+			case LOG_ABSOLUTE_DISTANCE:
+				colorDist = std::log(std::abs(colors.r - m_TargetColors[i].r) + std::abs(colors.g - m_TargetColors[i].g) + std::abs(colors.b - m_TargetColors[i].b) + 1.f); break;
+			case SQUARED_DISTANCE:
+				colorDist = (colors.r - m_TargetColors[i].r)*(colors.r - m_TargetColors[i].r) + (colors.g - m_TargetColors[i].g)*(colors.g - m_TargetColors[i].g) + (colors.b - m_TargetColors[i].b)*(colors.b - m_TargetColors[i].b);
 			}
+
+			
 			double dist = (1 - m_WeightRGB) * spaceDist + m_WeightRGB * colorDist;
 
 			if (dist < minDist)

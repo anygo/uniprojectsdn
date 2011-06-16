@@ -9,24 +9,25 @@
 #pragma warning( disable : 4996 )
 
 extern "C"
-void initGPUBruteForce(PointCoords* targetCoords, PointColors* targetColors, int nrOfPoints);
+void initGPUCommon(PointCoords* targetCoords, PointColors* targetColors, PointCoords* sourceCoords, PointColors* sourceColors, float weightRGB, int metric, int nrOfPoints);
+
 
 extern "C"
-void initGPURBC2(PointCoords* targetCoords, PointColors* targetColors, int nrOfPoints, int nrOfReps, RepGPU* repsGPU);
+void initGPURBC(int nrOfReps, RepGPU* repsGPU);
 
 extern "C"
-void PointsToReps(int nrOfPoints, int nrOfReps, int metric, float weightRGB, unsigned short* pointToRep, unsigned short* reps);
+void PointsToReps(int nrOfReps, unsigned short* pointToRep, unsigned short* reps);
 
 extern "C"
-void cleanupGPURBC2(int nrOfReps, RepGPU* repsGPU);
+void cleanupGPURBC(int nrOfReps, RepGPU* repsGPU);
 
 extern "C"
-void FindClosestPointsRBC2(int nrOfPoints, int nrOfReps, int metric, float weightRGB, unsigned short* indices, PointCoords* sourceCoords, PointColors* sourceColors, float* distances);
+void FindClosestPointsRBC(int nrOfReps, unsigned short* indices, float* distances);
 
 
 ClosestPointFinderRBCGPU2::~ClosestPointFinderRBCGPU2()
 { 
-	cleanupGPURBC2(m_NrOfReps, m_RepsGPU);
+	cleanupGPURBC(m_NrOfReps, m_RepsGPU);
 
 	for(int i = 0; i < m_NrOfReps; ++i) 
 	{
@@ -38,7 +39,7 @@ ClosestPointFinderRBCGPU2::~ClosestPointFinderRBCGPU2()
 unsigned short*
 ClosestPointFinderRBCGPU2::FindClosestPoints(PointCoords* sourceCoords, PointColors* sourceColors)
 {
-	FindClosestPointsRBC2(m_NrOfPoints, m_NrOfReps, m_Metric, m_WeightRGB, m_Indices, sourceCoords, sourceColors, m_Distances);
+	FindClosestPointsRBC(m_NrOfReps, m_Indices, m_Distances);
 
 	// return the indices which will then be used in the icp algorithm
 	return m_Indices;
@@ -51,7 +52,8 @@ ClosestPointFinderRBCGPU2::initRBC()
 	m_NrOfReps = std::min(MAX_REPRESENTATIVES, static_cast<int>(m_NrOfRepsFactor * sqrt(static_cast<double>(m_NrOfPoints))));
 
 	// initialize GPU for RBC initialization
-	initGPUBruteForce(m_TargetCoords, m_TargetColors, m_NrOfPoints);
+	initGPUCommon(m_TargetCoords, m_TargetColors, m_SourceCoords, m_SourceColors, m_WeightRGB, m_Metric, m_NrOfPoints);
+
 	unsigned short* reps = new unsigned short[m_NrOfReps];
 	unsigned short* pointToRep = new unsigned short[m_NrOfPoints];
 
@@ -80,7 +82,7 @@ ClosestPointFinderRBCGPU2::initRBC()
 	}
 
 	// find closest representative to each point on gpu
-	PointsToReps(m_NrOfPoints, m_NrOfReps, m_Metric, m_WeightRGB, pointToRep, reps);
+	PointsToReps(m_NrOfReps, pointToRep, reps);
 
 	for (int i = 0; i < m_NrOfPoints; ++i)
 	{
@@ -104,7 +106,7 @@ ClosestPointFinderRBCGPU2::initRBC()
 	}
 
 	DBG << "Copying data to gpu..." << std::endl;
-	initGPURBC2(m_TargetCoords, m_TargetColors, m_NrOfPoints, m_NrOfReps, m_RepsGPU);
+	initGPURBC(m_NrOfReps, m_RepsGPU);
 }
 
 float
@@ -122,18 +124,13 @@ ClosestPointFinderRBCGPU2::DistanceTargetTarget(unsigned short i, unsigned short
 	case SQUARED_DISTANCE: spaceDist = (x_dist * x_dist) + (y_dist * y_dist) + (z_dist * z_dist); break;
 	}
 
-	if (m_UseRGBData)
-	{
-		// always use euclidean distance for colors...
-		double r_dist = m_TargetColors[i].r - m_TargetColors[j].r; 
-		double g_dist = m_TargetColors[i].g - m_TargetColors[j].g;
-		double b_dist = m_TargetColors[i].b - m_TargetColors[j].b;
-		double colorDist = (r_dist * r_dist) + (g_dist * g_dist) + (b_dist * b_dist);
-		double dist = (1 - m_WeightRGB) * spaceDist + m_WeightRGB * colorDist;
-		
-		return static_cast<float>(dist);
-	} else
-	{
-		return static_cast<float>(spaceDist);
-	}
+
+	// always use euclidean distance for colors...
+	double r_dist = m_TargetColors[i].r - m_TargetColors[j].r; 
+	double g_dist = m_TargetColors[i].g - m_TargetColors[j].g;
+	double b_dist = m_TargetColors[i].b - m_TargetColors[j].b;
+	double colorDist = (r_dist * r_dist) + (g_dist * g_dist) + (b_dist * b_dist);
+	double dist = (1 - m_WeightRGB) * spaceDist + m_WeightRGB * colorDist;
+
+	return static_cast<float>(dist);
 }

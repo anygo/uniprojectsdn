@@ -87,7 +87,6 @@ SET(HDRS
 	ClosestPointFinderBruteForceCPU.h
 	ClosestPointFinderBruteForceGPU.h
 	ClosestPointFinderRBCCPU.h
-	ClosestPointFinderRBCGPU.h
 	ClosestPointFinderRBCGPU2.h
 )
 
@@ -99,7 +98,6 @@ SET(SRCS
 	ClosestPointFinderBruteForceCPU.cxx
 	ClosestPointFinderBruteForceGPU.cxx
 	ClosestPointFinderRBCCPU.cxx
-	ClosestPointFinderRBCGPU.cxx
 	ClosestPointFinderRBCGPU2.cxx
 )
 

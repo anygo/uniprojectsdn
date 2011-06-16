@@ -19,8 +19,14 @@ public:
 
 	virtual unsigned short* FindClosestPoints(PointCoords* sourceCoords, PointColors* sourceColors) = 0;
 
-	virtual inline void SetTarget(PointCoords* targetCoords, PointColors* targetColors) { m_TargetCoords = targetCoords; m_TargetColors = targetColors; }
-	virtual inline void SetUseRGBData(bool use) { m_UseRGBData = use; }
+	virtual inline void SetTarget(PointCoords* targetCoords, PointColors* targetColors, PointCoords* sourceCoords, PointColors* sourceColors) 
+	{
+		m_TargetCoords = targetCoords; 
+		m_TargetColors = targetColors;
+		m_SourceCoords = sourceCoords;
+		m_SourceColors = sourceColors;
+	}
+
 	virtual inline void SetWeightRGB(float weight) { m_WeightRGB = weight; }
 	virtual inline void SetMetric(int metric) { m_Metric = metric; }
 	virtual inline float* GetDistances() { return m_Distances; }
@@ -31,10 +37,11 @@ protected:
 	int m_NrOfPoints;
 	int m_Metric;
 	unsigned short* m_Indices;
-	bool m_UseRGBData;
 	float m_WeightRGB;
 	PointCoords* m_TargetCoords;
 	PointColors* m_TargetColors;
+	PointCoords* m_SourceCoords;
+	PointColors* m_SourceColors;
 	float* m_Distances;
 };
 

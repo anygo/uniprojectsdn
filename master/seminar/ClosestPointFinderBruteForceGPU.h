@@ -4,7 +4,7 @@
 #include "ClosestPointFinder.h"
 
 extern "C"
-void cleanupGPUBruteForce(); 
+void cleanupGPUCommon(); 
 
 /**	@class		ClosestPointFinderBruteForceGPU
  *	@brief		BruteForce ClosestPointFinder on GPU (CUDA)
@@ -19,9 +19,9 @@ class ClosestPointFinderBruteForceGPU : public ClosestPointFinder
 {
 public:
 	ClosestPointFinderBruteForceGPU(int NrOfPoints) : ClosestPointFinder(NrOfPoints) { }
-	~ClosestPointFinderBruteForceGPU() { cleanupGPUBruteForce(); }
+	~ClosestPointFinderBruteForceGPU() { cleanupGPUCommon(); }
 
-	void SetTarget(PointCoords* targetCoords, PointColors* targetColors); 
+	void SetTarget(PointCoords* targetCoords, PointColors* targetColors, PointCoords* sourceCoords, PointColors* sourceColors); 
 	unsigned short* FindClosestPoints(PointCoords* sourceCoords, PointColors* sourceColors);
 	inline bool usesGPU() { return true; }
 

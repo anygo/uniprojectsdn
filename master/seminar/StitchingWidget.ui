@@ -208,7 +208,7 @@
                   </size>
                  </property>
                  <property name="currentIndex">
-                  <number>5</number>
+                  <number>4</number>
                  </property>
                  <item>
                   <property name="text">
@@ -228,11 +228,6 @@
                  <item>
                   <property name="text">
                    <string>RandomBallCover CPU</string>
-                  </property>
-                 </item>
-                 <item>
-                  <property name="text">
-                   <string>RandomBallCover GPU</string>
                   </property>
                  </item>
                  <item>
@@ -289,16 +284,6 @@
                 </widget>
                </item>
                <item>
-                <widget class="QCheckBox" name="m_CheckBoxUseRGBData">
-                 <property name="text">
-                  <string>Use RGB Data</string>
-                 </property>
-                 <property name="checked">
-                  <bool>true</bool>
-                 </property>
-                </widget>
-               </item>
-               <item>
                 <widget class="QCheckBox" name="m_CheckBoxRemoveOutliers">
                  <property name="text">
                   <string>Remove / Ignore Outliers</string>
@@ -307,6 +292,19 @@
                   <bool>true</bool>
                  </property>
                 </widget>
+               </item>
+               <item>
+                <spacer name="verticalSpacer_3">
+                 <property name="orientation">
+                  <enum>Qt::Vertical</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>20</width>
+                   <height>40</height>
+                  </size>
+                 </property>
+                </spacer>
                </item>
               </layout>
              </item>
@@ -996,22 +994,6 @@
     <hint type="destinationlabel">
      <x>784</x>
      <y>463</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>m_CheckBoxUseRGBData</sender>
-   <signal>clicked(bool)</signal>
-   <receiver>m_DoubleSpinBoxRGBWeight</receiver>
-   <slot>setEnabled(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>936</x>
-     <y>287</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>813</x>
-     <y>275</y>
     </hint>
    </hints>
   </connection>

@@ -20,7 +20,7 @@ vtkStandardNewMacro(ExtendedICPTransform);
 
 
 extern "C"
-void TransformPointsDirectlyOnGPU(int nrOfPoints, double transformationMatrix[4][4], PointCoords* writeTo, float* distances);
+void TransformPointsDirectlyOnGPU(double transformationMatrix[4][4], PointCoords* writeTo, float* distances);
 
 ExtendedICPTransform::ExtendedICPTransform() : vtkLinearTransform()
 {
@@ -158,7 +158,7 @@ ExtendedICPTransform::InternalUpdate()
 	vtkPolyDataToPointCoordsAndColors();
 
 	// configure ClosestPointFinder
-	m_ClosestPointFinder->SetTarget(m_TargetCoords, m_TargetColors);
+	m_ClosestPointFinder->SetTarget(m_TargetCoords, m_TargetColors, m_SourceCoords, m_SourceColors);
 	
 	// allocate some points used for icp
 	vtkSmartPointer<vtkPoints> points1 =
@@ -270,7 +270,7 @@ ExtendedICPTransform::InternalUpdate()
 		// transform on gpu
 		if (m_ClosestPointFinder->usesGPU())
 		{	
-			TransformPointsDirectlyOnGPU(m_NumLandmarks, m_LandmarkTransform->GetMatrix()->Element, m_SourceCoords, distances);
+			TransformPointsDirectlyOnGPU(m_LandmarkTransform->GetMatrix()->Element, m_SourceCoords, distances);
 			for(int i = 0; i < m_NumLandmarks; i++)
 			{
 				totaldist += distances[i];

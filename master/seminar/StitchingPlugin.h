@@ -62,8 +62,8 @@ signals:
 	void InitProgressBar(int from, int to);
 
 protected slots:
-	void LoadCleanStitch();
-	void LoadCleanInitialize();
+	void LoadStitch();
+	void LoadInitialize();
 	void Delaunay2DSelectedActors();
 	void SaveSelectedActors();
 	void InitializeHistory();

@@ -35,7 +35,6 @@ public:
 					int to,
 					int nrOfPoints,
 					int metric,
-					bool useRGBData,
 					double weightRGB,
 					unsigned short* indices,
 					PointCoords* sourceCoords,
@@ -49,7 +48,6 @@ public:
 		m_To = to;
 		m_NrOfPoints = nrOfPoints;
 		m_Metric = metric;
-		m_UseRGBData = useRGBData;
 		m_WeightRGB = weightRGB;
 		m_Indices = indices;
 		m_SourceCoords = sourceCoords;
@@ -66,7 +64,6 @@ protected:
 	int m_To;
 	int m_NrOfPoints;
 	int m_Metric;
-	bool m_UseRGBData;
 	double m_WeightRGB;
 	unsigned short* m_Indices;
 	PointCoords* m_SourceCoords;

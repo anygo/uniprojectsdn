@@ -1,4 +1,4 @@
-#include "ClosestPointFinderRBCGPU2.h"
+#include "ClosestPointFinderRBCGPU.h"
 
 #include <limits>
 #include <iostream>
@@ -25,7 +25,7 @@ extern "C"
 void FindClosestPointsRBC(int nrOfReps, unsigned short* indices, float* distances);
 
 
-ClosestPointFinderRBCGPU2::~ClosestPointFinderRBCGPU2()
+ClosestPointFinderRBCGPU::~ClosestPointFinderRBCGPU()
 { 
 	cleanupGPURBC(m_NrOfReps, m_RepsGPU);
 
@@ -37,7 +37,7 @@ ClosestPointFinderRBCGPU2::~ClosestPointFinderRBCGPU2()
 }
 
 unsigned short*
-ClosestPointFinderRBCGPU2::FindClosestPoints(PointCoords* sourceCoords, PointColors* sourceColors)
+ClosestPointFinderRBCGPU::FindClosestPoints(PointCoords* sourceCoords, PointColors* sourceColors)
 {
 	FindClosestPointsRBC(m_NrOfReps, m_Indices, m_Distances);
 
@@ -47,9 +47,9 @@ ClosestPointFinderRBCGPU2::FindClosestPoints(PointCoords* sourceCoords, PointCol
 //----------------------------------------------------------------------------
 
 void
-ClosestPointFinderRBCGPU2::initRBC()
+ClosestPointFinderRBCGPU::initRBC()
 {
-	m_NrOfReps = std::min(MAX_REPRESENTATIVES, static_cast<int>(m_NrOfRepsFactor * sqrt(static_cast<double>(m_NrOfPoints))));
+	m_NrOfReps = std::min(MAX_REPRESENTATIVES, static_cast<int>(m_NrOfRepsFactor * sqrt(static_cast<float>(m_NrOfPoints))));
 
 	// initialize GPU for RBC initialization
 	initGPUCommon(m_TargetCoords, m_TargetColors, m_SourceCoords, m_SourceColors, m_WeightRGB, m_Metric, m_NrOfPoints);
@@ -110,12 +110,12 @@ ClosestPointFinderRBCGPU2::initRBC()
 }
 
 float
-ClosestPointFinderRBCGPU2::DistanceTargetTarget(unsigned short i, unsigned short j)
+ClosestPointFinderRBCGPU::DistanceTargetTarget(unsigned short i, unsigned short j)
 {
-	double x_dist = m_TargetCoords[i].x - m_TargetCoords[j].x; 
-	double y_dist = m_TargetCoords[i].y - m_TargetCoords[j].y;
-	double z_dist = m_TargetCoords[i].z - m_TargetCoords[j].z;
-	double spaceDist; 
+	float x_dist = m_TargetCoords[i].x - m_TargetCoords[j].x; 
+	float y_dist = m_TargetCoords[i].y - m_TargetCoords[j].y;
+	float z_dist = m_TargetCoords[i].z - m_TargetCoords[j].z;
+	float spaceDist; 
 
 	switch (m_Metric)
 	{
@@ -126,11 +126,11 @@ ClosestPointFinderRBCGPU2::DistanceTargetTarget(unsigned short i, unsigned short
 
 
 	// always use euclidean distance for colors...
-	double r_dist = m_TargetColors[i].r - m_TargetColors[j].r; 
-	double g_dist = m_TargetColors[i].g - m_TargetColors[j].g;
-	double b_dist = m_TargetColors[i].b - m_TargetColors[j].b;
-	double colorDist = (r_dist * r_dist) + (g_dist * g_dist) + (b_dist * b_dist);
-	double dist = (1 - m_WeightRGB) * spaceDist + m_WeightRGB * colorDist;
+	float r_dist = m_TargetColors[i].r - m_TargetColors[j].r; 
+	float g_dist = m_TargetColors[i].g - m_TargetColors[j].g;
+	float b_dist = m_TargetColors[i].b - m_TargetColors[j].b;
+	float colorDist = (r_dist * r_dist) + (g_dist * g_dist) + (b_dist * b_dist);
+	float dist = (1 - m_WeightRGB) * spaceDist + m_WeightRGB * colorDist;
 
 	return static_cast<float>(dist);
 }

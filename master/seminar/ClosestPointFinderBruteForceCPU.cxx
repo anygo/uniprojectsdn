@@ -55,9 +55,9 @@ ClosestPointFinderBruteForceCPUWorker::run()
 {
 	for (int j = 0; j < m_NrOfPoints; ++j)
 	{
-		double minSpaceDist = std::numeric_limits<double>::max();
-		double minColorDist = std::numeric_limits<double>::max();
-		double minDist = std::numeric_limits<double>::max();
+		float minSpaceDist = std::numeric_limits<float>::max();
+		float minColorDist = std::numeric_limits<float>::max();
+		float minDist = std::numeric_limits<float>::max();
 		int idx = -1;
 
 		PointCoords coords = m_SourceCoords[j];
@@ -65,8 +65,8 @@ ClosestPointFinderBruteForceCPUWorker::run()
 
 		for (int i = 0; i < m_NrOfPoints; ++i)
 		{
-			double spaceDist = 0.;
-			double colorDist = 0.;
+			float spaceDist = 0.;
+			float colorDist = 0.;
 
 			switch (m_Metric)
 			{
@@ -89,7 +89,7 @@ ClosestPointFinderBruteForceCPUWorker::run()
 			}
 
 			
-			double dist = (1 - m_WeightRGB) * spaceDist + m_WeightRGB * colorDist;
+			float dist = (1 - m_WeightRGB) * spaceDist + m_WeightRGB * colorDist;
 
 			if (dist < minDist)
 			{

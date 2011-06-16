@@ -46,7 +46,7 @@ ClosestPointFinderRBCCPU::FindClosestPoints(PointCoords* sourceCoords, PointColo
 void
 ClosestPointFinderRBCCPU::initRBC()
 {
-	int nrOfReps = std::min(MAX_REPRESENTATIVES, static_cast<int>(m_NrOfRepsFactor * sqrt(static_cast<double>(m_NrOfPoints))));
+	int nrOfReps = std::min(MAX_REPRESENTATIVES, static_cast<int>(m_NrOfRepsFactor * sqrt(static_cast<float>(m_NrOfPoints))));
 
 	for (int i = 0; i < nrOfReps; ++i)
 	{
@@ -91,10 +91,10 @@ ClosestPointFinderRBCCPU::initRBC()
 float
 ClosestPointFinderRBCCPU::DistanceTargetTarget(unsigned short i, unsigned short j)
 {
-	double x_dist = m_TargetCoords[i].x - m_TargetCoords[j].x; 
-	double y_dist = m_TargetCoords[i].y - m_TargetCoords[j].y;
-	double z_dist = m_TargetCoords[i].z - m_TargetCoords[j].z;
-	double spaceDist; 
+	float x_dist = m_TargetCoords[i].x - m_TargetCoords[j].x; 
+	float y_dist = m_TargetCoords[i].y - m_TargetCoords[j].y;
+	float z_dist = m_TargetCoords[i].z - m_TargetCoords[j].z;
+	float spaceDist; 
 
 	switch (m_Metric)
 	{
@@ -104,11 +104,11 @@ ClosestPointFinderRBCCPU::DistanceTargetTarget(unsigned short i, unsigned short 
 	}
 
 	// always use euclidean distance for colors...
-	double r_dist = m_TargetColors[i].r - m_TargetColors[j].r; 
-	double g_dist = m_TargetColors[i].g - m_TargetColors[j].g;
-	double b_dist = m_TargetColors[i].b - m_TargetColors[j].b;
-	double colorDist = (r_dist * r_dist) + (g_dist * g_dist) + (b_dist * b_dist);
-	double dist = (1 - m_WeightRGB) * spaceDist + m_WeightRGB * colorDist;
+	float r_dist = m_TargetColors[i].r - m_TargetColors[j].r; 
+	float g_dist = m_TargetColors[i].g - m_TargetColors[j].g;
+	float b_dist = m_TargetColors[i].b - m_TargetColors[j].b;
+	float colorDist = (r_dist * r_dist) + (g_dist * g_dist) + (b_dist * b_dist);
+	float dist = (1 - m_WeightRGB) * spaceDist + m_WeightRGB * colorDist;
 
 	return static_cast<float>(dist);
 }
@@ -116,10 +116,10 @@ ClosestPointFinderRBCCPU::DistanceTargetTarget(unsigned short i, unsigned short 
 float
 ClosestPointFinderRBCCPU::DistanceSourceTarget(PointCoords sourceCoords, PointColors sourceColors, unsigned short targetIndex)
 {
-	double x_dist = sourceCoords.x - m_TargetCoords[targetIndex].x; 
-	double y_dist = sourceCoords.y - m_TargetCoords[targetIndex].y;
-	double z_dist = sourceCoords.z - m_TargetCoords[targetIndex].z;
-	double spaceDist;
+	float x_dist = sourceCoords.x - m_TargetCoords[targetIndex].x; 
+	float y_dist = sourceCoords.y - m_TargetCoords[targetIndex].y;
+	float z_dist = sourceCoords.z - m_TargetCoords[targetIndex].z;
+	float spaceDist;
 
 	switch (m_Metric)
 	{
@@ -129,11 +129,11 @@ ClosestPointFinderRBCCPU::DistanceSourceTarget(PointCoords sourceCoords, PointCo
 	}
 
 	// always use euclidean distance for colors...
-	double r_dist = sourceColors.r - m_TargetColors[targetIndex].r; 
-	double g_dist = sourceColors.g - m_TargetColors[targetIndex].g;
-	double b_dist = sourceColors.b - m_TargetColors[targetIndex].b;
-	double colorDist = (r_dist * r_dist) + (g_dist * g_dist) + (b_dist * b_dist);
-	double dist = (1 - m_WeightRGB) * spaceDist + m_WeightRGB * colorDist;
+	float r_dist = sourceColors.r - m_TargetColors[targetIndex].r; 
+	float g_dist = sourceColors.g - m_TargetColors[targetIndex].g;
+	float b_dist = sourceColors.b - m_TargetColors[targetIndex].b;
+	float colorDist = (r_dist * r_dist) + (g_dist * g_dist) + (b_dist * b_dist);
+	float dist = (1 - m_WeightRGB) * spaceDist + m_WeightRGB * colorDist;
 
 	return static_cast<float>(dist);
 }

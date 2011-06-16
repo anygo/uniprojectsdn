@@ -33,7 +33,7 @@
 #include <ClosestPointFinderBruteForceCPU.h>
 #include <ClosestPointFinderBruteForceGPU.h>
 #include <ClosestPointFinderRBCCPU.h>
-#include <ClosestPointFinderRBCGPU2.h>
+#include <ClosestPointFinderRBCGPU.h>
 #include <defs.h>
 
 StitchingPlugin::StitchingPlugin()
@@ -781,10 +781,10 @@ StitchingPlugin::Stitch(vtkPolyData* toBeStitched, vtkPolyData* previousFrame,
 	case 0: cpf = new ClosestPointFinderBruteForceGPU(m_Widget->m_SpinBoxLandmarks->value()); break;
 	case 1: cpf = new ClosestPointFinderBruteForceCPU(m_Widget->m_SpinBoxLandmarks->value(), false); break;
 	case 2: cpf = new ClosestPointFinderBruteForceCPU(m_Widget->m_SpinBoxLandmarks->value(), true); break;
-	case 3: cpf = new ClosestPointFinderRBCCPU(m_Widget->m_SpinBoxLandmarks->value(), m_Widget->m_DoubleSpinBoxNrOfRepsFactor->value()); break;
-	case 4: cpf = new ClosestPointFinderRBCGPU2(m_Widget->m_SpinBoxLandmarks->value(), m_Widget->m_DoubleSpinBoxNrOfRepsFactor->value()); break;
+	case 3: cpf = new ClosestPointFinderRBCCPU(m_Widget->m_SpinBoxLandmarks->value(), static_cast<float>(m_Widget->m_DoubleSpinBoxNrOfRepsFactor->value())); break;
+	case 4: cpf = new ClosestPointFinderRBCGPU(m_Widget->m_SpinBoxLandmarks->value(), static_cast<float>(m_Widget->m_DoubleSpinBoxNrOfRepsFactor->value())); break;
 	}
-	cpf->SetWeightRGB(m_Widget->m_DoubleSpinBoxRGBWeight->value());
+	cpf->SetWeightRGB(static_cast<float>(m_Widget->m_DoubleSpinBoxRGBWeight->value()));
 	int metric;
 	switch (m_Widget->m_ComboBoxMetric->currentIndex())
 	{
@@ -802,11 +802,11 @@ StitchingPlugin::Stitch(vtkPolyData* toBeStitched, vtkPolyData* previousFrame,
 	icp->SetSource(voi);
 	icp->SetTarget(previousFrame);
 	icp->GetLandmarkTransform()->SetModeToRigidBody();
-	icp->SetMaxMeanDist(m_Widget->m_DoubleSpinBoxMaxRMS->value());
+	icp->SetMaxMeanDist(static_cast<float>(m_Widget->m_DoubleSpinBoxMaxRMS->value()));
 	icp->SetNumLandmarks(m_Widget->m_SpinBoxLandmarks->value());
 	icp->SetMaxIter(m_Widget->m_SpinBoxMaxIterations->value());
 	icp->SetRemoveOutliers(m_Widget->m_CheckBoxRemoveOutliers->isChecked());
-	icp->SetOutlierRate(m_Widget->m_DoubleSpinBoxOutlierRate->value());
+	icp->SetOutlierRate(static_cast<float>(m_Widget->m_DoubleSpinBoxOutlierRate->value()));
 
 	icp->SetClosestPointFinder(cpf);
 	icp->Modified();
@@ -814,8 +814,9 @@ StitchingPlugin::Stitch(vtkPolyData* toBeStitched, vtkPolyData* previousFrame,
 
 	// update icp runtime
 	int elapsedTimeICP = timeICP.elapsed();
-	m_Widget->m_LabelICPRuntime->setText(QString::number(elapsedTimeICP) + " ms (avg: " + QString::number(elapsedTimeICP / icp->GetNumIter()) + " ms)");
-
+	m_Widget->m_LabelICPRuntime->setText(QString::number(elapsedTimeICP) + " ms (avg: " + 
+		QString::number(static_cast<float>(elapsedTimeICP) / static_cast<float>(icp->GetNumIter()), 103, 3) + " ms)");
+	
 	// update output parameter
 	outputTransformationMatrix->DeepCopy(icp->GetMatrix());
 

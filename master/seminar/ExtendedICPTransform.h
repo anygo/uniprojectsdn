@@ -36,14 +36,14 @@ public:
 	inline int GetMaxIter() { return m_MaxIter; }
 	inline void SetNumLandmarks(int landmarks) { m_NumLandmarks = landmarks; }
 	inline int GetNumLandmarks() { return m_MaxIter; }
-	inline void SetMaxMeanDist(double dist) { m_MaxMeanDist = dist; }
+	inline void SetMaxMeanDist(float dist) { m_MaxMeanDist = dist; }
 	inline int GetMaxMeanDist() { return m_MaxMeanDist; }
-	inline void SetOutlierRate(double percentage) { m_OutlierRate = percentage; }
+	inline void SetOutlierRate(float percentage) { m_OutlierRate = percentage; }
 	inline void SetRemoveOutliers(bool remove) { m_RemoveOutliers = remove; }
 	inline void SetClosestPointFinder(ClosestPointFinder* cpf) { m_ClosestPointFinder = cpf; }
 
 	inline int GetNumIter() { return m_NumIter; }
-	inline double GetMeanDist() { return m_MeanDist; }
+	inline float GetMeanDist() { return m_MeanDist; }
 	inline vtkLandmarkTransform* GetLandmarkTransform() { return m_LandmarkTransform; }
 
 protected:
@@ -67,12 +67,12 @@ protected:
 
 	int m_MaxIter;
 	int m_NumLandmarks;
-	double m_MaxMeanDist;
-	double m_OutlierRate;
+	float m_MaxMeanDist;
+	float m_OutlierRate;
 	bool m_RemoveOutliers;
 
 	int m_NumIter;
-	double m_MeanDist;
+	float m_MeanDist;
 	vtkSmartPointer<vtkLandmarkTransform> m_LandmarkTransform;
 
 private:

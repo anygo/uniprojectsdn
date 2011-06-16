@@ -1,19 +1,19 @@
-#ifndef ClosestPointFinderRBCGPU2_H__
-#define ClosestPointFinderRBCGPU2_H__
+#ifndef ClosestPointFinderRBCGPU_H__
+#define ClosestPointFinderRBCGPU_H__
 
 #include "ClosestPointFinder.h"
 #include <list>
 #include <vector>
 
 
-/**	@class		ClosestPointFinderRBCGPU2
+/**	@class		ClosestPointFinderRBCGPU
  *	@brief		
  *	@author		Felix Lugauer and Dominik Neumann
  *
  *	@details
  *	
  */
-class ClosestPointFinderRBCGPU2 : public ClosestPointFinder
+class ClosestPointFinderRBCGPU : public ClosestPointFinder
 {
 
 	typedef struct Representative
@@ -23,8 +23,8 @@ class ClosestPointFinderRBCGPU2 : public ClosestPointFinder
 	} Representative;
 
 public:
-	ClosestPointFinderRBCGPU2(int NrOfPoints, double nrOfRepsFactor) : ClosestPointFinder(NrOfPoints), m_NrOfRepsFactor(nrOfRepsFactor) { }
-	~ClosestPointFinderRBCGPU2();
+	ClosestPointFinderRBCGPU(int NrOfPoints, float nrOfRepsFactor) : ClosestPointFinder(NrOfPoints), m_NrOfRepsFactor(nrOfRepsFactor) { }
+	~ClosestPointFinderRBCGPU();
 
 	unsigned short* FindClosestPoints(PointCoords* sourceCoords, PointColors* sourceColors);
 	void SetTarget(PointCoords* targetCoords, PointColors* targetColors, PointCoords* sourceCoords, PointColors* sourceColors) {
@@ -40,7 +40,7 @@ protected:
 	int m_NrOfReps;
 	std::vector<Representative> m_Representatives;
 	RepGPU* m_RepsGPU;
-	double m_NrOfRepsFactor;
+	float m_NrOfRepsFactor;
 };
 
 

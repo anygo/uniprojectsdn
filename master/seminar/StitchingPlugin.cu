@@ -144,8 +144,6 @@ void FindClosestPointsRBC(int nrOfReps, unsigned short* indices, float* distance
 extern "C"
 void PointsToReps(int nrOfReps, unsigned short* pointToRep, unsigned short* reps)
 {
-	printf("PointsToReps(...)\n");
-
 	unsigned short* dev_pointToRep;
 	unsigned short* dev_reps;
 	CUDA_SAFE_CALL(cudaMalloc((void**)&dev_pointToRep, host_conf->nrOfPoints*sizeof(unsigned short)));

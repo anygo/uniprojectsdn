@@ -35,7 +35,7 @@ public:
 					int to,
 					int nrOfPoints,
 					int metric,
-					double weightRGB,
+					float weightRGB,
 					unsigned short* indices,
 					PointCoords* sourceCoords,
 					PointColors* sourceColors,
@@ -64,7 +64,7 @@ protected:
 	int m_To;
 	int m_NrOfPoints;
 	int m_Metric;
-	double m_WeightRGB;
+	float m_WeightRGB;
 	unsigned short* m_Indices;
 	PointCoords* m_SourceCoords;
 	PointColors* m_SourceColors;

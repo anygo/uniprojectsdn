@@ -697,13 +697,10 @@ StitchingPlugin::Clean(vtkPolyData *toBeCleaned)
 		vtkSmartPointer<vtkCleanPolyData>::New();
 	cleanPolyData->SetTolerance(m_Widget->m_DoubleSpinBoxCleanTolerance->value());
 	cleanPolyData->PointMergingOn();
-	cleanPolyData->ConvertLinesToPointsOn();
-	cleanPolyData->ConvertPolysToLinesOn();
-	cleanPolyData->ConvertStripsToPolysOn();
 	cleanPolyData->SetInput(toBeCleaned);
 	cleanPolyData->Update();
 
-	toBeCleaned->ShallowCopy(cleanPolyData->GetOutput());
+	toBeCleaned->DeepCopy(cleanPolyData->GetOutput());
 }
 //----------------------------------------------------------------------------
 void
@@ -830,7 +827,7 @@ StitchingPlugin::Stitch(vtkPolyData* toBeStitched, vtkPolyData* previousFrame,
 
 	outputStitchedPolyData->DeepCopy(icpTransformFilter->GetOutput());
 
-	// also include previous transform into the transform to make "undo" possible
+	// include the previous transformation into the matrix to allow for "undo"
 	if (m_Widget->m_CheckBoxUsePreviousTransformation->isChecked())
 	{
 		vtkMatrix4x4::Multiply4x4(outputTransformationMatrix, previousTransformationMatrix, outputTransformationMatrix);

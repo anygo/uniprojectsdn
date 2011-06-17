@@ -43,8 +43,8 @@ grid on
 drawnow;
 title('3D points');
 
-numberOfTrackedPoints = length(xc)
-numberOfFrames = 20 
+numberOfTrackedPoints = length(xc);
+numberOfFrames = 20; 
 
 P = zeros(numberOfFrames, 3, 4);
 points = zeros(numberOfTrackedPoints, numberOfFrames, 2);
@@ -65,8 +65,8 @@ KPR = [ sx s  u0 0;
         0  0  1  0];
 
 % rotation angle of each frame
-angleStep = 9 / 180 * pi
-rotAngle = numberOfFrames*angleStep % = pi -> 180 degree
+angleStep = 9 / 180 * pi;
+rotAngle = numberOfFrames*angleStep; % = pi -> 180 degree
 
 cd = 1; 
 number = 1;
@@ -78,12 +78,12 @@ t3 =  800; % 700: more distance, 400: lower distance
 
 % rotate camera around y-axis
 alphay = 0;
-alphaz = 0
-alphax = 0
+alphaz = 0;
+alphax = 0;
 
 for alphay=0:angleStep:(rotAngle-angleStep)
-    alphay
-    number 
+    alphay;
+    number;
     
     RotX = [ 1  0                 0;
              0  cd*cos(alphax)   cd*(-sin(alphax));
@@ -144,7 +144,7 @@ if(ISO_SCALING)
     % (3) This transformation is applied to each of the images independently
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%     
      for i=1:numberOfFrames
-        i
+        i;
         pts = zeros(3, numberOfTrackedPoints);
         pts(1,:) = points(:,i,1);
         pts(2,:) = points(:,i,2);
@@ -165,10 +165,10 @@ if(ISO_SCALING)
         points(:,i,2) = pts(2,:);
         
         a=sqrt(points(:,i,1).*points(:,i,1) + points(:,i,2).*points(:,i,2));
-        avglength=(1/numberOfTrackedPoints).*(sum(sum(a)))
+        avglength=(1/numberOfTrackedPoints).*(sum(sum(a)));
         
-        originX=(1/numberOfTrackedPoints).*sum(sum(points(:,i,1)))
-        originY=(1/numberOfTrackedPoints).*sum(sum(points(:,i,2)))
+        originX=(1/numberOfTrackedPoints).*sum(sum(points(:,i,1)));
+        originY=(1/numberOfTrackedPoints).*sum(sum(points(:,i,2)));
     end
 end
 
@@ -200,7 +200,7 @@ oldLambda = 2000;
 
 while(abs(lambdaChange-oldLambda) > lc) 
     %for lo = 1:5 % fixed number of iterations
-        change = abs(lambdaChange-oldLambda)
+        change = abs(lambdaChange-oldLambda);
 
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         % (7) Normalizing rows, use Frobenius-norm
@@ -330,7 +330,7 @@ size(ydata)
 % function handle
 
 % lsqcurvefit ???
-[h, resnorm] = lsqcurvefit(@homography,x0,xdata,ydata)
+[h, resnorm] = lsqcurvefit(@homography,x0,xdata,ydata);
 
 % homography
 h 

@@ -15,6 +15,8 @@
 
 #include <complex>
 #include <algorithm>
+#include <QTime>
+#include <QString>
 
 vtkStandardNewMacro(ExtendedICPTransform);
 
@@ -208,26 +210,38 @@ ExtendedICPTransform::InternalUpdate()
 
 		if (m_RemoveOutliers && m_OutlierRate > 0.0)
 		{
-			std::vector<float> sortedDistances;
+			std::vector<float> sortedDistances(m_NumLandmarks);
 			float* dists = m_ClosestPointFinder->GetDistances();
+			m_MeanTargetDistance = 0;
 			for(int i = 0; i < m_NumLandmarks; ++i)
 			{
-				sortedDistances.push_back(dists[i]);
+				sortedDistances[i] = dists[i];
+				m_MeanTargetDistance += (dists[i]);
 			}
+			m_MeanTargetDistance /= static_cast<float>(m_NumLandmarks);
 
 			std::sort(sortedDistances.begin(), sortedDistances.end());
 
-			int thresholdIdx = floor((1.0 - m_OutlierRate) * static_cast<float>(sortedDistances.size() - 1));
+			int thresholdIdx = floor((1.0 - m_OutlierRate) * static_cast<float>(m_NumLandmarks - 1));
 			float threshold = sortedDistances[thresholdIdx];
-		
+
 			int number = thresholdIdx + 1;
+
+			// perfect match?
+			if (threshold < FLT_EPSILON)
+			{
+				threshold = FLT_MAX;
+				number = m_NumLandmarks;
+			}
+		
+			
 
 			// calling Modified() is necessary otherwise object properties won't change
 			closestp->SetNumberOfPoints(number);
 			a2->SetNumberOfPoints(number);
 			closestp->Modified();
 			a2->Modified();
-
+			
 			int count = 0;
 			for(int i = 0; i < m_NumLandmarks; ++i)
 			{
@@ -307,7 +321,6 @@ ExtendedICPTransform::InternalUpdate()
 			vtkPolyDataToPointCoords(a, m_SourceCoords);
 		}
 	} 
-
 	DBG << std::endl;
 
 	// now recover accumulated result

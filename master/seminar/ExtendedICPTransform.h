@@ -44,6 +44,7 @@ public:
 
 	inline int GetNumIter() { return m_NumIter; }
 	inline float GetMeanDist() { return m_MeanDist; }
+	inline float GetMeanTargetDistance() { return m_MeanTargetDistance; }
 	inline vtkLandmarkTransform* GetLandmarkTransform() { return m_LandmarkTransform; }
 
 protected:
@@ -73,6 +74,7 @@ protected:
 
 	int m_NumIter;
 	float m_MeanDist;
+	float m_MeanTargetDistance;
 	vtkSmartPointer<vtkLandmarkTransform> m_LandmarkTransform;
 
 private:

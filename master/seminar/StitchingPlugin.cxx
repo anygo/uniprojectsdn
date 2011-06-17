@@ -624,6 +624,9 @@ StitchingPlugin::ExtractValidPoints()
 void
 StitchingPlugin::Clip(vtkPolyData *toBeClipped)
 {
+	if (m_Widget->m_DoubleSpinBoxClipPercentage->value() == 0.0)
+		return;
+
 	vtkSmartPointer<vtkClipPolyData> clipper =
 		vtkSmartPointer<vtkClipPolyData>::New();	
 	vtkSmartPointer<vtkBox> box =
@@ -809,10 +812,11 @@ StitchingPlugin::Stitch(vtkPolyData* toBeStitched, vtkPolyData* previousFrame,
 	icp->Modified();
 	icp->Update();
 
-	// update icp runtime
+	// update icp runtime, etc
 	int elapsedTimeICP = timeICP.elapsed();
 	m_Widget->m_LabelICPRuntime->setText(QString::number(elapsedTimeICP) + " ms (avg: " + 
-		QString::number(static_cast<float>(elapsedTimeICP) / static_cast<float>(icp->GetNumIter()), 103, 3) + " ms)");
+		QString::number(static_cast<float>(elapsedTimeICP) / static_cast<float>(icp->GetNumIter()), 'f', 2) + " ms)");
+	m_Widget->m_LabelICPMeanTargetDistance->setText(QString::number(icp->GetMeanTargetDistance(), 'f', 2));
 	
 	// update output parameter
 	outputTransformationMatrix->DeepCopy(icp->GetMatrix());

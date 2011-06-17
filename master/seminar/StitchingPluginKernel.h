@@ -17,8 +17,8 @@ __constant__ GPUConfig dev_conf[1];
 GPUConfig host_conf[1];
 
 // RBC
-unsigned short* dev_representatives;
-unsigned short* dev_pointToRep;
+__constant__ unsigned short* dev_representatives;
+__constant__ unsigned short* dev_pointToRep;
 __constant__ RepGPU dev_repsGPU[MAX_REPRESENTATIVES];
 
 
@@ -32,18 +32,37 @@ void kernelTransformPointsAndComputeDistance()
 	unsigned int tid = blockIdx.x;
 
 	// compute homogeneous transformation
-	float x = dev_transformationMatrix[0]*dev_conf->sourceCoords[tid].x + dev_transformationMatrix[1]*dev_conf->sourceCoords[tid].y + dev_transformationMatrix[2]*dev_conf->sourceCoords[tid].z + dev_transformationMatrix[3];
-	float y = dev_transformationMatrix[4]*dev_conf->sourceCoords[tid].x + dev_transformationMatrix[5]*dev_conf->sourceCoords[tid].y + dev_transformationMatrix[6]*dev_conf->sourceCoords[tid].z + dev_transformationMatrix[7];
-	float z = dev_transformationMatrix[8]*dev_conf->sourceCoords[tid].x + dev_transformationMatrix[9]*dev_conf->sourceCoords[tid].y + dev_transformationMatrix[10]*dev_conf->sourceCoords[tid].z + dev_transformationMatrix[11];
-	float w = dev_transformationMatrix[12]*dev_conf->sourceCoords[tid].x + dev_transformationMatrix[13]*dev_conf->sourceCoords[tid].y + dev_transformationMatrix[14]*dev_conf->sourceCoords[tid].z + dev_transformationMatrix[15];
+	float x =
+		dev_transformationMatrix[0] * dev_conf->sourceCoords[tid].x +
+		dev_transformationMatrix[1] * dev_conf->sourceCoords[tid].y +
+		dev_transformationMatrix[2] * dev_conf->sourceCoords[tid].z +
+		dev_transformationMatrix[3];
+	float y =
+		dev_transformationMatrix[4] * dev_conf->sourceCoords[tid].x +
+		dev_transformationMatrix[5] * dev_conf->sourceCoords[tid].y +
+		dev_transformationMatrix[6] * dev_conf->sourceCoords[tid].z +
+		dev_transformationMatrix[7];
+	float z =
+		dev_transformationMatrix[8] * dev_conf->sourceCoords[tid].x +
+		dev_transformationMatrix[9] * dev_conf->sourceCoords[tid].y +
+		dev_transformationMatrix[10] * dev_conf->sourceCoords[tid].z +
+		dev_transformationMatrix[11];
+	float w =
+		dev_transformationMatrix[12] * dev_conf->sourceCoords[tid].x +
+		dev_transformationMatrix[13] * dev_conf->sourceCoords[tid].y +
+		dev_transformationMatrix[14] * dev_conf->sourceCoords[tid].z +
+		dev_transformationMatrix[15];
 
 	// divide by the last component
-	x = x/w;
-	y = y/w;
-	z = z/w;
+	x /= w;
+	y /= w;
+	z /= w;
 
 	// compute distance to previous point
-	dev_conf->distances[tid] = (dev_conf->sourceCoords[tid].x - x)*(dev_conf->sourceCoords[tid].x - x) + (dev_conf->sourceCoords[tid].y - y)*(dev_conf->sourceCoords[tid].y - y) + (dev_conf->sourceCoords[tid].z - z)*(dev_conf->sourceCoords[tid].z - z);
+	dev_conf->distances[tid] =
+		(dev_conf->sourceCoords[tid].x - x) * (dev_conf->sourceCoords[tid].x - x) +
+		(dev_conf->sourceCoords[tid].y - y) * (dev_conf->sourceCoords[tid].y - y) +
+		(dev_conf->sourceCoords[tid].z - z) * (dev_conf->sourceCoords[tid].z - z);
 
 	// set new coordinates
 	dev_conf->sourceCoords[tid].x = x;

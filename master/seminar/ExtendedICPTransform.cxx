@@ -137,9 +137,18 @@ ExtendedICPTransform::vtkPolyDataToPointCoordsAndColors()
 		m_SourceCoords[i].x = m_Source->GetPoint(static_cast<vtkIdType>(j))[0];
 		m_SourceCoords[i].y = m_Source->GetPoint(static_cast<vtkIdType>(j))[1];
 		m_SourceCoords[i].z = m_Source->GetPoint(static_cast<vtkIdType>(j))[2];
-		m_SourceColors[i].r = m_Source->GetPointData()->GetScalars()->GetTuple(static_cast<vtkIdType>(j))[0];
-		m_SourceColors[i].g = m_Source->GetPointData()->GetScalars()->GetTuple(static_cast<vtkIdType>(j))[1];
-		m_SourceColors[i].b = m_Source->GetPointData()->GetScalars()->GetTuple(static_cast<vtkIdType>(j))[2];
+
+		// conversion from RGB to rgb (r = R/(R+G+B), ...)
+		// and normalization w.r.t. bounding boxes of RGB cube and bounding box of pointcloud
+		float r_g_b = m_Source->GetPointData()->GetScalars()->GetTuple(static_cast<vtkIdType>(j))[0] +
+			m_Source->GetPointData()->GetScalars()->GetTuple(static_cast<vtkIdType>(j))[1] +
+			m_Source->GetPointData()->GetScalars()->GetTuple(static_cast<vtkIdType>(j))[2];
+
+		float factor = m_NormalizeRGBToDistanceValuesFactor / std::max(r_g_b, FLT_EPSILON);
+
+		m_SourceColors[i].r = m_Source->GetPointData()->GetScalars()->GetTuple(static_cast<vtkIdType>(j))[0] * factor;
+		m_SourceColors[i].g = m_Source->GetPointData()->GetScalars()->GetTuple(static_cast<vtkIdType>(j))[1] * factor;
+		m_SourceColors[i].b = m_Source->GetPointData()->GetScalars()->GetTuple(static_cast<vtkIdType>(j))[2] * factor;
 	}
 
 	for (int i = 0, j = 0; i < m_NumLandmarks; ++i, j += stepTarget)
@@ -147,9 +156,18 @@ ExtendedICPTransform::vtkPolyDataToPointCoordsAndColors()
 		m_TargetCoords[i].x = m_Target->GetPoint(static_cast<vtkIdType>(j))[0];
 		m_TargetCoords[i].y = m_Target->GetPoint(static_cast<vtkIdType>(j))[1];
 		m_TargetCoords[i].z = m_Target->GetPoint(static_cast<vtkIdType>(j))[2];
-		m_TargetColors[i].r = m_Target->GetPointData()->GetScalars()->GetTuple(static_cast<vtkIdType>(j))[0];
-		m_TargetColors[i].g = m_Target->GetPointData()->GetScalars()->GetTuple(static_cast<vtkIdType>(j))[1];
-		m_TargetColors[i].b = m_Target->GetPointData()->GetScalars()->GetTuple(static_cast<vtkIdType>(j))[2];
+
+		// conversion from RGB to rgb (r = R/(R+G+B), ...)
+		// and normalization w.r.t. bounding boxes of RGB cube and bounding box of pointcloud
+		float r_g_b = m_Target->GetPointData()->GetScalars()->GetTuple(static_cast<vtkIdType>(j))[0] +
+			m_Target->GetPointData()->GetScalars()->GetTuple(static_cast<vtkIdType>(j))[1] +
+			m_Target->GetPointData()->GetScalars()->GetTuple(static_cast<vtkIdType>(j))[2];
+
+		float factor = m_NormalizeRGBToDistanceValuesFactor / std::max(r_g_b, FLT_EPSILON);
+
+		m_TargetColors[i].r = m_Target->GetPointData()->GetScalars()->GetTuple(static_cast<vtkIdType>(j))[0] * factor;
+		m_TargetColors[i].g = m_Target->GetPointData()->GetScalars()->GetTuple(static_cast<vtkIdType>(j))[1] * factor;
+		m_TargetColors[i].b = m_Target->GetPointData()->GetScalars()->GetTuple(static_cast<vtkIdType>(j))[2] * factor;
 	}
 }
 //----------------------------------------------------------------------------

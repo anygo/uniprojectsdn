@@ -372,6 +372,9 @@ StitchingPlugin::StitchSelectedActors()
 	emit InitProgressBar(0, numSelected);
 	emit UpdateProgressBar(counterProgressBar);
 
+	QTime t;
+	int overallTime = 0;
+
 	// stitch all selected actors to previous actor in list
 	// ignore the first one, because it can not be stitched to anything
 	for (int i = 1; i < m_Widget->m_ListWidgetHistory->count(); ++i)
@@ -386,6 +389,7 @@ StitchingPlugin::StitchSelectedActors()
 
 			HistoryListItem* hli_prev = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i - 1));
 
+			t.start();
 			try
 			{
 				Stitch(hli->m_actor->GetData(), hli_prev->m_actor->GetData(), hli_prev->m_transform, hli->m_actor->GetData(), hli->m_transform);
@@ -394,6 +398,7 @@ StitchingPlugin::StitchSelectedActors()
 				std::cout << "Exception: \"" << e.what() << "\""<< std::endl;
 				continue;
 			}
+			overallTime += t.elapsed();
 
 			HighlightActor(hli);
 			emit UpdateProgressBar(++counterProgressBar);
@@ -401,6 +406,8 @@ StitchingPlugin::StitchSelectedActors()
 			QCoreApplication::processEvents();
 		}
 	}
+
+	std::cout << overallTime << " ms for Stitching " << m_Widget->m_ListWidgetHistory->selectedItems().count() << " frames" << std::endl;
 
 	emit UpdateGUI();
 }
@@ -595,6 +602,8 @@ StitchingPlugin::ExtractValidPoints()
 
 	colors->SetNumberOfComponents(4);
 
+	vtkSmartPointer<vtkCellArray> lines =
+		vtkSmartPointer<vtkCellArray>::New();
 
 	double p[3];
 	for (vtkIdType i = 0; i < m_Data->GetNumberOfPoints(); ++i)
@@ -618,13 +627,17 @@ StitchingPlugin::ExtractValidPoints()
 	m_Data->SetPoints(points);
 	m_Data->GetPointData()->SetScalars(colors);
 	m_Data->SetVerts(cells);
+	m_Data->SetLines(lines);
+	m_Data->Update();
 	m_Data->Update();
 }
 //----------------------------------------------------------------------------
 void
 StitchingPlugin::Clip(vtkPolyData *toBeClipped)
 {
-	if (m_Widget->m_DoubleSpinBoxClipPercentage->value() == 0.0)
+	double percentage = m_Widget->m_DoubleSpinBoxClipPercentage->value();
+
+	if (percentage == 0.0)
 		return;
 
 	vtkSmartPointer<vtkClipPolyData> clipper =
@@ -633,15 +646,16 @@ StitchingPlugin::Clip(vtkPolyData *toBeClipped)
 		vtkSmartPointer<vtkBox>::New();
 
 	double bounds[6];
+
 	toBeClipped->GetBounds(bounds);
 
 	// modify x, y (and z) bounds
-	bounds[0] = bounds[0] + m_Widget->m_DoubleSpinBoxClipPercentage->value()*(bounds[1] - bounds[0]);
-	bounds[1] = bounds[1] - m_Widget->m_DoubleSpinBoxClipPercentage->value()*(bounds[1] - bounds[0]);
-	bounds[2] = bounds[2] + m_Widget->m_DoubleSpinBoxClipPercentage->value()*(bounds[3] - bounds[2]);
-	bounds[3] = bounds[3] - m_Widget->m_DoubleSpinBoxClipPercentage->value()*(bounds[3] - bounds[2]);
-	bounds[4] = bounds[4] + m_Widget->m_DoubleSpinBoxClipPercentage->value()*(bounds[5] - bounds[4]);
-	bounds[5] = bounds[5] - m_Widget->m_DoubleSpinBoxClipPercentage->value()*(bounds[5] - bounds[4]);
+	bounds[0] += percentage*(bounds[1] - bounds[0]);
+	bounds[1] -= percentage*(bounds[1] - bounds[0]);
+	bounds[2] += percentage*(bounds[3] - bounds[2]);
+	bounds[3] -= percentage*(bounds[3] - bounds[2]);
+	bounds[4] += percentage*(bounds[5] - bounds[4]);
+	bounds[5] -= percentage*(bounds[5] - bounds[4]);
 
 	box->SetBounds(bounds);
 	clipper->SetClipFunction(box);
@@ -784,7 +798,9 @@ StitchingPlugin::Stitch(vtkPolyData* toBeStitched, vtkPolyData* previousFrame,
 	case 3: cpf = new ClosestPointFinderRBCCPU(m_Widget->m_SpinBoxLandmarks->value(), static_cast<float>(m_Widget->m_DoubleSpinBoxNrOfRepsFactor->value())); break;
 	case 4: cpf = new ClosestPointFinderRBCGPU(m_Widget->m_SpinBoxLandmarks->value(), static_cast<float>(m_Widget->m_DoubleSpinBoxNrOfRepsFactor->value())); break;
 	}
+
 	cpf->SetWeightRGB(static_cast<float>(m_Widget->m_DoubleSpinBoxRGBWeight->value()));
+
 	int metric;
 	switch (m_Widget->m_ComboBoxMetric->currentIndex())
 	{
@@ -807,6 +823,11 @@ StitchingPlugin::Stitch(vtkPolyData* toBeStitched, vtkPolyData* previousFrame,
 	icp->SetMaxIter(m_Widget->m_SpinBoxMaxIterations->value());
 	icp->SetRemoveOutliers(m_Widget->m_CheckBoxRemoveOutliers->isChecked());
 	icp->SetOutlierRate(static_cast<float>(m_Widget->m_DoubleSpinBoxOutlierRate->value()));
+
+	// new stuff... strange
+	double* bounds = voi->GetBounds();
+	double boundDiagonal = sqrt((bounds[1] - bounds[0])*(bounds[1] - bounds[0]) + (bounds[3] - bounds[2])*(bounds[3] - bounds[2]) + (bounds[5] - bounds[4])*(bounds[5] - bounds[4]));
+	icp->SetNormalizeRGBToDistanceValuesFactor(static_cast<float>(boundDiagonal / RGB_CUBE_DIAGONAL));
 
 	icp->SetClosestPointFinder(cpf);
 	icp->Modified();

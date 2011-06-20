@@ -2,6 +2,7 @@
 #define	defs_H__
 
 #define MAX_REPRESENTATIVES 4096
+#define RGB_CUBE_DIAGONAL sqrt(3.0)
 
 // structure that holds the spatial information of a single point
 typedef struct PointCoords

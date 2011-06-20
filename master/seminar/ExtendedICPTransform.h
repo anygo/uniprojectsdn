@@ -41,6 +41,7 @@ public:
 	inline void SetOutlierRate(float percentage) { m_OutlierRate = percentage; }
 	inline void SetRemoveOutliers(bool remove) { m_RemoveOutliers = remove; }
 	inline void SetClosestPointFinder(ClosestPointFinder* cpf) { m_ClosestPointFinder = cpf; }
+	inline void SetNormalizeRGBToDistanceValuesFactor(float factor) { m_NormalizeRGBToDistanceValuesFactor = factor; }
 
 	inline int GetNumIter() { return m_NumIter; }
 	inline float GetMeanDist() { return m_MeanDist; }
@@ -75,6 +76,7 @@ protected:
 	int m_NumIter;
 	float m_MeanDist;
 	float m_MeanTargetDistance;
+	float m_NormalizeRGBToDistanceValuesFactor;
 	vtkSmartPointer<vtkLandmarkTransform> m_LandmarkTransform;
 
 private:

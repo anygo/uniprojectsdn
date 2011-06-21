@@ -31,7 +31,7 @@ void TransformPointsDirectlyOnGPU(double transformationMatrix[4][4], PointCoords
 	CUDA_SAFE_CALL(cudaMemcpyToSymbol(dev_transformationMatrix, tmp, 16*sizeof(float), 0));
 	
 	// compute transformations
-	kernelTransformPointsAndComputeDistance<<<host_conf->nrOfPoints,1>>>();
+	kernelTransformPointsAndComputeDistance<<<DivUp(host_conf->nrOfPoints, CUDA_THREADS_PER_BLOCK), CUDA_THREADS_PER_BLOCK>>>();
 	CUT_CHECK_ERROR("Kernel execution failed (while transforming points)");
 	
 	// copy distance array to host
@@ -88,7 +88,7 @@ extern "C"
 void FindClosestPointsGPUBruteForce(unsigned short* indices, float* distances)
 {
 	// find the closest point for each pixel
-	kernelBruteForce<<<host_conf->nrOfPoints,1>>>();
+	kernelBruteForce<<<DivUp(host_conf->nrOfPoints, CUDA_THREADS_PER_BLOCK), CUDA_THREADS_PER_BLOCK>>>();
 	
 	CUT_CHECK_ERROR("Kernel execution failed (while trying to find closest points)");
 			
@@ -132,8 +132,10 @@ extern "C"
 void FindClosestPointsRBC(int nrOfReps, unsigned short* indices, float* distances)
 {
 	// find the closest point for each pixel
-	kernelRBC<<<host_conf->nrOfPoints,1>>>(nrOfReps);	
-
+	//kernelRBC<<<host_conf->nrOfPoints,1>>>(nrOfReps);
+	//kernelRBC<<<host_conf->nrOfPoints / CUDA_THREADS_PER_BLOCK, CUDA_THREADS_PER_BLOCK>>>(nrOfReps);
+	kernelRBC<<<DivUp(host_conf->nrOfPoints, CUDA_THREADS_PER_BLOCK), CUDA_THREADS_PER_BLOCK>>>(nrOfReps);
+	
 	CUT_CHECK_ERROR("Kernel execution failed (while trying to find closest points)");
 			
 	// copy data from gpu to host
@@ -151,7 +153,7 @@ void PointsToReps(int nrOfReps, unsigned short* pointToRep, unsigned short* reps
 	CUDA_SAFE_CALL(cudaMemcpy(dev_reps, reps, nrOfReps*sizeof(unsigned short), cudaMemcpyHostToDevice));
 	
 	
-	kernelPointsToReps<<<host_conf->nrOfPoints,1>>>(nrOfReps, dev_pointToRep, dev_reps);
+	kernelPointsToReps<<<DivUp(host_conf->nrOfPoints, CUDA_THREADS_PER_BLOCK), CUDA_THREADS_PER_BLOCK>>>(nrOfReps, dev_pointToRep, dev_reps);
 	
 	CUDA_SAFE_CALL(cudaMemcpy(pointToRep, dev_pointToRep, host_conf->nrOfPoints*sizeof(unsigned short), cudaMemcpyDeviceToHost));
 	CUDA_SAFE_CALL(cudaFree(dev_pointToRep));

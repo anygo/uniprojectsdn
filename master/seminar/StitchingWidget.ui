@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>979</width>
-    <height>657</height>
+    <height>676</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -232,7 +232,7 @@
                  </item>
                  <item>
                   <property name="text">
-                   <string>RandomBallCover GPU2</string>
+                   <string>RandomBallCover GPU</string>
                   </property>
                  </item>
                 </widget>
@@ -277,6 +277,16 @@
                 <widget class="QCheckBox" name="m_CheckBoxUsePreviousTransformation">
                  <property name="text">
                   <string>Initialize ICP with previous Transform</string>
+                 </property>
+                 <property name="checked">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QCheckBox" name="m_CheckBoxVOIClipping">
+                 <property name="text">
+                  <string>VOI Clipping</string>
                  </property>
                  <property name="checked">
                   <bool>true</bool>
@@ -1021,12 +1031,28 @@
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>936</x>
-     <y>306</y>
+     <x>621</x>
+     <y>347</y>
     </hint>
     <hint type="destinationlabel">
      <x>807</x>
      <y>303</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>m_CheckBoxVOIClipping</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>m_DoubleSpinBoxClipPercentage</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>406</x>
+     <y>270</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>798</x>
+     <y>255</y>
     </hint>
    </hints>
   </connection>

@@ -29,7 +29,7 @@ __constant__ RepGPU dev_repsGPU[MAX_REPRESENTATIVES];
 __global__
 void kernelTransformPointsAndComputeDistance()
 {
-	unsigned int tid = blockIdx.x;
+	int tid = blockIdx.x*blockDim.x + threadIdx.x;
 
 	// compute homogeneous transformation
 	float x =
@@ -126,7 +126,7 @@ float kernelComputeDistanceTargetTarget(int idx1, int idx2)
 __global__
 void kernelBruteForce() 
 {
-	unsigned int tid = blockIdx.x;
+	int tid = blockIdx.x*blockDim.x + threadIdx.x;
 
 	float minDist = FLT_MAX;
 	unsigned short idx;
@@ -152,7 +152,8 @@ __global__
 void kernelRBC(int nrOfReps) 
 {
 	// get source[tid] for this thread
-	unsigned int tid = blockIdx.x;
+	int tid = blockIdx.x*blockDim.x + threadIdx.x;
+
 
 	float minDist = FLT_MAX;
 	int nearestRepresentative;
@@ -190,7 +191,7 @@ __global__
 void kernelPointsToReps(int nrOfReps, unsigned short* pointToRep, unsigned short* reps)
 {
 	// get source[tid] for this thread
-	unsigned int tid = blockIdx.x;
+	int tid = blockIdx.x*blockDim.x + threadIdx.x;
 
 	float minDist = FLT_MAX;
 	int nearestRepresentative;

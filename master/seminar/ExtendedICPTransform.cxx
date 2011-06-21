@@ -221,10 +221,14 @@ ExtendedICPTransform::InternalUpdate()
 	float totaldist;
 	m_NumIter = 0;
 
+	//QTime findTime;
+	//int findTimeElapsed = 0;
 	while (true)
 	{
 		// Set locators source points and perfom nearest neighbor search
+		//findTime.start();
 		indices = m_ClosestPointFinder->FindClosestPoints(m_SourceCoords, m_SourceColors);
+		//findTimeElapsed += findTime.elapsed();
 
 		if (m_RemoveOutliers && m_OutlierRate > 0.0)
 		{
@@ -282,7 +286,6 @@ ExtendedICPTransform::InternalUpdate()
 			}
 			m_LandmarkTransform->SetSourceLandmarks(a);
 		}
-
 		// build the landmark transform
 		m_LandmarkTransform->SetTargetLandmarks(closestp);
 		m_LandmarkTransform->Update();
@@ -340,6 +343,8 @@ ExtendedICPTransform::InternalUpdate()
 		}
 	} 
 	DBG << std::endl;
+
+	//std::cout << "avg findTimeElapsed: " << static_cast<double>(findTimeElapsed) / static_cast<double>(m_NumIter) << std::endl;
 
 	// now recover accumulated result
 	this->Matrix->DeepCopy(accumulate->GetMatrix());

@@ -2,7 +2,12 @@
 #define	defs_H__
 
 #define MAX_REPRESENTATIVES 4096
-#define RGB_CUBE_DIAGONAL sqrt(3.0)
+#define CUDA_THREADS_PER_BLOCK 64
+
+// GPU stuff
+// Division. If division remainder is neq zero then the result is ceiled
+//----------------------------------------------------------------------------
+#define DivUp(a,b) ((a % b != 0) ? (a/b + 1) : (a/b))
 
 // structure that holds the spatial information of a single point
 typedef struct PointCoords
@@ -50,7 +55,7 @@ enum ICP_METRIC
 	SQUARED_DISTANCE
 };
 
-// debug macro
+// debug macros
 //#define DEBUG
 
 #ifdef DEBUG

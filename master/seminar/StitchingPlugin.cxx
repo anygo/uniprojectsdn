@@ -779,8 +779,16 @@ StitchingPlugin::Stitch(vtkPolyData* toBeStitched, vtkPolyData* previousFrame,
 	// get a subvolume of the original data
 	vtkSmartPointer<vtkPolyData> voi = 
 		vtkSmartPointer<vtkPolyData>::New();
-	voi->DeepCopy(toBeStitched);
-	Clip(voi);
+
+	if (m_Widget->m_CheckBoxVOIClipping->isChecked())
+	{
+		voi->DeepCopy(toBeStitched);
+		Clip(voi);
+	}
+	else
+	{
+		voi->ShallowCopy(toBeStitched);
+	}
 
 	if (voi->GetNumberOfPoints() < m_Widget->m_SpinBoxLandmarks->value())
 	{
@@ -827,7 +835,7 @@ StitchingPlugin::Stitch(vtkPolyData* toBeStitched, vtkPolyData* previousFrame,
 	// new stuff... strange
 	double* bounds = voi->GetBounds();
 	double boundDiagonal = sqrt((bounds[1] - bounds[0])*(bounds[1] - bounds[0]) + (bounds[3] - bounds[2])*(bounds[3] - bounds[2]) + (bounds[5] - bounds[4])*(bounds[5] - bounds[4]));
-	icp->SetNormalizeRGBToDistanceValuesFactor(static_cast<float>(boundDiagonal / RGB_CUBE_DIAGONAL));
+	icp->SetNormalizeRGBToDistanceValuesFactor(static_cast<float>(boundDiagonal / sqrt(3.0)));
 
 	icp->SetClosestPointFinder(cpf);
 	icp->Modified();

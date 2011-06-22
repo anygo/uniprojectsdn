@@ -2,7 +2,6 @@
 #include "defs.h"
 
 
-
 ///////////////////////////////////////////////////////////////////////////////
 // Common
 ///////////////////////////////////////////////////////////////////////////////
@@ -105,32 +104,49 @@ void FindClosestPointsGPUBruteForce(unsigned short* indices, float* distances)
 extern "C"
 void initGPURBC(int nrOfReps, RepGPU* repsGPU)
 {
+	unsigned short* dev_points;
+	unsigned short* host_points; // = (unsigned short*)malloc(host_conf->nrOfPoints*sizeof(unsigned short));
+	
+	//CUDA_SAFE_CALL(cudaHostAlloc( (void**) &host_points, host_conf->nrOfPoints*sizeof(unsigned short), cudaHostAllocDefault ));
+	CUDA_SAFE_CALL(cudaMalloc((void**)&dev_points, host_conf->nrOfPoints*sizeof(unsigned short)));
+	
+	unsigned short* dev_pointsPtr = dev_points;
+	//unsigned short* host_pointsPtr = host_points;
+	
 	// plus RBC-specific stuff
 	for(int i = 0; i < nrOfReps; ++i)
 	{
-		unsigned short* dev_points;
+		repsGPU[i].dev_points = dev_pointsPtr; 
+		dev_pointsPtr += repsGPU[i].nrOfPoints;
 		
-		CUDA_SAFE_CALL(cudaMalloc((void**)&dev_points, repsGPU[i].nrOfPoints*sizeof(unsigned short)));
-		CUDA_SAFE_CALL(cudaMemcpy(dev_points, repsGPU[i].points, repsGPU[i].nrOfPoints*sizeof(unsigned short), cudaMemcpyHostToDevice));
-		
-		repsGPU[i].dev_points = dev_points; 
+		//memcpy(host_pointsPtr, repsGPU[i].points, repsGPU[i].nrOfPoints*sizeof(unsigned short));
+	//	host_pointsPtr += repsGPU[i].nrOfPoints;
 	}
 	
+	CUDA_SAFE_CALL(cudaMemcpy(dev_points, repsGPU[0].points, host_conf->nrOfPoints*sizeof(unsigned short), cudaMemcpyHostToDevice));
+	
 	CUDA_SAFE_CALL(cudaMemcpyToSymbol(dev_repsGPU, repsGPU, nrOfReps*sizeof(RepGPU), 0));
+	
+	//CUDA_SAFE_CALL(cudaFreeHost(host_points));
 }
 
 extern "C"
 void cleanupGPURBC(int nrOfReps, RepGPU* repsGPU) 
 {	
-	for(int i = 0; i < nrOfReps; ++i)
-	{
-		CUDA_SAFE_CALL(cudaFree(repsGPU[i].dev_points)); 
-	}
+	CUDA_SAFE_CALL(cudaFree(repsGPU[0].dev_points)); 
 }
 
 extern "C"
 void FindClosestPointsRBC(int nrOfReps, unsigned short* indices, float* distances)
 {
+	///// TIME INITS /////
+	//float elapsed;
+	//cudaEvent_t start, stop;
+	//CUDA_SAFE_CALL(cudaEventCreate(&start));
+	//CUDA_SAFE_CALL(cudaEventCreate(&stop));
+	//CUDA_SAFE_CALL(cudaEventRecord(start, 0));
+	///// TIME START /////
+
 	// find the closest point for each pixel
 	//kernelRBC<<<host_conf->nrOfPoints,1>>>(nrOfReps);
 	//kernelRBC<<<host_conf->nrOfPoints / CUDA_THREADS_PER_BLOCK, CUDA_THREADS_PER_BLOCK>>>(nrOfReps);
@@ -141,6 +157,12 @@ void FindClosestPointsRBC(int nrOfReps, unsigned short* indices, float* distance
 	// copy data from gpu to host
 	CUDA_SAFE_CALL(cudaMemcpy(indices, host_conf->indices, host_conf->nrOfPoints*sizeof(unsigned short), cudaMemcpyDeviceToHost));
 	CUDA_SAFE_CALL(cudaMemcpy(distances, host_conf->distances, host_conf->nrOfPoints*sizeof(float), cudaMemcpyDeviceToHost));
+	
+	///// TIME END /////
+	//CUDA_SAFE_CALL(cudaEventRecord(stop, 0));
+	//CUDA_SAFE_CALL(cudaEventSynchronize(stop));
+	//CUDA_SAFE_CALL(cudaEventElapsedTime(&elapsed, start, stop));
+	//printf("Time for FindClosestPoints RBC: %3.3f ms\n", elapsed);
 }
 
 extern "C"

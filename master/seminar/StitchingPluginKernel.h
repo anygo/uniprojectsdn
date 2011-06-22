@@ -31,27 +31,43 @@ void kernelTransformPointsAndComputeDistance()
 {
 	int tid = blockIdx.x*blockDim.x + threadIdx.x;
 
+	__shared__ float m[16];
+
+	if (threadIdx.x < 16)
+		m[threadIdx.x] = dev_transformationMatrix[threadIdx.x];
+
+	__syncthreads();
+
+	if (tid >= dev_conf->nrOfPoints)
+		return;
+
+
+
+	float xOld = dev_conf->sourceCoords[tid].x;
+	float yOld = dev_conf->sourceCoords[tid].y;
+	float zOld = dev_conf->sourceCoords[tid].z;
+
 	// compute homogeneous transformation
 	float x =
-		dev_transformationMatrix[0] * dev_conf->sourceCoords[tid].x +
-		dev_transformationMatrix[1] * dev_conf->sourceCoords[tid].y +
-		dev_transformationMatrix[2] * dev_conf->sourceCoords[tid].z +
-		dev_transformationMatrix[3];
+		m[0] * xOld +
+		m[1] * yOld +
+		m[2] * zOld +
+		m[3];
 	float y =
-		dev_transformationMatrix[4] * dev_conf->sourceCoords[tid].x +
-		dev_transformationMatrix[5] * dev_conf->sourceCoords[tid].y +
-		dev_transformationMatrix[6] * dev_conf->sourceCoords[tid].z +
-		dev_transformationMatrix[7];
+		m[4] * xOld +
+		m[5] * yOld +
+		m[6] * zOld +
+		m[7];
 	float z =
-		dev_transformationMatrix[8] * dev_conf->sourceCoords[tid].x +
-		dev_transformationMatrix[9] * dev_conf->sourceCoords[tid].y +
-		dev_transformationMatrix[10] * dev_conf->sourceCoords[tid].z +
-		dev_transformationMatrix[11];
+		m[8] * xOld +
+		m[9] * yOld +
+		m[10] * zOld +
+		m[11];
 	float w =
-		dev_transformationMatrix[12] * dev_conf->sourceCoords[tid].x +
-		dev_transformationMatrix[13] * dev_conf->sourceCoords[tid].y +
-		dev_transformationMatrix[14] * dev_conf->sourceCoords[tid].z +
-		dev_transformationMatrix[15];
+		m[12] * xOld +
+		m[13] * yOld +
+		m[14] * zOld +
+		m[15];
 
 	// divide by the last component
 	x /= w;
@@ -60,9 +76,9 @@ void kernelTransformPointsAndComputeDistance()
 
 	// compute distance to previous point
 	dev_conf->distances[tid] =
-		(dev_conf->sourceCoords[tid].x - x) * (dev_conf->sourceCoords[tid].x - x) +
-		(dev_conf->sourceCoords[tid].y - y) * (dev_conf->sourceCoords[tid].y - y) +
-		(dev_conf->sourceCoords[tid].z - z) * (dev_conf->sourceCoords[tid].z - z);
+		(xOld - x) * (xOld - x) +
+		(yOld - y) * (yOld - y) +
+		(zOld - z) * (zOld - z);
 
 	// set new coordinates
 	dev_conf->sourceCoords[tid].x = x;
@@ -71,11 +87,11 @@ void kernelTransformPointsAndComputeDistance()
 }
 
 __device__
-float kernelComputeDistanceSourceTarget(int idx1, int idx2)
+float kernelComputeDistanceSourceTarget(PointCoords* coords, PointColors* colors, PointCoords* coords2, PointColors* colors2)
 {
-		float x_dist = dev_conf->sourceCoords[idx1].x - dev_conf->targetCoords[idx2].x; 
-		float y_dist = dev_conf->sourceCoords[idx1].y - dev_conf->targetCoords[idx2].y;
-		float z_dist = dev_conf->sourceCoords[idx1].z - dev_conf->targetCoords[idx2].z;
+		float x_dist = coords->x - coords2->x; 
+		float y_dist = coords->y - coords2->y;
+		float z_dist = coords->z - coords2->z;
 		float spaceDist;
 
 		//switch (dev_conf->metric)
@@ -88,19 +104,20 @@ float kernelComputeDistanceSourceTarget(int idx1, int idx2)
 
 
 		// always use euclidean distance for colors...
-		float r_dist = dev_conf->sourceColors[idx1].r - dev_conf->targetColors[idx2].r; 
-		float g_dist = dev_conf->sourceColors[idx1].g - dev_conf->targetColors[idx2].g;
-		float b_dist = dev_conf->sourceColors[idx1].b - dev_conf->targetColors[idx2].b;
+		float r_dist = colors->r - colors2->r; 
+		float g_dist = colors->g - colors2->g;
+		float b_dist = colors->b - colors2->b;
 		float colorDist = (r_dist * r_dist) + (g_dist * g_dist) + (b_dist * b_dist);
 	
 		return (1 - dev_conf->weightRGB) * spaceDist + dev_conf->weightRGB * colorDist;
 }
+
 __device__
-float kernelComputeDistanceTargetTarget(int idx1, int idx2)
+float kernelComputeDistanceSourceTarget(PointCoords* coords, PointColors* colors, int idx2)
 {
-		float x_dist = dev_conf->targetCoords[idx1].x - dev_conf->targetCoords[idx2].x; 
-		float y_dist = dev_conf->targetCoords[idx1].y - dev_conf->targetCoords[idx2].y;
-		float z_dist = dev_conf->targetCoords[idx1].z - dev_conf->targetCoords[idx2].z;
+		float x_dist = coords->x - dev_conf->targetCoords[idx2].x; 
+		float y_dist = coords->y - dev_conf->targetCoords[idx2].y;
+		float z_dist = coords->z - dev_conf->targetCoords[idx2].z;
 		float spaceDist;
 
 		//switch (dev_conf->metric)
@@ -113,9 +130,35 @@ float kernelComputeDistanceTargetTarget(int idx1, int idx2)
 
 
 		// always use euclidean distance for colors...
-		float r_dist = dev_conf->targetColors[idx1].r - dev_conf->targetColors[idx2].r; 
-		float g_dist = dev_conf->targetColors[idx1].g - dev_conf->targetColors[idx2].g;
-		float b_dist = dev_conf->targetColors[idx1].b - dev_conf->targetColors[idx2].b;
+		float r_dist = colors->r - dev_conf->targetColors[idx2].r; 
+		float g_dist = colors->g - dev_conf->targetColors[idx2].g;
+		float b_dist = colors->b - dev_conf->targetColors[idx2].b;
+		float colorDist = (r_dist * r_dist) + (g_dist * g_dist) + (b_dist * b_dist);
+	
+		return (1 - dev_conf->weightRGB) * spaceDist + dev_conf->weightRGB * colorDist;
+}
+
+__device__
+float kernelComputeDistanceTargetTarget(PointCoords* coords, PointColors* colors, int idx2)
+{
+		float x_dist = coords->x - dev_conf->targetCoords[idx2].x; 
+		float y_dist = coords->y - dev_conf->targetCoords[idx2].y;
+		float z_dist = coords->z - dev_conf->targetCoords[idx2].z;
+		float spaceDist;
+
+		//switch (dev_conf->metric)
+		//{
+		//case ABSOLUTE_DISTANCE: spaceDist = abs(x_dist) + abs(y_dist) + abs(z_dist); break;
+		//case LOG_ABSOLUTE_DISTANCE: spaceDist = log(abs(x_dist) + abs(y_dist) + abs(z_dist) + 1.f); break;
+		//case SQUARED_DISTANCE: 
+			spaceDist = (x_dist * x_dist) + (y_dist * y_dist) + (z_dist * z_dist); //break;
+		//}
+
+
+		// always use euclidean distance for colors...
+		float r_dist = colors->r - dev_conf->targetColors[idx2].r; 
+		float g_dist = colors->g - dev_conf->targetColors[idx2].g;
+		float b_dist = colors->b - dev_conf->targetColors[idx2].b;
 		float colorDist = (r_dist * r_dist) + (g_dist * g_dist) + (b_dist * b_dist);
 	
 		return (1 - dev_conf->weightRGB) * spaceDist + dev_conf->weightRGB * colorDist;
@@ -128,12 +171,18 @@ void kernelBruteForce()
 {
 	int tid = blockIdx.x*blockDim.x + threadIdx.x;
 
+	if (tid >= dev_conf->nrOfPoints)
+		return;
+
+	PointCoords coords = dev_conf->sourceCoords[tid];
+	PointColors colors = dev_conf->sourceColors[tid];
+
 	float minDist = FLT_MAX;
 	unsigned short idx;
 
 	for (int i = 0; i < dev_conf->nrOfPoints; ++i)
 	{
-		float dist = kernelComputeDistanceSourceTarget(tid, i);
+		float dist = kernelComputeDistanceSourceTarget(&coords, &colors, i);
 		if (dist < minDist)
 		{
 			minDist = dist;
@@ -154,6 +203,14 @@ void kernelRBC(int nrOfReps)
 	// get source[tid] for this thread
 	int tid = blockIdx.x*blockDim.x + threadIdx.x;
 
+	if (tid >= dev_conf->nrOfPoints)
+		return;
+
+	PointCoords coords = dev_conf->sourceCoords[tid];
+	PointColors colors = dev_conf->sourceColors[tid];
+
+	__shared__ PointCoords repCoords[CUDA_BUFFER_SIZE];
+	__shared__ PointColors repColors[CUDA_BUFFER_SIZE];
 
 	float minDist = FLT_MAX;
 	int nearestRepresentative;
@@ -161,7 +218,19 @@ void kernelRBC(int nrOfReps)
 	// step 1: search nearest representative
 	for (int i = 0; i < nrOfReps; ++i)
 	{
-		float dist = kernelComputeDistanceSourceTarget(tid, dev_repsGPU[i].index);
+		if (i % CUDA_BUFFER_SIZE == 0)
+		{
+			__syncthreads();
+
+			if (i % CUDA_BUFFER_SIZE == 0 && threadIdx.x < CUDA_BUFFER_SIZE && i + threadIdx.x < nrOfReps) 
+			{
+				repCoords[threadIdx.x] = dev_repsGPU[i + threadIdx.x].coords;
+				repColors[threadIdx.x] = dev_repsGPU[i + threadIdx.x].colors;
+			}
+			__syncthreads();
+		}
+
+		float dist = kernelComputeDistanceSourceTarget(&coords, &colors, &(repCoords[i % CUDA_BUFFER_SIZE]), &(repColors[i % CUDA_BUFFER_SIZE]));
 
 		if (dist < minDist)
 		{
@@ -175,7 +244,7 @@ void kernelRBC(int nrOfReps)
 	int nearestNeighborIndex = 0;
 	for (int i = 0; i < dev_repsGPU[nearestRepresentative].nrOfPoints; ++i)
 	{
-		float dist = kernelComputeDistanceSourceTarget(tid, dev_repsGPU[nearestRepresentative].dev_points[i]);
+		float dist = kernelComputeDistanceSourceTarget(&coords, &colors, dev_repsGPU[nearestRepresentative].dev_points[i]);
 		if (dist < minDist)
 		{
 			minDist = dist;
@@ -193,13 +262,19 @@ void kernelPointsToReps(int nrOfReps, unsigned short* pointToRep, unsigned short
 	// get source[tid] for this thread
 	int tid = blockIdx.x*blockDim.x + threadIdx.x;
 
+	if (tid >= dev_conf->nrOfPoints)
+		return;
+
+	PointCoords coords = dev_conf->targetCoords[tid];
+	PointColors colors = dev_conf->targetColors[tid];
+
 	float minDist = FLT_MAX;
 	int nearestRepresentative;
 
 	// step 1: search nearest representative
 	for (int i = 0; i < nrOfReps; ++i)
 	{
-		float dist = kernelComputeDistanceTargetTarget(tid, reps[i]);
+		float dist = kernelComputeDistanceTargetTarget(&coords, &colors, reps[i]);
 
 		if (dist < minDist)
 		{

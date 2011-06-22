@@ -99,7 +99,9 @@ ClosestPointFinderRBCGPU::initRBC()
 	
 	for (int i = 0; i < m_NrOfReps; ++i)
 	{
-		m_RepsGPU[i].index = m_Representatives[i].index;
+		//m_RepsGPU[i].index = m_Representatives[i].index;
+		m_RepsGPU[i].coords = m_TargetCoords[m_Representatives[i].index];
+		m_RepsGPU[i].colors = m_TargetColors[m_Representatives[i].index];
 		m_RepsGPU[i].nrOfPoints = m_Representatives[i].points.size();
 		m_RepsGPU[i].points = new unsigned short[m_RepsGPU[i].nrOfPoints];
 		std::copy(m_Representatives[i].points.begin(), m_Representatives[i].points.end(), m_RepsGPU[i].points);

@@ -178,7 +178,10 @@ ExtendedICPTransform::InternalUpdate()
 	vtkPolyDataToPointCoordsAndColors();
 
 	// configure ClosestPointFinder
+	QTime ts;
+	ts.start();
 	m_ClosestPointFinder->SetTarget(m_TargetCoords, m_TargetColors, m_SourceCoords, m_SourceColors);
+	std::cout << "SetTarget() " << ts.elapsed() << " ms" << std::endl;
 	
 	// allocate some points used for icp
 	vtkSmartPointer<vtkPoints> points1 =
@@ -221,14 +224,14 @@ ExtendedICPTransform::InternalUpdate()
 	float totaldist;
 	m_NumIter = 0;
 
-	//QTime findTime;
-	//int findTimeElapsed = 0;
+	QTime findTime;
+	int findTimeElapsed = 0;
 	while (true)
 	{
 		// Set locators source points and perfom nearest neighbor search
-		//findTime.start();
+		findTime.start();
 		indices = m_ClosestPointFinder->FindClosestPoints(m_SourceCoords, m_SourceColors);
-		//findTimeElapsed += findTime.elapsed();
+		findTimeElapsed += findTime.elapsed();
 
 		if (m_RemoveOutliers && m_OutlierRate > 0.0)
 		{
@@ -344,7 +347,7 @@ ExtendedICPTransform::InternalUpdate()
 	} 
 	DBG << std::endl;
 
-	//std::cout << "avg findTimeElapsed: " << static_cast<double>(findTimeElapsed) / static_cast<double>(m_NumIter) << std::endl;
+	std::cout << "avg findTimeElapsed: " << static_cast<double>(findTimeElapsed) / static_cast<double>(m_NumIter) << std::endl;
 
 	// now recover accumulated result
 	this->Matrix->DeepCopy(accumulate->GetMatrix());

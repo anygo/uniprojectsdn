@@ -1,8 +1,9 @@
 #ifndef defs_H__
 #define	defs_H__
 
-#define MAX_REPRESENTATIVES 4096
-#define CUDA_THREADS_PER_BLOCK 64
+#define MAX_REPRESENTATIVES 1024
+#define CUDA_THREADS_PER_BLOCK 128
+#define CUDA_BUFFER_SIZE ( CUDA_THREADS_PER_BLOCK / 2 )
 
 // GPU stuff
 // Division. If division remainder is neq zero then the result is ceiled
@@ -40,7 +41,9 @@ typedef struct GPUConfig
 // rbc specific structure
 typedef struct RepGPU
 {
-	unsigned short index;
+	//unsigned short index;
+	PointCoords coords;
+	PointColors colors;
 	unsigned short nrOfPoints;
 	unsigned short* points;
 	unsigned short* dev_points;

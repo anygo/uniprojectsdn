@@ -581,11 +581,15 @@ StitchingPlugin::LoadStitch()
 void
 StitchingPlugin::LoadFrame()
 {
+	QTime t;
+	t.start();
 	m_DataActor3D->SetData(m_CurrentFrame);
 	m_Data->DeepCopy(m_DataActor3D->GetData());
 
 	// remove invalid points
 	ExtractValidPoints();
+
+	std::cout << "LoadFrame(): " << t.elapsed() << " ms" << std::endl;
 
 	m_Widget->m_PushButtonLoadCleanStitch->setEnabled(true);
 }
@@ -640,6 +644,9 @@ StitchingPlugin::Clip(vtkPolyData *toBeClipped)
 	if (percentage == 0.0)
 		return;
 
+	QTime t;
+	t.start();
+
 	vtkSmartPointer<vtkClipPolyData> clipper =
 		vtkSmartPointer<vtkClipPolyData>::New();	
 	vtkSmartPointer<vtkBox> box =
@@ -661,9 +668,12 @@ StitchingPlugin::Clip(vtkPolyData *toBeClipped)
 	clipper->SetClipFunction(box);
 	clipper->InsideOutOn();
 	clipper->SetInput(toBeClipped);
+	std::cout << "	Clip() until update " << t.elapsed() << " ms" << std::endl;
+	t.start();
 	clipper->Update();
 
 	toBeClipped->ShallowCopy(clipper->GetOutput());
+	std::cout << "	Clip() after update " << t.elapsed() << " ms" << std::endl;
 }
 //----------------------------------------------------------------------------
 void
@@ -760,6 +770,9 @@ StitchingPlugin::Stitch(vtkPolyData* toBeStitched, vtkPolyData* previousFrame,
 
 	if (m_Widget->m_CheckBoxUsePreviousTransformation->isChecked())
 	{
+		QTime t;
+		t.start();
+
 		// start with previous transform
 		vtkSmartPointer<vtkTransform> prevTrans =
 			vtkSmartPointer<vtkTransform>::New();
@@ -774,7 +787,13 @@ StitchingPlugin::Stitch(vtkPolyData* toBeStitched, vtkPolyData* previousFrame,
 		previousTransformFilter->Modified();
 		previousTransformFilter->Update();
 		toBeStitched->DeepCopy(previousTransformFilter->GetOutput());
+
+		std::cout << "PreviousTransformatio(): " << t.elapsed() << " ms" << std::endl;
 	}
+
+
+	QTime t;
+	t.start();
 
 	// get a subvolume of the original data
 	vtkSmartPointer<vtkPolyData> voi = 
@@ -789,6 +808,8 @@ StitchingPlugin::Stitch(vtkPolyData* toBeStitched, vtkPolyData* previousFrame,
 	{
 		voi->ShallowCopy(toBeStitched);
 	}
+
+	std::cout << "Clipping: " << t.elapsed() << " ms" << std::endl;
 
 	if (voi->GetNumberOfPoints() < m_Widget->m_SpinBoxLandmarks->value())
 	{
@@ -847,6 +868,8 @@ StitchingPlugin::Stitch(vtkPolyData* toBeStitched, vtkPolyData* previousFrame,
 		QString::number(static_cast<float>(elapsedTimeICP) / static_cast<float>(icp->GetNumIter()), 'f', 2) + " ms)");
 	m_Widget->m_LabelICPMeanTargetDistance->setText(QString::number(icp->GetMeanTargetDistance(), 'f', 2));
 	
+
+	t.start();
 	// update output parameter
 	outputTransformationMatrix->DeepCopy(icp->GetMatrix());
 
@@ -859,6 +882,8 @@ StitchingPlugin::Stitch(vtkPolyData* toBeStitched, vtkPolyData* previousFrame,
 	icpTransformFilter->Update();
 
 	outputStitchedPolyData->DeepCopy(icpTransformFilter->GetOutput());
+
+	std::cout << "Transformation of all points: " << t.elapsed() << " ms" << std::endl;
 
 	// include the previous transformation into the matrix to allow for "undo"
 	if (m_Widget->m_CheckBoxUsePreviousTransformation->isChecked())

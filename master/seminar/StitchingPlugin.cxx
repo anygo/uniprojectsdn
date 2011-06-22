@@ -644,9 +644,6 @@ StitchingPlugin::Clip(vtkPolyData *toBeClipped)
 	if (percentage == 0.0)
 		return;
 
-	QTime t;
-	t.start();
-
 	vtkSmartPointer<vtkClipPolyData> clipper =
 		vtkSmartPointer<vtkClipPolyData>::New();	
 	vtkSmartPointer<vtkBox> box =
@@ -668,12 +665,9 @@ StitchingPlugin::Clip(vtkPolyData *toBeClipped)
 	clipper->SetClipFunction(box);
 	clipper->InsideOutOn();
 	clipper->SetInput(toBeClipped);
-	std::cout << "	Clip() until update " << t.elapsed() << " ms" << std::endl;
-	t.start();
 	clipper->Update();
 
 	toBeClipped->ShallowCopy(clipper->GetOutput());
-	std::cout << "	Clip() after update " << t.elapsed() << " ms" << std::endl;
 }
 //----------------------------------------------------------------------------
 void
@@ -770,9 +764,6 @@ StitchingPlugin::Stitch(vtkPolyData* toBeStitched, vtkPolyData* previousFrame,
 
 	if (m_Widget->m_CheckBoxUsePreviousTransformation->isChecked())
 	{
-		QTime t;
-		t.start();
-
 		// start with previous transform
 		vtkSmartPointer<vtkTransform> prevTrans =
 			vtkSmartPointer<vtkTransform>::New();
@@ -787,10 +778,7 @@ StitchingPlugin::Stitch(vtkPolyData* toBeStitched, vtkPolyData* previousFrame,
 		previousTransformFilter->Modified();
 		previousTransformFilter->Update();
 		toBeStitched->DeepCopy(previousTransformFilter->GetOutput());
-
-		std::cout << "PreviousTransformatio(): " << t.elapsed() << " ms" << std::endl;
 	}
-
 
 	QTime t;
 	t.start();

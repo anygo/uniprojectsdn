@@ -89,26 +89,30 @@ ClosestPointFinderRBCGPU::initRBC()
 		m_Representatives[pointToRep[i]].points.push_back(i);
 	}
 
-	delete[] pointToRep;
-	delete[] reps;
-
 	DBG << "Random Ball Cover initialized (" << m_NrOfReps << " Representatives)." << std::endl;
 
 	// initialize GPU RBC struct
 	m_RepsGPU = new RepGPU[m_NrOfReps];
-	
+	unsigned short* repsIndices = new unsigned short[m_NrOfPoints];
+
+	unsigned short offset = 0;
+
 	for (int i = 0; i < m_NrOfReps; ++i)
 	{
-		//m_RepsGPU[i].index = m_Representatives[i].index;
 		m_RepsGPU[i].coords = m_TargetCoords[m_Representatives[i].index];
 		m_RepsGPU[i].colors = m_TargetColors[m_Representatives[i].index];
 		m_RepsGPU[i].nrOfPoints = m_Representatives[i].points.size();
-		m_RepsGPU[i].points = new unsigned short[m_RepsGPU[i].nrOfPoints];
-		std::copy(m_Representatives[i].points.begin(), m_Representatives[i].points.end(), m_RepsGPU[i].points);
+		m_RepsGPU[i].points = repsIndices + offset;
+
+		std::copy(m_Representatives[i].points.begin(), m_Representatives[i].points.end(), repsIndices + offset);
+		offset += m_RepsGPU[i].nrOfPoints;
 	}
 
 	DBG << "Copying data to gpu..." << std::endl;
 	initGPURBC(m_NrOfReps, m_RepsGPU);
+
+	delete[] pointToRep;
+	delete[] reps;
 }
 
 float

@@ -77,7 +77,6 @@ ClosestPointFinderRBCGPU::initRBC()
 		r.index = rep;
 		m_Representatives.push_back(r);
 
-
 		reps[i] = rep;
 	}
 
@@ -93,19 +92,14 @@ ClosestPointFinderRBCGPU::initRBC()
 
 	// initialize GPU RBC struct
 	m_RepsGPU = new RepGPU[m_NrOfReps];
-	unsigned short* repsIndices = new unsigned short[m_NrOfPoints];
-
-	unsigned short offset = 0;
-
+	
 	for (int i = 0; i < m_NrOfReps; ++i)
 	{
 		m_RepsGPU[i].coords = m_TargetCoords[m_Representatives[i].index];
 		m_RepsGPU[i].colors = m_TargetColors[m_Representatives[i].index];
 		m_RepsGPU[i].nrOfPoints = m_Representatives[i].points.size();
-		m_RepsGPU[i].points = repsIndices + offset;
-
-		std::copy(m_Representatives[i].points.begin(), m_Representatives[i].points.end(), repsIndices + offset);
-		offset += m_RepsGPU[i].nrOfPoints;
+		m_RepsGPU[i].points = new unsigned short[m_RepsGPU[i].nrOfPoints];
+		std::copy(m_Representatives[i].points.begin(), m_Representatives[i].points.end(), m_RepsGPU[i].points);
 	}
 
 	DBG << "Copying data to gpu..." << std::endl;

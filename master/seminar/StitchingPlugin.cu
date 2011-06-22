@@ -107,11 +107,11 @@ void initGPURBC(int nrOfReps, RepGPU* repsGPU)
 	unsigned short* dev_points;
 	unsigned short* host_points; // = (unsigned short*)malloc(host_conf->nrOfPoints*sizeof(unsigned short));
 	
-	//CUDA_SAFE_CALL(cudaHostAlloc( (void**) &host_points, host_conf->nrOfPoints*sizeof(unsigned short), cudaHostAllocDefault ));
+	CUDA_SAFE_CALL(cudaHostAlloc( (void**) &host_points, host_conf->nrOfPoints*sizeof(unsigned short), cudaHostAllocDefault ));
 	CUDA_SAFE_CALL(cudaMalloc((void**)&dev_points, host_conf->nrOfPoints*sizeof(unsigned short)));
 	
 	unsigned short* dev_pointsPtr = dev_points;
-	//unsigned short* host_pointsPtr = host_points;
+	unsigned short* host_pointsPtr = host_points;
 	
 	// plus RBC-specific stuff
 	for(int i = 0; i < nrOfReps; ++i)
@@ -119,15 +119,15 @@ void initGPURBC(int nrOfReps, RepGPU* repsGPU)
 		repsGPU[i].dev_points = dev_pointsPtr; 
 		dev_pointsPtr += repsGPU[i].nrOfPoints;
 		
-		//memcpy(host_pointsPtr, repsGPU[i].points, repsGPU[i].nrOfPoints*sizeof(unsigned short));
-	//	host_pointsPtr += repsGPU[i].nrOfPoints;
+		memcpy(host_pointsPtr, repsGPU[i].points, repsGPU[i].nrOfPoints*sizeof(unsigned short));
+		host_pointsPtr += repsGPU[i].nrOfPoints;
 	}
 	
-	CUDA_SAFE_CALL(cudaMemcpy(dev_points, repsGPU[0].points, host_conf->nrOfPoints*sizeof(unsigned short), cudaMemcpyHostToDevice));
+	CUDA_SAFE_CALL(cudaMemcpy(dev_points, host_points, host_conf->nrOfPoints*sizeof(unsigned short), cudaMemcpyHostToDevice));
 	
 	CUDA_SAFE_CALL(cudaMemcpyToSymbol(dev_repsGPU, repsGPU, nrOfReps*sizeof(RepGPU), 0));
 	
-	//CUDA_SAFE_CALL(cudaFreeHost(host_points));
+	CUDA_SAFE_CALL(cudaFreeHost(host_points));
 }
 
 extern "C"

@@ -12,7 +12,7 @@
  *
  *	@details
  *	Class that implements the ClosestPointFinder Interface by using
- *	the Random Ball Cover acceleration structure. Runs on GPU.
+ *	the Random Ball Cover acceleration structure. Uses GPU capabilities.
  */
 class ClosestPointFinderRBCGPU : public ClosestPointFinder
 {

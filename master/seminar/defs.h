@@ -3,7 +3,14 @@
 
 #define MAX_REPRESENTATIVES 1024
 #define CUDA_THREADS_PER_BLOCK 128
-#define CUDA_BUFFER_SIZE ( CUDA_THREADS_PER_BLOCK / 2 )
+#define CUDA_BUFFER_SIZE ( CUDA_THREADS_PER_BLOCK )
+
+// GLOBAL TIME STATS
+static int OVERALL_TIME;
+static int LOAD_TIME;
+static int CLIP_TIME;
+static int ICP_TIME;
+static int TRANSFORM_TIME;
 
 // GPU stuff
 // Division. If division remainder is neq zero then the result is ceiled
@@ -41,11 +48,9 @@ typedef struct GPUConfig
 // rbc specific structure
 typedef struct RepGPU
 {
-	//unsigned short index;
 	PointCoords coords;
 	PointColors colors;
 	unsigned short nrOfPoints;
-	unsigned short* points;
 	unsigned short* dev_points;
 } RepGPU;
 

@@ -34,7 +34,10 @@ void TransformPointsDirectlyOnGPU(double transformationMatrix[4][4], PointCoords
 	CUT_CHECK_ERROR("Kernel execution failed (while transforming points)");
 	
 	// copy distance array to host
-	CUDA_SAFE_CALL(cudaMemcpy(distances, host_conf->distances, host_conf->nrOfPoints*sizeof(float), cudaMemcpyDeviceToHost));
+	if (distances)
+	{
+		CUDA_SAFE_CALL(cudaMemcpy(distances, host_conf->distances, host_conf->nrOfPoints*sizeof(float), cudaMemcpyDeviceToHost));
+	}
 	
 	// copy transformed points to host
 	CUDA_SAFE_CALL(cudaMemcpy(writeTo, host_conf->sourceCoords, host_conf->nrOfPoints*sizeof(PointCoords), cudaMemcpyDeviceToHost));
@@ -102,32 +105,21 @@ void FindClosestPointsGPUBruteForce(unsigned short* indices, float* distances)
 ///////////////////////////////////////////////////////////////////////////////
 
 extern "C"
-void initGPURBC(int nrOfReps, RepGPU* repsGPU)
+void initGPURBC(int nrOfReps, RepGPU* repsGPU, unsigned short* repsIndices)
 {
-	unsigned short* dev_points;
-	unsigned short* host_points; // = (unsigned short*)malloc(host_conf->nrOfPoints*sizeof(unsigned short));
-	
-	CUDA_SAFE_CALL(cudaHostAlloc( (void**) &host_points, host_conf->nrOfPoints*sizeof(unsigned short), cudaHostAllocDefault ));
+	unsigned short* dev_points;	
 	CUDA_SAFE_CALL(cudaMalloc((void**)&dev_points, host_conf->nrOfPoints*sizeof(unsigned short)));
-	
 	unsigned short* dev_pointsPtr = dev_points;
-	unsigned short* host_pointsPtr = host_points;
 	
 	// plus RBC-specific stuff
 	for(int i = 0; i < nrOfReps; ++i)
 	{
 		repsGPU[i].dev_points = dev_pointsPtr; 
 		dev_pointsPtr += repsGPU[i].nrOfPoints;
-		
-		memcpy(host_pointsPtr, repsGPU[i].points, repsGPU[i].nrOfPoints*sizeof(unsigned short));
-		host_pointsPtr += repsGPU[i].nrOfPoints;
 	}
 	
-	CUDA_SAFE_CALL(cudaMemcpy(dev_points, host_points, host_conf->nrOfPoints*sizeof(unsigned short), cudaMemcpyHostToDevice));
-	
+	CUDA_SAFE_CALL(cudaMemcpy(dev_points, repsIndices, host_conf->nrOfPoints*sizeof(unsigned short), cudaMemcpyHostToDevice));
 	CUDA_SAFE_CALL(cudaMemcpyToSymbol(dev_repsGPU, repsGPU, nrOfReps*sizeof(RepGPU), 0));
-	
-	CUDA_SAFE_CALL(cudaFreeHost(host_points));
 }
 
 extern "C"

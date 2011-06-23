@@ -42,6 +42,8 @@ public:
 	inline void SetRemoveOutliers(bool remove) { m_RemoveOutliers = remove; }
 	inline void SetClosestPointFinder(ClosestPointFinder* cpf) { m_ClosestPointFinder = cpf; }
 	inline void SetNormalizeRGBToDistanceValuesFactor(float factor) { m_NormalizeRGBToDistanceValuesFactor = factor; }
+	inline void SetPreviousTransformMatrix(vtkMatrix4x4* m) { m_PreviousTransformationMatrix = m; }
+	inline void SetApplyPreviousTransform(bool apply) { m_ApplyPreviousTransform = apply; }
 
 	inline int GetNumIter() { return m_NumIter; }
 	inline float GetMeanDist() { return m_MeanDist; }
@@ -72,6 +74,8 @@ protected:
 	float m_MaxMeanDist;
 	float m_OutlierRate;
 	bool m_RemoveOutliers;
+	vtkSmartPointer<vtkMatrix4x4> m_PreviousTransformationMatrix;
+	bool m_ApplyPreviousTransform;
 
 	int m_NumIter;
 	float m_MeanDist;

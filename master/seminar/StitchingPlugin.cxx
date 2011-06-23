@@ -46,8 +46,7 @@ StitchingPlugin::StitchingPlugin()
 	connect(this, SIGNAL(UpdateGUI()), m_Widget->m_VisualizationWidget3D,	SLOT(UpdateGUI()));
 
 	// our signals and slots
-	connect(m_Widget->m_PushButtonLoadCleanStitch,			SIGNAL(clicked()),								this, SLOT(LoadStitch()));
-	connect(m_Widget->m_PushButtonInitialize,				SIGNAL(clicked()),								this, SLOT(LoadInitialize()));
+	connect(m_Widget->m_PushButtonStitchFrame,				SIGNAL(clicked()),								this, SLOT(LoadStitch()));
 	connect(m_Widget->m_PushButtonDelaunay2D,				SIGNAL(clicked()),								this, SLOT(Delaunay2DSelectedActors()));
 	connect(m_Widget->m_PushButtonSaveVTKData,				SIGNAL(clicked()),								this, SLOT(SaveSelectedActors()));
 	connect(m_Widget->m_HorizontalSliderPointSize,			SIGNAL(valueChanged(int)),						this, SLOT(ChangePointSize()));
@@ -98,21 +97,23 @@ StitchingPlugin::ProcessEvent(ritk::Event::Pointer EventP)
 	// New frame event
 	if (EventP->type() == ritk::NewFrameEvent::EventType)
 	{
-		// Cast the event
-		ritk::NewFrameEvent::Pointer NewFrameEventP = qSharedPointerDynamicCast<ritk::NewFrameEvent, ritk::Event>(EventP);
-		if ( !NewFrameEventP )
-		{
-			LOG_DEB("Event mismatch detected: Type=" << EventP->type());
-			return;
-		}
+		++m_FramesProcessed;
 
 		// skip frame if plugin is still working
 		if (m_Mutex.tryLock())
 		{
+			// Cast the event
+			ritk::NewFrameEvent::Pointer NewFrameEventP = qSharedPointerDynamicCast<ritk::NewFrameEvent, ritk::Event>(EventP);
+			if ( !NewFrameEventP )
+			{
+				LOG_DEB("Event mismatch detected: Type=" << EventP->type());
+				return;
+			}
+
 			m_CurrentFrame = NewFrameEventP->RImage;
 
 			// run autostitching for each frame if checkbox is checked
-			if (m_Widget->m_CheckBoxRecord->isChecked() && ++m_FramesProcessed % m_Widget->m_SpinBoxFrameStep->value() == 0)
+			if (m_Widget->m_RadioButtonRecord->isChecked() && m_FramesProcessed % m_Widget->m_SpinBoxFrameStep->value() == 0)
 			{
 				try
 				{
@@ -123,7 +124,6 @@ StitchingPlugin::ProcessEvent(ritk::Event::Pointer EventP)
 					return;
 				}
 				
-
 				// add next actor
 				int listSize = m_Widget->m_ListWidgetHistory->count();
 				HistoryListItem* hli = new HistoryListItem();
@@ -138,15 +138,24 @@ StitchingPlugin::ProcessEvent(ritk::Event::Pointer EventP)
 				m_Widget->m_CheckBoxShowSelectedActors->setText(QString("Show ") + QString::number(m_Widget->m_ListWidgetHistory->selectedItems().count()) + 
 					QString("/") + QString::number(m_Widget->m_ListWidgetHistory->count()) + " Actors");
 			}
+			else if (m_Widget->m_RadioButtonLiveStitching->isChecked() && m_FramesProcessed % m_Widget->m_SpinBoxFrameStep->value() == 0)
+			{
+				try
+				{
+					LoadStitch();
+				} catch (std::exception &e)
+				{
+					std::cout << "Exception: \"" << e.what() << "\""<< std::endl;
+					return;
+				}
+
+				m_Widget->m_CheckBoxShowSelectedActors->setText(QString("Show ") + QString::number(m_Widget->m_ListWidgetHistory->selectedItems().count()) + 
+					QString("/") + QString::number(m_Widget->m_ListWidgetHistory->count()) + " Actors");
+			}
 
 			// unlock mutex
 			m_Mutex.unlock();
 		}
-
-		// enable buttons (ProcessEvent has to be called at least once before
-		// we can load the data into our plugin)
-		if (!m_Widget->m_PushButtonInitialize->isEnabled())
-			m_Widget->m_PushButtonInitialize->setEnabled(true);
 
 		emit UpdateGUI();
 	}
@@ -239,10 +248,6 @@ StitchingPlugin::DeleteSelectedActors()
 
 	// update gui
 	int size = m_Widget->m_ListWidgetHistory->count();
-	if (size == 0)
-	{
-		m_Widget->m_PushButtonLoadCleanStitch->setEnabled(false);
-	}
 }
 void
 StitchingPlugin::MergeSelectedActors()
@@ -395,7 +400,7 @@ StitchingPlugin::StitchSelectedActors()
 				Stitch(hli->m_actor->GetData(), hli_prev->m_actor->GetData(), hli_prev->m_transform, hli->m_actor->GetData(), hli->m_transform);
 			} catch (std::exception &e)
 			{
-				std::cout << "Exception: \"" << e.what() << "\""<< std::endl;
+				std::cout << "Exception: \"" << e.what() << "\"" << std::endl;
 				continue;
 			}
 			overallTime += t.elapsed();
@@ -407,7 +412,7 @@ StitchingPlugin::StitchSelectedActors()
 		}
 	}
 
-	std::cout << overallTime << " ms for Stitching " << m_Widget->m_ListWidgetHistory->selectedItems().count() << " frames" << std::endl;
+	//std::cout << overallTime << " ms for Stitching " << m_Widget->m_ListWidgetHistory->selectedItems().count() << " frames (time to update GUI excluded)" << std::endl;
 
 	emit UpdateGUI();
 }
@@ -492,7 +497,7 @@ StitchingPlugin::SaveSelectedActors()
 				vtkSmartPointer<vtkPolyDataWriter>::New();
 			writer->SetFileName(partFileName.toStdString().c_str());
 			writer->SetInput(hli->m_actor->GetData());
-			writer->SetFileTypeToBinary();
+			writer->SetFileTypeToASCII();
 			writer->Update();
 
 			emit UpdateProgressBar(++counterProgressBar);
@@ -543,25 +548,28 @@ void
 StitchingPlugin::LoadInitialize()
 {
 	LoadFrame();
-	//CleanFrame();
 	InitializeHistory();
-
-	emit UpdateGUI();
 }
 void
 StitchingPlugin::LoadStitch()
 {
+	QTime t;
+	t.start();
+
 	// get last entry in history to determine previousTransformationMatrix and previousFrame
 	int listSize = m_Widget->m_ListWidgetHistory->count();
+
 	if (listSize == 0)
 	{
-		std::cout << "Please initialize the history first!" << std::endl;
-	}		
-	HistoryListItem* hli_last = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(listSize - 1));
+		LoadInitialize();
+		return;
+	}
 
-	// load and clean the new frame
+	// load the new frame
+	QTime loadFrameTime;
+	loadFrameTime.start();
 	LoadFrame();
-	//CleanFrame();
+	LOAD_TIME = loadFrameTime.elapsed();
 
 	// create new history entry
 	HistoryListItem* hli = new HistoryListItem();
@@ -569,29 +577,67 @@ StitchingPlugin::LoadStitch()
 	hli->m_actor = vtkSmartPointer<ritk::RImageActorPipeline>::New();
 	hli->m_actor->GetProperty()->SetPointSize(m_Widget->m_HorizontalSliderPointSize->value());
 	hli->m_transform = vtkSmartPointer<vtkMatrix4x4>::New();
-	m_Widget->m_ListWidgetHistory->insertItem(listSize, hli);
-	hli->setSelected(true);
+
+	// get the previous history entry
+	HistoryListItem* hli_last = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(listSize - 1));
 
 	// stitch to just loaded frame to the previous frame (given by last history entry)
 	Stitch(m_Data, hli_last->m_actor->GetData(), hli_last->m_transform, hli->m_actor->GetData(), hli->m_transform);
 
-	emit UpdateGUI();
+	OVERALL_TIME = t.elapsed();
+
+	m_Widget->m_ListWidgetHistory->insertItem(listSize, hli);
+	hli->setSelected(true);
+
+	if (m_Widget->m_CheckBoxShowSelectedActors->isChecked())
+	{
+		ShowHideActors();
+	}
+
+
+
+	// stats...
+	std::stringstream visualPercentage;
+
+	int percentageLoad = static_cast<int>((static_cast<double>(LOAD_TIME) / static_cast<double>(OVERALL_TIME)) * 100.0);
+	for (int i = 0; i < percentageLoad / 3; ++i)
+		visualPercentage << "|";
+	std::string visualPercentageLoad = visualPercentage.str();
+	visualPercentage.str(""); visualPercentage.clear();
+
+	int percentageClip = static_cast<int>((static_cast<double>(CLIP_TIME) / static_cast<double>(OVERALL_TIME)) * 100.0);
+	for (int i = 0; i < percentageClip / 3; ++i)
+		visualPercentage << "|";
+	std::string visualPercentageClip = visualPercentage.str();
+	visualPercentage.str(""); visualPercentage.clear();
+
+	int percentageICP = static_cast<int>((static_cast<double>(ICP_TIME) / static_cast<double>(OVERALL_TIME)) * 100.0);
+	for (int i = 0; i < percentageICP / 3; ++i)
+		visualPercentage << "|";
+	std::string visualPercentageICP = visualPercentage.str();
+	visualPercentage.str(""); visualPercentage.clear();
+
+	int percentageTransform = static_cast<int>((static_cast<double>(TRANSFORM_TIME) / static_cast<double>(OVERALL_TIME)) * 100.0);
+	for (int i = 0; i < percentageTransform / 3; ++i)
+		visualPercentage << "|";
+	std::string visualPercentageTransform = visualPercentage.str();
+	visualPercentage.str(""); visualPercentage.clear();
+
+	m_Widget->m_LabelTimeLoad->setText(QString(QString::number(LOAD_TIME) + QString(" ms\t") + QString(visualPercentageLoad.c_str()) + QString(" (") + QString::number(percentageLoad) + QString(" %)")));
+	m_Widget->m_LabelTimeClip->setText(QString(QString::number(CLIP_TIME) + QString(" ms\t") + QString(visualPercentageClip.c_str()) + QString(" (") + QString::number(percentageClip) + QString(" %)")));
+	m_Widget->m_LabelTimeICP->setText(QString(QString::number(ICP_TIME) + QString(" ms\t") + QString(visualPercentageICP.c_str()) + QString(" (") + QString::number(percentageICP) + QString(" %)")));
+	m_Widget->m_LabelTimeTransform->setText(QString(QString::number(TRANSFORM_TIME) + QString(" ms\t") + QString(visualPercentageTransform.c_str()) + QString(" (") + QString::number(percentageTransform) + QString(" %)")));
+	m_Widget->m_LabelTimeOverall->setText(QString(QString::number(OVERALL_TIME) + QString(" ms")));
 }
 //----------------------------------------------------------------------------
 void
 StitchingPlugin::LoadFrame()
 {
-	QTime t;
-	t.start();
 	m_DataActor3D->SetData(m_CurrentFrame);
 	m_Data->DeepCopy(m_DataActor3D->GetData());
 
 	// remove invalid points
 	ExtractValidPoints();
-
-	std::cout << "LoadFrame(): " << t.elapsed() << " ms" << std::endl;
-
-	m_Widget->m_PushButtonLoadCleanStitch->setEnabled(true);
 }
 //----------------------------------------------------------------------------
 void
@@ -605,9 +651,6 @@ StitchingPlugin::ExtractValidPoints()
 		vtkSmartPointer<vtkUnsignedCharArray>::New();
 
 	colors->SetNumberOfComponents(4);
-
-	vtkSmartPointer<vtkCellArray> lines =
-		vtkSmartPointer<vtkCellArray>::New();
 
 	double p[3];
 	for (vtkIdType i = 0; i < m_Data->GetNumberOfPoints(); ++i)
@@ -631,8 +674,6 @@ StitchingPlugin::ExtractValidPoints()
 	m_Data->SetPoints(points);
 	m_Data->GetPointData()->SetScalars(colors);
 	m_Data->SetVerts(cells);
-	m_Data->SetLines(lines);
-	m_Data->Update();
 	m_Data->Update();
 }
 //----------------------------------------------------------------------------
@@ -741,10 +782,6 @@ StitchingPlugin::InitializeHistory()
 	m_Widget->m_ListWidgetHistory->insertItem(0, hli);
 	hli->setSelected(true);
 
-	// enable buttons
-	m_Widget->m_PushButtonLoadCleanStitch->setEnabled(true);
-
-
 	emit UpdateGUI();
 }
 //----------------------------------------------------------------------------
@@ -754,35 +791,12 @@ StitchingPlugin::Stitch(vtkPolyData* toBeStitched, vtkPolyData* previousFrame,
 						vtkPolyData* outputStitchedPolyData,
 						vtkMatrix4x4* outputTransformationMatrix)
 {
-	// time measurement for stitching
-	QTime time;
-	time.start();
-
 	// iterative closest point (ICP) transformation
 	vtkSmartPointer<ExtendedICPTransform> icp = 
 		vtkSmartPointer<ExtendedICPTransform>::New();
 
-	if (m_Widget->m_CheckBoxUsePreviousTransformation->isChecked())
-	{
-		// start with previous transform
-		vtkSmartPointer<vtkTransform> prevTrans =
-			vtkSmartPointer<vtkTransform>::New();
-		prevTrans->SetMatrix(previousTransformationMatrix);
-		prevTrans->Modified();
-
-		vtkSmartPointer<vtkTransformPolyDataFilter> previousTransformFilter =
-			vtkSmartPointer<vtkTransformPolyDataFilter>::New();
-
-		previousTransformFilter->SetInput(toBeStitched);
-		previousTransformFilter->SetTransform(prevTrans);
-		previousTransformFilter->Modified();
-		previousTransformFilter->Update();
-		toBeStitched->DeepCopy(previousTransformFilter->GetOutput());
-	}
-
-	QTime t;
-	t.start();
-
+	QTime timeClip;
+	timeClip.start();
 	// get a subvolume of the original data
 	vtkSmartPointer<vtkPolyData> voi = 
 		vtkSmartPointer<vtkPolyData>::New();
@@ -796,8 +810,7 @@ StitchingPlugin::Stitch(vtkPolyData* toBeStitched, vtkPolyData* previousFrame,
 	{
 		voi->ShallowCopy(toBeStitched);
 	}
-
-	std::cout << "Clipping: " << t.elapsed() << " ms" << std::endl;
+	CLIP_TIME = timeClip.elapsed();
 
 	if (voi->GetNumberOfPoints() < m_Widget->m_SpinBoxLandmarks->value())
 	{
@@ -840,6 +853,8 @@ StitchingPlugin::Stitch(vtkPolyData* toBeStitched, vtkPolyData* previousFrame,
 	icp->SetMaxIter(m_Widget->m_SpinBoxMaxIterations->value());
 	icp->SetRemoveOutliers(m_Widget->m_CheckBoxRemoveOutliers->isChecked());
 	icp->SetOutlierRate(static_cast<float>(m_Widget->m_DoubleSpinBoxOutlierRate->value()));
+	icp->SetApplyPreviousTransform(m_Widget->m_CheckBoxUsePreviousTransformation->isChecked());
+	icp->SetPreviousTransformMatrix(previousTransformationMatrix);
 
 	// new stuff... strange
 	double* bounds = voi->GetBounds();
@@ -851,13 +866,12 @@ StitchingPlugin::Stitch(vtkPolyData* toBeStitched, vtkPolyData* previousFrame,
 	icp->Update();
 
 	// update icp runtime, etc
-	int elapsedTimeICP = timeICP.elapsed();
-	m_Widget->m_LabelICPRuntime->setText(QString::number(elapsedTimeICP) + " ms (avg: " + 
-		QString::number(static_cast<float>(elapsedTimeICP) / static_cast<float>(icp->GetNumIter()), 'f', 2) + " ms)");
+	ICP_TIME = timeICP.elapsed();
 	m_Widget->m_LabelICPMeanTargetDistance->setText(QString::number(icp->GetMeanTargetDistance(), 'f', 2));
 	
 
-	t.start();
+	QTime timeTransform;
+	timeTransform.start();
 	// update output parameter
 	outputTransformationMatrix->DeepCopy(icp->GetMatrix());
 
@@ -871,19 +885,17 @@ StitchingPlugin::Stitch(vtkPolyData* toBeStitched, vtkPolyData* previousFrame,
 
 	outputStitchedPolyData->DeepCopy(icpTransformFilter->GetOutput());
 
-	std::cout << "Transformation of all points: " << t.elapsed() << " ms" << std::endl;
+	TRANSFORM_TIME = timeTransform.elapsed();
 
 	// include the previous transformation into the matrix to allow for "undo"
 	if (m_Widget->m_CheckBoxUsePreviousTransformation->isChecked())
 	{
-		vtkMatrix4x4::Multiply4x4(outputTransformationMatrix, previousTransformationMatrix, outputTransformationMatrix);
+		//vtkMatrix4x4::Multiply4x4(outputTransformationMatrix, previousTransformationMatrix, outputTransformationMatrix);
 	}
 
 	// update debug information in GUI
 	m_Widget->m_LabelICPIterations->setText(QString::number(icp->GetNumIter()));
 	m_Widget->m_LabelICPError->setText(QString::number(icp->GetMeanDist()));
-	int elapsedTime = time.elapsed();
-	m_Widget->m_LabelStitchTime->setText(QString::number(elapsedTime) + " ms");
 
 	// cleanup
 	delete cpf; // delete ClosestPointFinder

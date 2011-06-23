@@ -200,6 +200,13 @@ ExtendedICPTransform::InternalUpdate()
 		vtkTransform::New();
 	accumulate->PostMultiply();
 
+	// apply previous transform
+	if (m_ApplyPreviousTransform)
+	{
+		TransformPointsDirectlyOnGPU(m_PreviousTransformationMatrix->Element, m_SourceCoords, NULL);
+		accumulate->Concatenate(m_PreviousTransformationMatrix);
+	}
+
 	double p1[3], p2[3];
 	// for gpu based distance computation
 	float* distances = new float[m_NumLandmarks];

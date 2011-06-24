@@ -113,7 +113,7 @@ ExtendedICPTransform::vtkPolyDataToPointCoords(vtkSmartPointer<vtkPoints> poly, 
 	}
 }
 void
-ExtendedICPTransform::vtkPolyDataToPointCoordsAndColors()
+ExtendedICPTransform::vtkPolyDataToPointCoordsAndColors(double percentage)
 {
 	int stepSource = 1;
 	int stepTarget = 1;
@@ -127,16 +127,36 @@ ExtendedICPTransform::vtkPolyDataToPointCoordsAndColors()
 		stepTarget = m_Target->GetNumberOfPoints() / m_NumLandmarks;
 	}
 
+	double bounds[6];
+	m_Source->GetBounds(bounds);
+
+	// modify x, y (and z) bounds
+	bounds[0] += percentage*(bounds[1] - bounds[0]);
+	bounds[1] -= percentage*(bounds[1] - bounds[0]);
+	bounds[2] += percentage*(bounds[3] - bounds[2]);
+	bounds[3] -= percentage*(bounds[3] - bounds[2]);
+	bounds[4] += percentage*(bounds[5] - bounds[4]);
+	bounds[5] -= percentage*(bounds[5] - bounds[4]);
+
 	m_SourceCoords = new PointCoords[m_NumLandmarks];
 	m_SourceColors = new PointColors[m_NumLandmarks];
 	m_TargetCoords = new PointCoords[m_NumLandmarks];
 	m_TargetColors = new PointColors[m_NumLandmarks];
 
-	for (int i = 0, j = 0; i < m_NumLandmarks; ++i, j += stepSource)
+	for (int i = 0, j = 0; i < m_NumLandmarks; ++i, j = (j + stepSource) % m_Source->GetNumberOfPoints())
 	{
 		m_SourceCoords[i].x = m_Source->GetPoint(static_cast<vtkIdType>(j))[0];
 		m_SourceCoords[i].y = m_Source->GetPoint(static_cast<vtkIdType>(j))[1];
 		m_SourceCoords[i].z = m_Source->GetPoint(static_cast<vtkIdType>(j))[2];
+
+		if (!(  m_SourceCoords[i].x >= bounds[0] && m_SourceCoords[i].x <= bounds[1] &&
+				m_SourceCoords[i].y >= bounds[2] && m_SourceCoords[i].y <= bounds[3] &&
+				m_SourceCoords[i].z >= bounds[4] && m_SourceCoords[i].z <= bounds[5]
+			))
+		{
+			--i;
+			continue;
+		}
 
 		// conversion from RGB to rgb (r = R/(R+G+B), ...)
 		// and normalization w.r.t. bounding boxes of RGB cube and bounding box of pointcloud
@@ -174,15 +194,12 @@ ExtendedICPTransform::vtkPolyDataToPointCoordsAndColors()
 void
 ExtendedICPTransform::InternalUpdate() 
 {
-	// transform vtkPolyData in our own structures
-	vtkPolyDataToPointCoordsAndColors();
-
 	// configure ClosestPointFinder
 	QTime ts;
 	ts.start();
 	m_ClosestPointFinder->SetTarget(m_TargetCoords, m_TargetColors, m_SourceCoords, m_SourceColors);
 	std::cout << "SetTarget() " << ts.elapsed() << " ms" << std::endl;
-	
+
 	// allocate some points used for icp
 	vtkSmartPointer<vtkPoints> points1 =
 		vtkSmartPointer<vtkPoints>::New();
@@ -265,15 +282,13 @@ ExtendedICPTransform::InternalUpdate()
 				threshold = FLT_MAX;
 				number = m_NumLandmarks;
 			}
-		
-			
 
 			// calling Modified() is necessary otherwise object properties won't change
 			closestp->SetNumberOfPoints(number);
 			a2->SetNumberOfPoints(number);
 			closestp->Modified();
 			a2->Modified();
-			
+
 			int count = 0;
 			for(int i = 0; i < m_NumLandmarks; ++i)
 			{
@@ -336,7 +351,7 @@ ExtendedICPTransform::InternalUpdate()
 
 		m_MeanDist = totaldist / (float)m_NumLandmarks;
 		DBG << "\rICP Iteration " << m_NumIter << ":\t mean distance = " << m_MeanDist << "\t\t";
-			
+
 		if (m_MeanDist <= m_MaxMeanDist)
 		{
 			break;

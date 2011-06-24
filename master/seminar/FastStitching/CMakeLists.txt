@@ -1,15 +1,12 @@
 cmake_minimum_required(VERSION 2.6)
 
-#-----------------------------------------------------------------------------
-# Required libraries
-
 # ITK
 FIND_PACKAGE(ITK REQUIRED)
 IF(ITK_FOUND)
 	INCLUDE_DIRECTORIES(${ITK_INCLUDE_DIRS})
 	INCLUDE(${ITK_USE_FILE})
 ELSE()
-	MESSAGE(FATAL_ERROR "ITK not found, but needed.")
+	MESSAGE("ITK not found, but needed.")
 ENDIF(ITK_FOUND)
 
 # VTK
@@ -20,13 +17,12 @@ IF(VTK_FOUND)
 ELSE()
 	MESSAGE(FATAL_ERROR "VTK not found, but needed.")
 ENDIF(VTK_FOUND)
-
-SET(VTK_LIBRARIES
-	vtkCOmmon
+SET(
+	VTK_LIBRARIES
+	vtkCommon
 	vtkWidgets
 	QVTK
 )
-
 
 # Qt4
 FIND_PACKAGE(Qt4 REQUIRED)
@@ -34,7 +30,7 @@ IF(QT4_FOUND)
 	INCLUDE_DIRECTORIES(${QT_INCLUDE_DIR})
 	INCLUDE(${QT_USE_FILE})	
 ELSE()
-	MESSAGE(FATAL_ERROR "QT4 not found, but needed.")
+	MESSAGE("QT4 not found, but needed.")
 ENDIF(QT4_FOUND)
 
 # RITK
@@ -43,7 +39,7 @@ IF(RITK_FOUND)
 	INCLUDE_DIRECTORIES(${RITK_INCLUDE_DIR})
 	INCLUDE(${RITK_USE_FILE})	
 ELSE()
-	MESSAGE(FATAL_ERROR "RITK not found, but needed.")
+	MESSAGE("RITK not found, but needed.")
 ENDIF(RITK_FOUND)
 
 # CUDA
@@ -55,7 +51,7 @@ IF(CUDA_FOUND)
 		PATH_SUFFIXES "common/inc"
 		DOC "Location of cutil.h"
 		NO_DEFAULT_PATH
-    	)
+    )
 	mark_as_advanced(CUDA_CUT_INCLUDE_DIR)
 	INCLUDE_DIRECTORIES(${CUDA_INCLUDE_DIRS} ${CUDA_CUT_INCLUDE_DIR})
 	
@@ -73,44 +69,39 @@ ELSE()
 	MESSAGE(FATAL_ERROR "CUDA not found, but needed.")
 ENDIF(CUDA_FOUND)
 
-
 #-----------------------------------------------------------------------------
-# Set headers (HDRS), sources (SRCS), childs of QObject (MOC_HDRS), and Qt ui-files (UIS)
 
 SET(HDRS
-	FastStitchingPluginFactory.h
-	FastStitchingPlugin.h
-	FastStitchingWidget.h
+	CUDARangeToWorldPluginFactory.h
+	CUDARangeToWorldPlugin.h
+	CUDARangeToWorldWidget.h
+	CUDAOpenGLVisualizationWidget.h
 )
 
 SET(SRCS
-	FastStitchingPluginFactory.cxx
-	FastStitchingPlugin.cxx
-	FastStitchingWidget.cxx
+	CUDARangeToWorldPluginFactory.cxx
+	CUDARangeToWorldPlugin.cxx
+	CUDARangeToWorldWidget.cxx
+	CUDAOpenGLVisualizationWidget.cxx
 )
 
-
-SET(CUDA_HDRS
-	FastStitchingPluginKernel.h
+SET(	CUDA_HDRS
+		CUDARangeToWorldKernel.h
 )
 
-
-SET(CUDA_SRCS
-	FastStitchingPlugin.cu
+SET(	CUDA_SRCS
+		CUDARangeToWorld.cu
 )
 
-#-----------------------------------------------------------------------------
-
-# Qt
-# all childs of qobject have to be put here
-SET(MOC_HDRS 	
-	FastStitchingPluginFactory.h
-	FastStitchingPlugin.h
-	FastStitchingWidget.h
+SET(  MOC_HDRS 	
+	CUDARangeToWorldPluginFactory.h
+	CUDARangeToWorldPlugin.h
+	CUDARangeToWorldWidget.h
+	CUDAOpenGLVisualizationWidget.h
 )
 
-SET(UIS
-	FastStitchingWidget.ui
+SET(  UIS
+	CUDARangeToWorldWidget.ui
 )
 
 QT4_WRAP_UI(UI_HDRS ${UIS})	
@@ -119,45 +110,44 @@ QT4_WRAP_CPP(MOC_SRCS ${MOC_HDRS})
 #-----------------------------------------------------------------------------
 
 # Set the name for the library
-SET(LIBRARY_NAME 
-	FastStitchingPlugin
-)
+SET(  LIBRARY_NAME
+    CUDARangeToWorldPlugin)
 
-SET(INCLUDE_DIRS
+# Set include directories
+SET(  INCLUDE_DIRS
 	${CMAKE_CURRENT_SOURCE_DIR}
-	${CMAKE_CURRENT_BINARY_DIR}	
+	${CMAKE_CURRENT_BINARY_DIR}
 )
 
+# QT plugin
+ADD_DEFINITIONS(-DQT_PLUGIN)
+ADD_DEFINITIONS(-DQT_SHARED)
+#ADD_DEFINITIONS(-DQT_NO_DEBUG)
 
-#-----------------------------------------------------------------------------
-# Set include directories, definitions and libs for this plugin
-
-INCLUDE_DIRECTORIES(
-	${INCLUDE_DIRS} 
-	${RITK_INCLUDE_DIRS}
-	${QT_QTOPENGL_INCLUDE_DIR}
-)
+# Include directories for the plugin
+INCLUDE_DIRECTORIES(${INCLUDE_DIRS} ${RITK_INCLUDE_DIRS} ${QT_QTOPENGL_INCLUDE_DIR})
 CUDA_ADD_LIBRARY(
-	${LIBRARY_NAME} SHARED 
-	${SRCS} 
-	${HDRS} 
-	${CUDA_HDRS} 
-	${CUDA_SRCS}
-	${MOC_SRCS} 
-	${UI_HDRS}
+  ${LIBRARY_NAME} SHARED
+  ${SRCS}
+  ${HDRS}
+  ${MOC_SRCS}
+  ${UI_HDRS}
+  ${CUDA_HDRS}
+  ${CUDA_SRCS}
 )
 TARGET_LINK_LIBRARIES(
-	${LIBRARY_NAME} 
+  ${LIBRARY_NAME} 
 	debug ${RITK_Common_LIBRARY_DEBUG}
 	debug ${RITK_Core_LIBRARY_DEBUG}
-	debug ${RITK_Visualization_LIBRARY_DEBUG}
 	debug ${RITK_Cuda_LIBRARY_DEBUG}
+	debug ${RITK_Visualization_LIBRARY_DEBUG}
+	debug ${RITK_Tools_LIBRARY_DEBUG}
 	optimized ${RITK_Common_LIBRARY}
 	optimized ${RITK_Core_LIBRARY}
-	optimized ${RITK_Visualization_LIBRARY}
 	optimized ${RITK_Cuda_LIBRARY}
+	optimized ${RITK_Visualization_LIBRARY}
 	optimized ${RITK_Tools_LIBRARY}
-	${ITK_LIBRARIES} 
+	${ITK_LIBRARIES}
 	${QT_LIBRARIES}
 	${VTK_LIBRARIES}
 	${QT_QTOPENGL_LIBRARY}
@@ -165,15 +155,16 @@ TARGET_LINK_LIBRARIES(
 	${CUDA_CUDART_LIBRARY} 
 	${CUDA_CUT_LIBRARIES}
 )
-SET_TARGET_PROPERTIES(
-	${LIBRARY_NAME} 
-	PROPERTIES  DEBUG_POSTFIX "d"
+
+SET_TARGET_PROPERTIES(${LIBRARY_NAME} PROPERTIES 
+	DEBUG_POSTFIX "d")
+
+INSTALL(TARGETS ${LIBRARY_NAME}
+	RUNTIME DESTINATION ${RITK_BINARY_DIR}/release/plugins CONFIGURATIONS RELEASE
 )
-ADD_DEFINITIONS(-DQT_PLUGIN)
-ADD_DEFINITIONS(-DQT_SHARED)
+
+INSTALL(TARGETS ${LIBRARY_NAME}
+	RUNTIME DESTINATION ${RITK_BINARY_DIR}/debug/plugins CONFIGURATIONS DEBUG
+)
 
 
-#-----------------------------------------------------------------------------
-# Installation
-INSTALL(TARGETS ${LIBRARY_NAME} RUNTIME DESTINATION ${RITK_BINARY_DIR}/release/plugins CONFIGURATIONS RELEASE)
-INSTALL(TARGETS ${LIBRARY_NAME} RUNTIME DESTINATION ${RITK_BINARY_DIR}/debug/plugins CONFIGURATIONS DEBUG)

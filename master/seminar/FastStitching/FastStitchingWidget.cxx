@@ -1,9 +1,9 @@
-#include "CUDARangeToWorldWidget.h"
+#include "FastStitchingWidget.h"
 //#include "DebugManager.h"
 //
 //#include <windows.h> 
 
-CUDARangeToWorldWidget::CUDARangeToWorldWidget(QWidget *parent) :
+FastStitchingWidget::FastStitchingWidget(QWidget *parent) :
 	QWidget(parent)
 {
  	setupUi(this);
@@ -22,7 +22,7 @@ CUDARangeToWorldWidget::CUDARangeToWorldWidget(QWidget *parent) :
 	m_CurrentFrame = NULL;
 }
 
-CUDARangeToWorldWidget::~CUDARangeToWorldWidget()
+FastStitchingWidget::~FastStitchingWidget()
 {
 
 }
@@ -31,13 +31,13 @@ CUDARangeToWorldWidget::~CUDARangeToWorldWidget()
 
 //----------------------------------------------------------------------------
 void 
-CUDARangeToWorldWidget::SetMinValue(int value)
+FastStitchingWidget::SetMinValue(int value)
 {
   m_RangeIntervalMinSpinBox->setValue(value);
 }
 //----------------------------------------------------------------------------
 void 
-CUDARangeToWorldWidget::SetMaxValue(int value)
+FastStitchingWidget::SetMaxValue(int value)
 {
   m_RangeIntervalMaxSpinBox->setValue(value);
 }
@@ -45,7 +45,7 @@ CUDARangeToWorldWidget::SetMaxValue(int value)
 
 //----------------------------------------------------------------------------
 void 
-CUDARangeToWorldWidget::SetRangeData(ritk::RImageF2::ConstPointer Data)
+FastStitchingWidget::SetRangeData(ritk::RImageF2::ConstPointer Data)
 {
 	if ( !m_CurrentFrame )
 	{
@@ -65,7 +65,7 @@ CUDARangeToWorldWidget::SetRangeData(ritk::RImageF2::ConstPointer Data)
 
 //----------------------------------------------------------------------------
 void 
-CUDARangeToWorldWidget::LUTAlphaSliderMoved(int value)
+FastStitchingWidget::LUTAlphaSliderMoved(int value)
 {
 	m_VisualizationWidget3D->SetLUTAlpha(value/100.f);
 }
@@ -73,7 +73,7 @@ CUDARangeToWorldWidget::LUTAlphaSliderMoved(int value)
 
 //----------------------------------------------------------------------------
 void 
-CUDARangeToWorldWidget::LUTIndexChanged(int index)
+FastStitchingWidget::LUTIndexChanged(int index)
 {
 	m_VisualizationWidget3D->SetLUT(index);
 }
@@ -81,7 +81,7 @@ CUDARangeToWorldWidget::LUTIndexChanged(int index)
 
 //----------------------------------------------------------------------------
 void 
-CUDARangeToWorldWidget::RadioButtonPolyDataClicked()
+FastStitchingWidget::RadioButtonPolyDataClicked()
 {
 	if(this->m_RadioButtonPoints->isChecked())
 	{
@@ -96,7 +96,7 @@ CUDARangeToWorldWidget::RadioButtonPolyDataClicked()
 
 //----------------------------------------------------------------------------
 void
-CUDARangeToWorldWidget::RangeIntervalMinChanged(double d)
+FastStitchingWidget::RangeIntervalMinChanged(double d)
 {
 	if ( d >= this->m_RangeIntervalMaxSpinBox->value() )
 		return;
@@ -107,7 +107,7 @@ CUDARangeToWorldWidget::RangeIntervalMinChanged(double d)
 
 //----------------------------------------------------------------------------
 void
-CUDARangeToWorldWidget::RangeIntervalMaxChanged(double d)
+FastStitchingWidget::RangeIntervalMaxChanged(double d)
 {
 	if ( d <= this->m_RangeIntervalMinSpinBox->value() )
 		return;
@@ -117,7 +117,7 @@ CUDARangeToWorldWidget::RangeIntervalMaxChanged(double d)
 
 //----------------------------------------------------------------------------
 void
-CUDARangeToWorldWidget::ClampRangeInterval()
+FastStitchingWidget::ClampRangeInterval()
 {
 	m_Mutex.lock();
 	// Get the min and max value from the current frame

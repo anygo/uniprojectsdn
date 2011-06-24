@@ -1,34 +1,34 @@
-#include "CUDARangeToWorldPluginFactory.h"
-#include "CUDARangeToWorldPlugin.h"
+#include "FastStitchingPluginFactory.h"
+#include "FastStitchingPlugin.h"
 
 #include <QtPlugin>
 
-CUDARangeToWorldPluginFactory::CUDARangeToWorldPluginFactory()
+FastStitchingPluginFactory::FastStitchingPluginFactory()
 {
 }
 
-CUDARangeToWorldPluginFactory::~CUDARangeToWorldPluginFactory()
+FastStitchingPluginFactory::~FastStitchingPluginFactory()
 {
 }
 
 ritk::ApplicationPlugin*
-CUDARangeToWorldPluginFactory::CreateInstance()
+FastStitchingPluginFactory::CreateInstance()
 {
-	return new CUDARangeToWorldPlugin();
+	return new FastStitchingPlugin();
 }
 
 QString 
-CUDARangeToWorldPluginFactory::GetName()
+FastStitchingPluginFactory::GetName()
 {
-	return ("CUDARangeToWorld");
+	return ("FastStitching");
 }
 
 QString 
-CUDARangeToWorldPluginFactory::GetDescription()
+FastStitchingPluginFactory::GetDescription()
 {
-	return ("Calculates world coords in CUDA");
+	return ("Fast GPU Stitching based on RBC-ICP");
 }
 
 
-Q_EXPORT_PLUGIN2(CUDARangeToWorldPlugin, CUDARangeToWorldPluginFactory)
+Q_EXPORT_PLUGIN2(FastStitchingPlugin, FastStitchingPluginFactory)
 

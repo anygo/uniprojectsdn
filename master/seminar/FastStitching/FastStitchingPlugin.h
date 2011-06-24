@@ -1,21 +1,21 @@
-#ifndef CUDARangeToWorldPLUGIN_H__
-#define	CUDARangeToWorldPLUGIN_H__
+#ifndef FastStitchingPLUGIN_H__
+#define	FastStitchingPLUGIN_H__
 
 #include "ApplicationPlugin.h"
-#include "CUDARangeToWorldPlugin.h"
-#include "CUDARangeToWorldWidget.h"
+#include "FastStitchingPlugin.h"
+#include "FastStitchingWidget.h"
 #include "RImageActorPipeline.h"
 #include "RImage.h"
 
-class CUDARangeToWorldPlugin : public ritk::ApplicationPlugin
+class FastStitchingPlugin : public ritk::ApplicationPlugin
 {
 	Q_OBJECT
 
 public:
 	/// Constructor
-	CUDARangeToWorldPlugin();
+	FastStitchingPlugin();
 	/// Destructor
-	~CUDARangeToWorldPlugin();
+	~FastStitchingPlugin();
 
 	/// Get the name @sa Plugin::GetName
 	QString GetName();
@@ -27,8 +27,8 @@ public:
 	void ProcessEvent(ritk::Event::Pointer EventP);
 
 protected:
-	CUDARangeToWorldWidget *m_Widget;	
+	FastStitchingWidget *m_Widget;	
 };
 
 
-#endif // CUDARangeToWorldPLUGIN_H__
+#endif // FastStitchingPLUGIN_H__

@@ -4,44 +4,27 @@
 //#include <windows.h> 
 
 FastStitchingWidget::FastStitchingWidget(QWidget *parent) :
-	QWidget(parent)
+QWidget(parent)
 {
- 	setupUi(this);
+	setupUi(this);
 
 	// Connect signals and slots
-	connect(this->m_AlphaSlider,					SIGNAL(sliderMoved(int)),			this,	SLOT(LUTAlphaSliderMoved(int))				);
-	connect(this->m_LUTComboBox,					SIGNAL(currentIndexChanged(int)),	this,	SLOT(LUTIndexChanged(int))					);
-	connect(this->m_RadioButtonPoints,				SIGNAL(clicked()),					this,	SLOT(RadioButtonPolyDataClicked())			);
-	connect(this->m_RadioButtonTriangles,			SIGNAL(clicked()),					this,	SLOT(RadioButtonPolyDataClicked())			);
-	connect(this->m_RangeIntervalMinSpinBox,		SIGNAL(valueChanged(double)),		this,	SLOT(RangeIntervalMinChanged(double))		);
-	connect(this->m_RangeIntervalMaxSpinBox,		SIGNAL(valueChanged(double)),		this,	SLOT(RangeIntervalMaxChanged(double))		);
-	connect(this->m_RangeIntervalClampPushButton,	SIGNAL(clicked()),					this,	SLOT(ClampRangeInterval())					);
-	connect(this,	SIGNAL(SetMinSignal(int)),					this,	SLOT(SetMinValue(int))					);
-	connect(this,	SIGNAL(SetMaxSignal(int)),					this,	SLOT(SetMaxValue(int))					);
+	connect(this->m_AlphaSlider,					SIGNAL(sliderMoved(int)),			this,	SLOT(LUTAlphaSliderMoved(int))			);
+	connect(this->m_LUTComboBox,					SIGNAL(currentIndexChanged(int)),	this,	SLOT(LUTIndexChanged(int))				);
+	connect(this->m_RadioButtonPoints,				SIGNAL(clicked()),					this,	SLOT(RadioButtonPolyDataClicked())		);
+	connect(this->m_RadioButtonTriangles,			SIGNAL(clicked()),					this,	SLOT(RadioButtonPolyDataClicked())		);
+	connect(this->m_RangeIntervalMinSpinBox,		SIGNAL(valueChanged(double)),		this,	SLOT(RangeIntervalMinChanged(double))	);
+	connect(this->m_RangeIntervalMaxSpinBox,		SIGNAL(valueChanged(double)),		this,	SLOT(RangeIntervalMaxChanged(double))	);
+	connect(this->m_RangeIntervalClampPushButton,	SIGNAL(clicked()),					this,	SLOT(ClampRangeInterval())				);
+	connect(this,									SIGNAL(SetMinSignal(int)),			this,	SLOT(SetMinValue(int))					);
+	connect(this,									SIGNAL(SetMaxSignal(int)),			this,	SLOT(SetMaxValue(int))					);
 
 	m_CurrentFrame = NULL;
 }
 
 FastStitchingWidget::~FastStitchingWidget()
 {
-
 }
-
-
-
-//----------------------------------------------------------------------------
-void 
-FastStitchingWidget::SetMinValue(int value)
-{
-  m_RangeIntervalMinSpinBox->setValue(value);
-}
-//----------------------------------------------------------------------------
-void 
-FastStitchingWidget::SetMaxValue(int value)
-{
-  m_RangeIntervalMaxSpinBox->setValue(value);
-}
-
 
 //----------------------------------------------------------------------------
 void 
@@ -55,11 +38,26 @@ FastStitchingWidget::SetRangeData(ritk::RImageF2::ConstPointer Data)
 		this->m_RangeIntervalMaxSpinBox->setEnabled(true);
 		this->m_RangeIntervalClampPushButton->setEnabled(true);
 
-    ClampRangeInterval();
+		ClampRangeInterval();
 
 	}
+
 	m_CurrentFrame = Data;
 	m_VisualizationWidget3D->SetRangeData(m_CurrentFrame);	
+}
+
+
+//----------------------------------------------------------------------------
+void 
+FastStitchingWidget::SetMinValue(int value)
+{
+	m_RangeIntervalMinSpinBox->setValue(value);
+}
+//----------------------------------------------------------------------------
+void 
+FastStitchingWidget::SetMaxValue(int value)
+{
+	m_RangeIntervalMaxSpinBox->setValue(value);
 }
 
 
@@ -85,11 +83,11 @@ FastStitchingWidget::RadioButtonPolyDataClicked()
 {
 	if(this->m_RadioButtonPoints->isChecked())
 	{
-    m_VisualizationWidget3D->SetRenderType(true);
+		m_VisualizationWidget3D->SetRenderType(true);
 	}
 	else if(this->m_RadioButtonTriangles->isChecked())
 	{
-	  m_VisualizationWidget3D->SetRenderType(false);
+		m_VisualizationWidget3D->SetRenderType(false);
 	}
 }
 
@@ -111,6 +109,7 @@ FastStitchingWidget::RangeIntervalMaxChanged(double d)
 {
 	if ( d <= this->m_RangeIntervalMinSpinBox->value() )
 		return;
+
 	m_VisualizationWidget3D->SetRangeClamping(this->m_RangeIntervalMinSpinBox->value(), d);
 }
 
@@ -130,7 +129,7 @@ FastStitchingWidget::ClampRangeInterval()
 		long SizeY = m_CurrentFrame->GetBufferedRegion().GetSize()[1];
 
 		const float *RData = m_CurrentFrame->GetRangeImage()->GetBufferPointer();
-		
+
 		for ( long l = 0; l < SizeX*SizeY; l++ )
 		{
 			if ( fabs(RData[l]) < 1e-5 )
@@ -146,7 +145,7 @@ FastStitchingWidget::ClampRangeInterval()
 
 	m_VisualizationWidget3D->SetRangeClamping(RMin,RMax);
 
-  // needs to be done with slot-signal because of contexts
-  emit SetMinSignal(RMin);
-  emit SetMaxSignal(RMax);
+	// needs to be done with slot-signal because of contexts
+	emit SetMinSignal(RMin);
+	emit SetMaxSignal(RMax);
 }

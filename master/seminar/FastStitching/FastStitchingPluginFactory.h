@@ -7,7 +7,7 @@
 class FastStitchingPluginFactory : public QObject, public ritk::ApplicationPluginFactory
 {
 	Q_OBJECT
-    Q_INTERFACES(ritk::ApplicationPluginFactory)
+	Q_INTERFACES(ritk::ApplicationPluginFactory)
 
 public:
 	/// Constructor
@@ -15,7 +15,7 @@ public:
 	/// Destructor
 	~FastStitchingPluginFactory();
 
-  ritk::ApplicationPlugin* CreateInstance();
+	ritk::ApplicationPlugin* CreateInstance();
 
 	QString GetName();
 

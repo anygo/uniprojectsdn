@@ -202,10 +202,8 @@ CUDAOpenGLVisualizationWidget::SetRangeData(ritk::RImageF2::ConstPointer Data)
 		ResetCameraRequired = true;
 	}
 
-
 	// Update the current frame
 	m_CurrentFrame = Data;
-
 
 	// For convenience
 	long SizeX = m_CurrentFrame->GetBufferedRegion().GetSize()[0];
@@ -224,27 +222,18 @@ CUDAOpenGLVisualizationWidget::SetRangeData(ritk::RImageF2::ConstPointer Data)
 		m_TextureCoords = new GLfloat[SizeX*SizeY*2 + SizeX*(SizeY-2)*2];
 
 		// Update coords
-		bool evenSizeX;
-		if (SizeX%2 == 0)
-			evenSizeX = true;
-		else
-			evenSizeX = false;
-
 		for ( long l = 0; l < SizeX*SizeY + SizeX*(SizeY-2); l++ )
 		{
-			if(evenSizeX)
+			if(l%2==0)
 			{
-				if(l%2==0)
-				{
-					m_TextureCoords[l*2+0] = (l%(SizeX*2))/((SizeX*2)*1.f);
-					m_TextureCoords[l*2+1] = (l/(SizeX*2))/(SizeY*1.f) ;
-				}
-				else
-				{
-					m_TextureCoords[l*2+0] = (l%(SizeX*2)-1)/((SizeX*2)*1.f);
-					m_TextureCoords[l*2+1] = (l/(SizeX*2)+1)/(SizeY*1.f);
-				}
-			}	
+				m_TextureCoords[l*2+0] = (l%(SizeX*2))/((SizeX*2)*1.f);
+				m_TextureCoords[l*2+1] = (l/(SizeX*2))/(SizeY*1.f) ;
+			}
+			else
+			{
+				m_TextureCoords[l*2+0] = (l%(SizeX*2)-1)/((SizeX*2)*1.f);
+				m_TextureCoords[l*2+1] = (l/(SizeX*2)+1)/(SizeY*1.f);
+			}
 		}
 
 	}
@@ -313,12 +302,12 @@ CUDAOpenGLVisualizationWidget::SetRangeData(ritk::RImageF2::ConstPointer Data)
 void
 CUDAOpenGLVisualizationWidget::SetTranslation(int dx, int dy)
 {
-	//m_Translation[0] -= dx;
-	//m_Translation[1] -= dy;
-	m_EyePos[0] += dx;
+	m_Translation[0] -= dx;
+	m_Translation[1] -= dy;
+	/*m_EyePos[0] += dx;
 	m_EyePos[1] += dy;
 	m_ViewCenter[0] += dx;
-	m_ViewCenter[1] += dy;
+	m_ViewCenter[1] += dy;*/
 }
 
 
@@ -596,7 +585,6 @@ CUDAOpenGLVisualizationWidget::initializeGL()
 {
 	// Get the OpenGL extension function pointers...
 	if ( !ritk::InitOpenGLExtensions() )
-
 	{
 		std::cerr << "Could not initialize OpenGL extensions!" << std::endl;
 		CHECK_GL_ERROR();
@@ -700,7 +688,7 @@ CUDAOpenGLVisualizationWidget::paintGL()
 	// Set up viewing frustum defined by our bounding box
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluPerspective((GLfloat)45.0f*m_Zoom, (GLfloat)(m_Width)/(GLfloat)(m_Height), (GLfloat)m_ClippingPlanes[0], m_ClippingPlanes[1]);
+	gluPerspective((GLfloat)45.0f*m_Zoom, (GLfloat)(m_Width)/(GLfloat)(m_Height), (GLfloat)m_ClippingPlanes[0], (GLfloat)m_ClippingPlanes[1]);
 
 	// Std OpenGL
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

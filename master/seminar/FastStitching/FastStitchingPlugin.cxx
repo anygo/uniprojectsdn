@@ -1,17 +1,17 @@
-#include "CUDARangeToWorldPlugin.h"
+#include "FastStitchingPlugin.h"
 #include "DebugManager.h"
 #include "Manager.h"
 
 
-CUDARangeToWorldPlugin::CUDARangeToWorldPlugin()
+FastStitchingPlugin::FastStitchingPlugin()
 {
 	// Create the widget
-	m_Widget = new CUDARangeToWorldWidget();
+	m_Widget = new FastStitchingWidget();
 
 	Timer::SetNumberOfPassesToAverageRuntime(10);
 }
 
-CUDARangeToWorldPlugin::~CUDARangeToWorldPlugin()
+FastStitchingPlugin::~FastStitchingPlugin()
 {
 	delete m_Widget;
 }
@@ -19,15 +19,15 @@ CUDARangeToWorldPlugin::~CUDARangeToWorldPlugin()
 
 //----------------------------------------------------------------------------
 QString
-CUDARangeToWorldPlugin::GetName()
+FastStitchingPlugin::GetName()
 {
-	return tr("CUDARangeToWorldPlugin");
+	return tr("FastStitchingPlugin");
 }
 
 
 //----------------------------------------------------------------------------
 QWidget*
-CUDARangeToWorldPlugin::GetPluginGUI()
+FastStitchingPlugin::GetPluginGUI()
 {
 	return m_Widget;
 }
@@ -35,7 +35,7 @@ CUDARangeToWorldPlugin::GetPluginGUI()
 
 //----------------------------------------------------------------------------
 void
-CUDARangeToWorldPlugin::ProcessEvent(ritk::Event::Pointer EventP)
+FastStitchingPlugin::ProcessEvent(ritk::Event::Pointer EventP)
 {
 	// New frame event
   if ( EventP->type() == ritk::NewFrameEvent::EventType )
@@ -50,7 +50,8 @@ CUDARangeToWorldPlugin::ProcessEvent(ritk::Event::Pointer EventP)
 		ritk::NewFrameEvent::RImageConstPointer CurrentFrameP = NewFrameEventP->RImage;
 		// Here comes your code. Access range data with CurrentFrame.
 		// ...
-		Timer::StartTimer();
+
+		Timer::StartTimer();	
 		m_Widget->SetRangeData(CurrentFrameP);
 		Timer::StopTimer();
 		Timer::GetElapsedTime(&m_Runtime[0],&m_Runtime[1]);

@@ -8,19 +8,19 @@
 
 #include <QMutex>
 
-#include "Ui_CUDARangeToWorldWidget.h"
+#include "Ui_FastStitchingWidget.h"
 
 #include "RImage.h"
 
-class CUDARangeToWorldWidget : public QWidget, public Ui_CUDARangeToWorldWidget
+class FastStitchingWidget : public QWidget, public Ui_FastStitchingWidget
 {
 	Q_OBJECT
 
 public:
 	/// Constructor
-	CUDARangeToWorldWidget(QWidget *parent=0);
+	FastStitchingWidget(QWidget *parent=0);
 	/// Destructor
-	~CUDARangeToWorldWidget();
+	~FastStitchingWidget();
 
 public slots:
 	/**	@brief	Set the TOF data to render 

@@ -2,7 +2,7 @@
 	#define WIN32_LEAN_AND_MEAN
 #endif
 
-#include "CUDARangeToWorldKernel.h"
+#include "FastStitchingKernel.h"
 #include <cutil.h>
 
 //#define RUNTIME_EVALUATION
@@ -48,7 +48,7 @@ CUDAMeshTriangulation(unsigned int w, unsigned int h, const float3* Input, float
 //----------------------------------------------------------------------------
 extern "C"
 float
-CUDARangeToWorld(const cudaArray *InputImageArray, float4 *DeviceOutput, int w, int h, float fx, float fy, float cx, float cy, float k1, float k2, float p1, float p2)
+FastStitching(const cudaArray *InputImageArray, float4 *DeviceOutput, int w, int h, float fx, float fy, float cx, float cy, float k1, float k2, float p1, float p2)
 {
 	float ElapsedTime = -1;
 
@@ -72,7 +72,7 @@ CUDARangeToWorld(const cudaArray *InputImageArray, float4 *DeviceOutput, int w, 
 	// Kernel Invocation
 	dim3 DimBlock(16,16);
 	dim3 DimGrid(DivUp(w,DimBlock.x),DivUp(h,DimBlock.y));
-	CUDARangeToWorldKernel<16,16><<<DimGrid,DimBlock>>>(w,h,DeviceOutput, fx, fy, cx, cy, k1, k2, p1, p2);
+	FastStitchingKernel<16,16><<<DimGrid,DimBlock>>>(w,h,DeviceOutput, fx, fy, cx, cy, k1, k2, p1, p2);
 
 #ifdef RUNTIME_EVALUATION
 	}

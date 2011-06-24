@@ -20,7 +20,7 @@
 
 extern "C"
 float
-CUDARangeToWorld(const cudaArray *InputImageArray, float4 *DeviceOutput, int w, int h, float fx, float fy, float cx, float cy, float k1, float k2, float p1, float p2);
+FastStitching(const cudaArray *InputImageArray, float4 *DeviceOutput, int w, int h, float fx, float fy, float cx, float cy, float k1, float k2, float p1, float p2);
 
 extern "C"
 float
@@ -621,7 +621,7 @@ CUDAOpenGLVisualizationWidget::UpdateVBO(bool SizeChanged)
 	//printf("CUDA mapped VBO: May access %ld bytes\n", num_bytes);
 
 	// Compute the world coordinates
-	ElapsedKernelTime = CUDARangeToWorld
+	ElapsedKernelTime = FastStitching
 	(
 		m_InputImgArr, 
 		m_Output,

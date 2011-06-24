@@ -1,19 +1,19 @@
-#ifndef CUDARangeToWorldPLUGINFACTORY_H__
-#define CUDARangeToWorldPLUGINFACTORY_H__
+#ifndef FastStitchingPLUGINFACTORY_H__
+#define FastStitchingPLUGINFACTORY_H__
 
 #include <QObject>
 #include "PluginFactories.h"
 
-class CUDARangeToWorldPluginFactory : public QObject, public ritk::ApplicationPluginFactory
+class FastStitchingPluginFactory : public QObject, public ritk::ApplicationPluginFactory
 {
 	Q_OBJECT
     Q_INTERFACES(ritk::ApplicationPluginFactory)
 
 public:
 	/// Constructor
-	CUDARangeToWorldPluginFactory();
+	FastStitchingPluginFactory();
 	/// Destructor
-	~CUDARangeToWorldPluginFactory();
+	~FastStitchingPluginFactory();
 
   ritk::ApplicationPlugin* CreateInstance();
 
@@ -22,4 +22,4 @@ public:
 	QString GetDescription();
 };
 
-#endif // CUDARangeToWorldPLUGINFACTORY_H__
+#endif // FastStitchingPLUGINFACTORY_H__

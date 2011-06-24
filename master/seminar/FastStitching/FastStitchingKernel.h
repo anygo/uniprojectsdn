@@ -61,7 +61,7 @@ CUDAMeshTriangulationKernel(unsigned int NX, unsigned int NY, const float3* Inpu
 //----------------------------------------------------------------------------
 template<unsigned int BlockSizeX, unsigned int BlockSizeY>
 __global__ void
-CUDARangeToWorldKernel(unsigned int NX, unsigned int NY, float4* Output, float fx, float fy, float cx, float cy, float k1, float k2, float p1, float p2)
+FastStitchingKernel(unsigned int NX, unsigned int NY, float4* Output, float fx, float fy, float cx, float cy, float k1, float k2, float p1, float p2)
 {
 	// 2D index and linear index within this thread block
 	int tu = threadIdx.x;

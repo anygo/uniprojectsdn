@@ -1,16 +1,17 @@
-#include "FastStitchingPlugin.h"
+#include "CUDARangeToWorldPlugin.h"
 #include "DebugManager.h"
 #include "Manager.h"
 
 
-FastStitchingPlugin::FastStitchingPlugin()
+CUDARangeToWorldPlugin::CUDARangeToWorldPlugin()
 {
 	// Create the widget
-	m_Widget = new FastStitchingWidget();
-	connect(this, SIGNAL(UpdateGUI()), m_Widget, SLOT(UpdateGUI()));
+	m_Widget = new CUDARangeToWorldWidget();
+
+	Timer::SetNumberOfPassesToAverageRuntime(10);
 }
 
-FastStitchingPlugin::~FastStitchingPlugin()
+CUDARangeToWorldPlugin::~CUDARangeToWorldPlugin()
 {
 	delete m_Widget;
 }
@@ -18,15 +19,15 @@ FastStitchingPlugin::~FastStitchingPlugin()
 
 //----------------------------------------------------------------------------
 QString
-FastStitchingPlugin::GetName()
+CUDARangeToWorldPlugin::GetName()
 {
-	return tr("FastStitchingPlugin");
+	return tr("CUDARangeToWorldPlugin");
 }
 
 
 //----------------------------------------------------------------------------
 QWidget*
-FastStitchingPlugin::GetPluginGUI()
+CUDARangeToWorldPlugin::GetPluginGUI()
 {
 	return m_Widget;
 }
@@ -34,24 +35,25 @@ FastStitchingPlugin::GetPluginGUI()
 
 //----------------------------------------------------------------------------
 void
-FastStitchingPlugin::ProcessEvent(ritk::Event::Pointer EventP)
+CUDARangeToWorldPlugin::ProcessEvent(ritk::Event::Pointer EventP)
 {
 	// New frame event
-	if ( EventP->type() == ritk::NewFrameEvent::EventType )
+  if ( EventP->type() == ritk::NewFrameEvent::EventType )
 	{
 		// Cast the event
 		ritk::NewFrameEvent::Pointer NewFrameEventP = qSharedPointerDynamicCast<ritk::NewFrameEvent,ritk::Event>(EventP);
 		if ( !NewFrameEventP )
 		{
-			LOG_DEB("Event mismatch detected: Type=" << EventP->type());
+		LOG_DEB("Event mismatch detected: Type=" << EventP->type());
 			return;
 		}
 		ritk::NewFrameEvent::RImageConstPointer CurrentFrameP = NewFrameEventP->RImage;
-
 		// Here comes your code. Access range data with CurrentFrame.
 		// ...
-
-		emit UpdateGUI();
+		Timer::StartTimer();
+		m_Widget->SetRangeData(CurrentFrameP);
+		Timer::StopTimer();
+		Timer::GetElapsedTime(&m_Runtime[0],&m_Runtime[1]);
 	}
 	else
 	{

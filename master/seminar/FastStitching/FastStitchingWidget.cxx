@@ -1,7 +1,4 @@
 #include "FastStitchingWidget.h"
-//#include "DebugManager.h"
-//
-//#include <windows.h> 
 
 FastStitchingWidget::FastStitchingWidget(QWidget *parent) :
 QWidget(parent)
@@ -20,6 +17,7 @@ QWidget(parent)
 	connect(this,									SIGNAL(SetMaxSignal(int)),			this,	SLOT(SetMaxValue(int))					);
 
 	m_CurrentFrame = NULL;
+	m_PreviousFrame = NULL;
 }
 
 FastStitchingWidget::~FastStitchingWidget()
@@ -42,8 +40,10 @@ FastStitchingWidget::SetRangeData(ritk::RImageF2::ConstPointer Data)
 
 	}
 
+	m_PreviousFrame = m_CurrentFrame;
 	m_CurrentFrame = Data;
-	m_VisualizationWidget3D->SetRangeData(m_CurrentFrame);	
+	m_VisualizationWidget3D->SetRangeData(m_CurrentFrame);
+	m_VisualizationWidget3D->SetRangeData(m_PreviousFrame);
 }
 
 

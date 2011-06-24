@@ -65,6 +65,9 @@ StitchingPlugin::StitchingPlugin()
 	connect(this, SIGNAL(UpdateProgressBar(int)),		m_Widget->m_ProgressBar, SLOT(setValue(int)));
 	connect(this, SIGNAL(InitProgressBar(int, int)),	m_Widget->m_ProgressBar, SLOT(setRange(int, int)));
 
+	// signal for time measurements
+	connect(this, SIGNAL(UpdateStats()), this, SLOT(ComputeStats()));
+
 	// add data actor
 	m_DataActor3D = vtkSmartPointer<ritk::RImageActorPipeline>::New();	
 	m_DataActor3D->SetVisualizationMode(ritk::RImageActorPipeline::RGB);
@@ -210,7 +213,6 @@ StitchingPlugin::HighlightActor(QListWidgetItem* item)
 		hli->m_actor->GetMapper()->SetColorModeToDefault();
 		hli->setTextColor(QColor(0, 0, 0, 255));
 	}
-	emit UpdateGUI();
 }
 void
 StitchingPlugin::DeleteSelectedActors()
@@ -388,8 +390,11 @@ StitchingPlugin::StitchSelectedActors()
 		if (hli->isSelected())
 		{
 			DBG << "stitching actor " << i << std::endl;
-			HighlightActor(hli);
-			emit UpdateGUI();
+			if (m_Widget->m_CheckBoxShowSelectedActors->isChecked())
+			{
+				HighlightActor(hli);
+			}
+			//emit UpdateGUI();
 			QCoreApplication::processEvents();
 
 			HistoryListItem* hli_prev = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i - 1));
@@ -397,7 +402,11 @@ StitchingPlugin::StitchSelectedActors()
 			t.start();
 			try
 			{
+				QTime timeOverall;
+				timeOverall.start();
 				Stitch(hli->m_actor->GetData(), hli_prev->m_actor->GetData(), hli_prev->m_transform, hli->m_actor->GetData(), hli->m_transform);
+				OVERALL_TIME = timeOverall.elapsed();
+				LOAD_TIME = 0; // because frames are already loaded
 			} catch (std::exception &e)
 			{
 				std::cout << "Exception: \"" << e.what() << "\"" << std::endl;
@@ -405,14 +414,18 @@ StitchingPlugin::StitchSelectedActors()
 			}
 			overallTime += t.elapsed();
 
-			HighlightActor(hli);
+			if (m_Widget->m_CheckBoxShowSelectedActors->isChecked())
+			{
+				HighlightActor(hli);
+			}
+			emit UpdateStats();
 			emit UpdateProgressBar(++counterProgressBar);
 			emit UpdateGUI();
 			QCoreApplication::processEvents();
 		}
 	}
 
-	//std::cout << overallTime << " ms for Stitching " << m_Widget->m_ListWidgetHistory->selectedItems().count() << " frames (time to update GUI excluded)" << std::endl;
+	std::cout << overallTime << " ms for Stitching " << m_Widget->m_ListWidgetHistory->selectedItems().count() << " frames (time to update GUI excluded)" << std::endl;
 
 	emit UpdateGUI();
 }
@@ -545,6 +558,41 @@ StitchingPlugin::Delaunay2DSelectedActors()
 }
 //----------------------------------------------------------------------------
 void
+StitchingPlugin::ComputeStats()
+{
+	std::stringstream visualPercentage;
+
+	int percentageLoad = static_cast<int>((static_cast<double>(LOAD_TIME) / static_cast<double>(OVERALL_TIME)) * 100.0);
+	for (int i = 0; i < percentageLoad / 3; ++i)
+		visualPercentage << "|";
+	std::string visualPercentageLoad = visualPercentage.str();
+	visualPercentage.str(""); visualPercentage.clear();
+
+	int percentageClip = static_cast<int>((static_cast<double>(CLIP_TIME) / static_cast<double>(OVERALL_TIME)) * 100.0);
+	for (int i = 0; i < percentageClip / 3; ++i)
+		visualPercentage << "|";
+	std::string visualPercentageClip = visualPercentage.str();
+	visualPercentage.str(""); visualPercentage.clear();
+
+	int percentageICP = static_cast<int>((static_cast<double>(ICP_TIME) / static_cast<double>(OVERALL_TIME)) * 100.0);
+	for (int i = 0; i < percentageICP / 3; ++i)
+		visualPercentage << "|";
+	std::string visualPercentageICP = visualPercentage.str();
+	visualPercentage.str(""); visualPercentage.clear();
+
+	int percentageTransform = static_cast<int>((static_cast<double>(TRANSFORM_TIME) / static_cast<double>(OVERALL_TIME)) * 100.0);
+	for (int i = 0; i < percentageTransform / 3; ++i)
+		visualPercentage << "|";
+	std::string visualPercentageTransform = visualPercentage.str();
+	visualPercentage.str(""); visualPercentage.clear();
+
+	m_Widget->m_LabelTimeLoad->setText(QString(QString(visualPercentageLoad.c_str()) + QString(" (") + QString::number(LOAD_TIME) + QString(" ms, ") + QString::number(percentageLoad) + QString("%)")));
+	m_Widget->m_LabelTimeClip->setText(QString(QString(visualPercentageClip.c_str()) + QString(" (") + QString::number(CLIP_TIME) + QString(" ms, ") + QString::number(percentageClip) + QString("%)")));
+	m_Widget->m_LabelTimeICP->setText(QString(QString(visualPercentageICP.c_str()) + QString(" (") + QString::number(ICP_TIME) + QString(" ms, ") + QString::number(percentageICP) + QString("%)")));
+	m_Widget->m_LabelTimeTransform->setText(QString(QString(visualPercentageTransform.c_str()) + QString(" (") + QString::number(TRANSFORM_TIME) + QString(" ms, ") + QString::number(percentageTransform) + QString("%)")));
+	m_Widget->m_LabelTimeOverall->setText(QString(QString::number(OVERALL_TIME) + QString(" ms")));
+}
+void
 StitchingPlugin::LoadInitialize()
 {
 	LoadFrame();
@@ -553,8 +601,8 @@ StitchingPlugin::LoadInitialize()
 void
 StitchingPlugin::LoadStitch()
 {
-	QTime t;
-	t.start();
+	QTime timeOverall;
+	timeOverall.start();
 
 	// get last entry in history to determine previousTransformationMatrix and previousFrame
 	int listSize = m_Widget->m_ListWidgetHistory->count();
@@ -584,7 +632,7 @@ StitchingPlugin::LoadStitch()
 	// stitch to just loaded frame to the previous frame (given by last history entry)
 	Stitch(m_Data, hli_last->m_actor->GetData(), hli_last->m_transform, hli->m_actor->GetData(), hli->m_transform);
 
-	OVERALL_TIME = t.elapsed();
+	OVERALL_TIME = timeOverall.elapsed();
 
 	m_Widget->m_ListWidgetHistory->insertItem(listSize, hli);
 	hli->setSelected(true);
@@ -594,40 +642,8 @@ StitchingPlugin::LoadStitch()
 		ShowHideActors();
 	}
 
-
-
 	// stats...
-	std::stringstream visualPercentage;
-
-	int percentageLoad = static_cast<int>((static_cast<double>(LOAD_TIME) / static_cast<double>(OVERALL_TIME)) * 100.0);
-	for (int i = 0; i < percentageLoad / 3; ++i)
-		visualPercentage << "|";
-	std::string visualPercentageLoad = visualPercentage.str();
-	visualPercentage.str(""); visualPercentage.clear();
-
-	int percentageClip = static_cast<int>((static_cast<double>(CLIP_TIME) / static_cast<double>(OVERALL_TIME)) * 100.0);
-	for (int i = 0; i < percentageClip / 3; ++i)
-		visualPercentage << "|";
-	std::string visualPercentageClip = visualPercentage.str();
-	visualPercentage.str(""); visualPercentage.clear();
-
-	int percentageICP = static_cast<int>((static_cast<double>(ICP_TIME) / static_cast<double>(OVERALL_TIME)) * 100.0);
-	for (int i = 0; i < percentageICP / 3; ++i)
-		visualPercentage << "|";
-	std::string visualPercentageICP = visualPercentage.str();
-	visualPercentage.str(""); visualPercentage.clear();
-
-	int percentageTransform = static_cast<int>((static_cast<double>(TRANSFORM_TIME) / static_cast<double>(OVERALL_TIME)) * 100.0);
-	for (int i = 0; i < percentageTransform / 3; ++i)
-		visualPercentage << "|";
-	std::string visualPercentageTransform = visualPercentage.str();
-	visualPercentage.str(""); visualPercentage.clear();
-
-	m_Widget->m_LabelTimeLoad->setText(QString(QString::number(LOAD_TIME) + QString(" ms\t") + QString(visualPercentageLoad.c_str()) + QString(" (") + QString::number(percentageLoad) + QString(" %)")));
-	m_Widget->m_LabelTimeClip->setText(QString(QString::number(CLIP_TIME) + QString(" ms\t") + QString(visualPercentageClip.c_str()) + QString(" (") + QString::number(percentageClip) + QString(" %)")));
-	m_Widget->m_LabelTimeICP->setText(QString(QString::number(ICP_TIME) + QString(" ms\t") + QString(visualPercentageICP.c_str()) + QString(" (") + QString::number(percentageICP) + QString(" %)")));
-	m_Widget->m_LabelTimeTransform->setText(QString(QString::number(TRANSFORM_TIME) + QString(" ms\t") + QString(visualPercentageTransform.c_str()) + QString(" (") + QString::number(percentageTransform) + QString(" %)")));
-	m_Widget->m_LabelTimeOverall->setText(QString(QString::number(OVERALL_TIME) + QString(" ms")));
+	emit UpdateStats();
 }
 //----------------------------------------------------------------------------
 void

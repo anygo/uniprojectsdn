@@ -72,36 +72,36 @@ ENDIF(CUDA_FOUND)
 #-----------------------------------------------------------------------------
 
 SET(HDRS
-	CUDARangeToWorldPluginFactory.h
-	CUDARangeToWorldPlugin.h
-	CUDARangeToWorldWidget.h
+	FastStitchingPluginFactory.h
+	FastStitchingPlugin.h
+	FastStitchingWidget.h
 	CUDAOpenGLVisualizationWidget.h
 )
 
 SET(SRCS
-	CUDARangeToWorldPluginFactory.cxx
-	CUDARangeToWorldPlugin.cxx
-	CUDARangeToWorldWidget.cxx
+	FastStitchingPluginFactory.cxx
+	FastStitchingPlugin.cxx
+	FastStitchingWidget.cxx
 	CUDAOpenGLVisualizationWidget.cxx
 )
 
 SET(	CUDA_HDRS
-		CUDARangeToWorldKernel.h
+		FastStitchingKernel.h
 )
 
 SET(	CUDA_SRCS
-		CUDARangeToWorld.cu
+		FastStitching.cu
 )
 
 SET(  MOC_HDRS 	
-	CUDARangeToWorldPluginFactory.h
-	CUDARangeToWorldPlugin.h
-	CUDARangeToWorldWidget.h
+	FastStitchingPluginFactory.h
+	FastStitchingPlugin.h
+	FastStitchingWidget.h
 	CUDAOpenGLVisualizationWidget.h
 )
 
 SET(  UIS
-	CUDARangeToWorldWidget.ui
+	FastStitchingWidget.ui
 )
 
 QT4_WRAP_UI(UI_HDRS ${UIS})	
@@ -111,7 +111,7 @@ QT4_WRAP_CPP(MOC_SRCS ${MOC_HDRS})
 
 # Set the name for the library
 SET(  LIBRARY_NAME
-    CUDARangeToWorldPlugin)
+    FastStitchingPlugin)
 
 # Set include directories
 SET(  INCLUDE_DIRS

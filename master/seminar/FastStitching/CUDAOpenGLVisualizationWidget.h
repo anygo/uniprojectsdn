@@ -11,32 +11,32 @@
 #include "CudaContext.h"
 
 /**
- *	@class		CUDAOpenGLVisualizationWidget
- *	@author		Jakob Wasza
- *	@brief		A visualization widget that uses OpenGL
- *
- *	@details
- */
+*	@class		CUDAOpenGLVisualizationWidget
+*	@author		Jakob Wasza
+*	@brief		A visualization widget that uses OpenGL
+*
+*	@details
+*/
 class CUDAOpenGLVisualizationWidget : public QGLWidget
 {
 	Q_OBJECT
 
 public:
 
-  /// Constructor
+	/// Constructor
 	CUDAOpenGLVisualizationWidget(QWidget *parent=0);
 	/// Destructor
 	~CUDAOpenGLVisualizationWidget();
 
-  /**	@brief	Set the range data to render 
-	 *	@param	Data	The data to render
-	 *
-	 *	@details
-	 *	A call to this method will set the range data to render.
-	 *	In order to comply with the OpenGL render context this method
-	 *	will pass the data to the UpdateVBO() slot via the NewDataAvailable() signal.
-	 */
-  void SetRangeData(ritk::RImageF2::ConstPointer Data);
+	/**	@brief	Set the range data to render 
+	*	@param	Data	The data to render
+	*
+	*	@details
+	*	A call to this method will set the range data to render.
+	*	In order to comply with the OpenGL render context this method
+	*	will pass the data to the UpdateVBO() slot via the NewDataAvailable() signal.
+	*/
+	void SetRangeData(ritk::RImageF2::ConstPointer Data);
 
 	/// Set the alpha value for blending
 	void SetLUTAlpha(float value);
@@ -83,30 +83,30 @@ protected:
 
 	void SetFullScreenMode(bool b);
 
-protected slots:
-	/**	@brief	Update the internal VBOs 
-	 *
-	 *	@details
-	 *	Calling this method will update the internal VBOs to match the current frame. 
-	 *	Note that this method is supposed to be called within the widgets main thread
-	 *	in order to comply with the OpenGL render context!
-	 *	@sa SetTOFData
-	 */
-	void UpdateVBO(bool SizeChanged);
+	protected slots:
+		/**	@brief	Update the internal VBOs 
+		*
+		*	@details
+		*	Calling this method will update the internal VBOs to match the current frame. 
+		*	Note that this method is supposed to be called within the widgets main thread
+		*	in order to comply with the OpenGL render context!
+		*	@sa SetTOFData
+		*/
+		void UpdateVBO(bool SizeChanged);
 
-	/**	@name Mouse rotation */
-	//@{
-	void SetXRotation(int angle);
-	void SetYRotation(int angle);
-	void SetZRotation(int angle);
-	void SetTranslation(int dx, int dy);
-	//@}
+		/**	@name Mouse rotation */
+		//@{
+		void SetXRotation(int angle);
+		void SetYRotation(int angle);
+		void SetZRotation(int angle);
+		void SetTranslation(int dx, int dy);
+		//@}
 
-	/// Update the current zoom
-	void UpdateZoom(float delta);
+		/// Update the current zoom
+		void UpdateZoom(float delta);
 
-	/// Reset the camera
-	void ResetCamera();
+		/// Reset the camera
+		void ResetCamera();
 
 protected:
 	/// Flag that indicates whether this widget (in particular the OpenGL extensions are initialized)
@@ -195,7 +195,7 @@ protected:
 	int m_Counters[10];
 	float m_Timers[10];
 
-  /// true if points instead of triangles
+	/// true if points instead of triangles
 	bool m_renderPoints;
 };
 

@@ -76,7 +76,10 @@
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_4">
             <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_4">
+             <layout class="QHBoxLayout" name="horizontalLayout_3">
+              <property name="spacing">
+               <number>5</number>
+              </property>
               <item>
                <widget class="QPushButton" name="m_PushButtonStitchFrame">
                 <property name="minimumSize">
@@ -86,21 +89,17 @@
                  </size>
                 </property>
                 <property name="text">
-                 <string>Manual Stitching / Initialization</string>
+                 <string>Stitch</string>
                 </property>
                 <property name="checkable">
                  <bool>false</bool>
                 </property>
                </widget>
               </item>
-             </layout>
-            </item>
-            <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_3">
               <item>
                <widget class="QRadioButton" name="m_RadioButtonOff">
                 <property name="text">
-                 <string>Off</string>
+                 <string>Manual</string>
                 </property>
                 <property name="checked">
                  <bool>true</bool>
@@ -117,7 +116,7 @@
               <item>
                <widget class="QRadioButton" name="m_RadioButtonLiveStitching">
                 <property name="text">
-                 <string>LiveStitching</string>
+                 <string>Live</string>
                 </property>
                </widget>
               </item>
@@ -127,7 +126,7 @@
                  <bool>true</bool>
                 </property>
                 <property name="toolTip">
-                 <string>record each n'th frame</string>
+                 <string>only use each n'th frame</string>
                 </property>
                 <property name="minimum">
                  <number>1</number>
@@ -139,7 +138,7 @@
                  <number>5</number>
                 </property>
                 <property name="value">
-                 <number>15</number>
+                 <number>10</number>
                 </property>
                </widget>
               </item>
@@ -188,7 +187,7 @@
                   <number>500</number>
                  </property>
                  <property name="value">
-                  <number>3500</number>
+                  <number>2000</number>
                  </property>
                 </widget>
                </item>
@@ -922,7 +921,7 @@
              <widget class="QLabel" name="m_LabelTimeLoad">
               <property name="minimumSize">
                <size>
-                <width>200</width>
+                <width>243</width>
                 <height>0</height>
                </size>
               </property>
@@ -1094,11 +1093,11 @@
    <hints>
     <hint type="sourcelabel">
      <x>933</x>
-     <y>466</y>
+     <y>430</y>
     </hint>
     <hint type="destinationlabel">
      <x>784</x>
-     <y>463</y>
+     <y>454</y>
     </hint>
    </hints>
   </connection>
@@ -1110,11 +1109,11 @@
    <hints>
     <hint type="sourcelabel">
      <x>936</x>
-     <y>323</y>
+     <y>259</y>
     </hint>
     <hint type="destinationlabel">
-     <x>741</x>
-     <y>229</y>
+     <x>722</x>
+     <y>147</y>
     </hint>
    </hints>
   </connection>
@@ -1126,11 +1125,27 @@
    <hints>
     <hint type="sourcelabel">
      <x>936</x>
-     <y>306</y>
+     <y>242</y>
     </hint>
     <hint type="destinationlabel">
-     <x>741</x>
-     <y>229</y>
+     <x>722</x>
+     <y>142</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>m_RadioButtonOff</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>m_PushButtonStitchFrame</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>725</x>
+     <y>79</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>708</x>
+     <y>79</y>
     </hint>
    </hints>
   </connection>

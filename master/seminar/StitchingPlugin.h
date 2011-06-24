@@ -60,6 +60,7 @@ signals:
 	void UpdateGUI();
 	void UpdateProgressBar(int val);
 	void InitProgressBar(int from, int to);
+	void UpdateStats();
 
 protected slots:
 	void LoadStitch();
@@ -77,6 +78,7 @@ protected slots:
 	void StitchSelectedActors();
 	void UndoTransformForSelectedActors();
 	void HighlightActor(QListWidgetItem*);
+	void ComputeStats();
 
 
 protected:

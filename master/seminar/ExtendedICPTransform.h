@@ -27,6 +27,8 @@ public:
 	void SetSource(vtkPolyData *source);
 	void SetTarget(vtkPolyData *target);
 
+	void vtkPolyDataToPointCoordsAndColors(double clipPercentage);
+
 	// virtual methods that have to be defined
 	vtkAbstractTransform *MakeTransform();
 	void Inverse();
@@ -56,7 +58,6 @@ protected:
 
 	void InternalUpdate();
 	unsigned long int GetMTime();
-	void vtkPolyDataToPointCoordsAndColors();
 	void vtkPolyDataToPointCoords(vtkSmartPointer<vtkPoints> poly, PointCoords* coords);
 
 	vtkSmartPointer<vtkPolyData> m_Source;

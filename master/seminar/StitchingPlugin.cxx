@@ -671,6 +671,9 @@ StitchingPlugin::ExtractValidPoints()
 	double p[3];
 	for (vtkIdType i = 0; i < m_Data->GetNumberOfPoints(); ++i)
 	{	
+		if (rand() % 4 != 0)
+			continue;
+
 		m_Data->GetPoint(i, p);
 
 		if (p[0] == p[0]) // i.e. not QNAN
@@ -807,27 +810,12 @@ StitchingPlugin::Stitch(vtkPolyData* toBeStitched, vtkPolyData* previousFrame,
 						vtkPolyData* outputStitchedPolyData,
 						vtkMatrix4x4* outputTransformationMatrix)
 {
-	// iterative closest point (ICP) transformation
-	vtkSmartPointer<ExtendedICPTransform> icp = 
-		vtkSmartPointer<ExtendedICPTransform>::New();
-
-	QTime timeClip;
-	timeClip.start();
 	// get a subvolume of the original data
 	vtkSmartPointer<vtkPolyData> voi = 
 		vtkSmartPointer<vtkPolyData>::New();
 
-	if (m_Widget->m_CheckBoxVOIClipping->isChecked())
-	{
-		voi->DeepCopy(toBeStitched);
-		Clip(voi);
-	}
-	else
-	{
-		voi->ShallowCopy(toBeStitched);
-	}
-	CLIP_TIME = timeClip.elapsed();
-
+	voi->ShallowCopy(toBeStitched);
+	
 	if (voi->GetNumberOfPoints() < m_Widget->m_SpinBoxLandmarks->value())
 	{
 		std::cout << "Reduce the number of landmarks!!! Data might be inconsistent now..." << std::endl;
@@ -856,16 +844,16 @@ StitchingPlugin::Stitch(vtkPolyData* toBeStitched, vtkPolyData* previousFrame,
 	}
 	cpf->SetMetric(metric);
 
-	// time measurement for ICP
-	QTime timeICP;
-	timeICP.start();
+	// iterative closest point (ICP) transformation
+	vtkSmartPointer<ExtendedICPTransform> icp = 
+		vtkSmartPointer<ExtendedICPTransform>::New();
 
 	// configure icp
 	icp->SetSource(voi);
 	icp->SetTarget(previousFrame);
+	icp->SetNumLandmarks(m_Widget->m_SpinBoxLandmarks->value());
 	icp->GetLandmarkTransform()->SetModeToRigidBody();
 	icp->SetMaxMeanDist(static_cast<float>(m_Widget->m_DoubleSpinBoxMaxRMS->value()));
-	icp->SetNumLandmarks(m_Widget->m_SpinBoxLandmarks->value());
 	icp->SetMaxIter(m_Widget->m_SpinBoxMaxIterations->value());
 	icp->SetRemoveOutliers(m_Widget->m_CheckBoxRemoveOutliers->isChecked());
 	icp->SetOutlierRate(static_cast<float>(m_Widget->m_DoubleSpinBoxOutlierRate->value()));
@@ -877,12 +865,22 @@ StitchingPlugin::Stitch(vtkPolyData* toBeStitched, vtkPolyData* previousFrame,
 	double boundDiagonal = sqrt((bounds[1] - bounds[0])*(bounds[1] - bounds[0]) + (bounds[3] - bounds[2])*(bounds[3] - bounds[2]) + (bounds[5] - bounds[4])*(bounds[5] - bounds[4]));
 	icp->SetNormalizeRGBToDistanceValuesFactor(static_cast<float>(boundDiagonal / sqrt(3.0)));
 
+	// transform vtkPolyData in our own structures and clip simultaneously
+	QTime timeClip;
+	timeClip.start();
+	icp->vtkPolyDataToPointCoordsAndColors(m_Widget->m_DoubleSpinBoxClipPercentage->value());
+	CLIP_TIME = timeClip.elapsed();
+
+	QTime timeICP;
+	timeICP.start();
+
 	icp->SetClosestPointFinder(cpf);
 	icp->Modified();
 	icp->Update();
 
-	// update icp runtime, etc
 	ICP_TIME = timeICP.elapsed();
+
+	// update icp runtime, etc
 	m_Widget->m_LabelICPMeanTargetDistance->setText(QString::number(icp->GetMeanTargetDistance(), 'f', 2));
 	
 

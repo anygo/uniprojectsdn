@@ -18,11 +18,7 @@
 
 extern "C"
 void
-CUDARangeToWorld(const cudaArray *InputImageArray, float4 *DeviceOutput, int w, int h, float fx, float fy, float cx, float cy, float k1, float k2);
-
-extern "C"
-void
-TEST(float4* DeviceOutput);
+CUDARangeToWorld(int bla, const cudaArray *InputImageArray, float4 *DeviceOutput, int w, int h, float fx, float fy, float cx, float cy, float k1, float k2);
 
 #define CHECK_GL_ERROR()													\
 {																			\
@@ -140,9 +136,17 @@ CUDAOpenGLVisualizationWidget::~CUDAOpenGLVisualizationWidget()
 
 
 //----------------------------------------------------------------------------
+
+
+static int bla = 0;
+
+
 void
 CUDAOpenGLVisualizationWidget::SetRangeData(ritk::RImageF2::ConstPointer Data)
 {
+	std::cout << "SetRangeData" << std::endl;
+	bla = bla++ % 2;
+
 	// Lock ourself
 	m_Mutex.lock();
 
@@ -172,6 +176,8 @@ CUDAOpenGLVisualizationWidget::SetRangeData(ritk::RImageF2::ConstPointer Data)
 	// Prepare the texture coords
 	if (SizeChanged)
 	{
+		SizeX *= 2;
+
 		// Delete old memory and allocate memory to fit the requirements
 		if ( m_TextureCoords )
 			delete[] m_TextureCoords;
@@ -193,20 +199,24 @@ CUDAOpenGLVisualizationWidget::SetRangeData(ritk::RImageF2::ConstPointer Data)
 			}
 		}
 
+		SizeX /= 2;
 	}
 
 	// Prepare the rgb texture data
 	if (SizeChanged)
 	{
+		SizeX *= 2;
 		// Delete old memory and allocate memory to fit the requirements
 		if ( m_RGBTextureData )
 			delete[] m_RGBTextureData;
 		m_RGBTextureData = new unsigned char[SizeX*SizeY*3];
+		SizeX /= 2;
 	}
 
+	
 	// Copy the RGB texture
 	const ritk::RImageF2::RGBType *RGBData = m_CurrentFrame->GetRGBImage()->GetBufferPointer();
-	unsigned char *RGBTexturePtr = m_RGBTextureData;
+	unsigned char *RGBTexturePtr = bla == 0 ? m_RGBTextureData : (m_RGBTextureData+SizeX*SizeY*3);
 	for ( int l = 0; l < SizeX*SizeY; ++l, ++RGBTexturePtr, ++RGBData )
 	{
 		*RGBTexturePtr = (unsigned char)(*RGBData)[0];
@@ -217,14 +227,16 @@ CUDAOpenGLVisualizationWidget::SetRangeData(ritk::RImageF2::ConstPointer Data)
 	// Prepare the range texture data
 	if (SizeChanged)
 	{
+		SizeX *= 2;
 		// Delete old memory and allocate memory to fit the requirements
 		if ( m_RangeTextureData )
 			delete[] m_RangeTextureData;
 		m_RangeTextureData = new unsigned char[SizeX*SizeY];
+		SizeX /= 2;
 	}
 
 	// Clamp and rescale the range information
-	unsigned char *RTexturePtr = m_RangeTextureData;
+	unsigned char *RTexturePtr = bla == 0 ? m_RangeTextureData : (m_RangeTextureData+SizeX*SizeY);
 	const float *RData = m_CurrentFrame->GetRangeImage()->GetBufferPointer();
 	float Scale = 1.f/(m_RangeBoundaries[1]-m_RangeBoundaries[0]);
 
@@ -259,6 +271,8 @@ CUDAOpenGLVisualizationWidget::SetRangeData(ritk::RImageF2::ConstPointer Data)
 void 
 CUDAOpenGLVisualizationWidget::UpdateVBO(bool SizeChanged)
 {
+	std::cout << "UpdateVBO" << std::endl;
+
 	// Lock the mutex
 	m_Mutex.lock();
 
@@ -279,10 +293,14 @@ CUDAOpenGLVisualizationWidget::UpdateVBO(bool SizeChanged)
 		cudaChannelFormatDesc ChannelDesc = cudaCreateChannelDesc(32, 0, 0, 0, cudaChannelFormatKindFloat);
 		cutilSafeCall(cudaMallocArray(&m_InputImgArr, &ChannelDesc, SizeX, SizeY));
 
+		SizeX *= 2;
+
 		cutilSafeCall(cudaGraphicsUnregisterResource(m_Cuda_vbo_resource));
 		ritk::glBindBuffer(GL_ARRAY_BUFFER, m_VBOVertices);
 		ritk::glBufferData(GL_ARRAY_BUFFER, (SizeX*SizeY + SizeX*(SizeY-2)) * 4*sizeof(float), 0, GL_DYNAMIC_DRAW);
 		cutilSafeCall(cudaGraphicsGLRegisterBuffer(&m_Cuda_vbo_resource, m_VBOVertices, cudaGraphicsMapFlagsWriteDiscard));
+
+		SizeX /= 2;
 
 		m_AllocatedSize = SizeX * SizeY;
 	}
@@ -295,9 +313,12 @@ CUDAOpenGLVisualizationWidget::UpdateVBO(bool SizeChanged)
 	cutilSafeCall(cudaGraphicsMapResources(1, &m_Cuda_vbo_resource, 0));
 	cutilSafeCall(cudaGraphicsResourceGetMappedPointer((void **)&m_Output, &num_bytes, m_Cuda_vbo_resource));
 
+	std::cout << "CUDARangeToWorld" << std::endl;
+
 	// Compute the world coordinates
 	CUDARangeToWorld
 		(
+		bla,
 		m_InputImgArr, 
 		m_Output,
 		m_CurrentFrame->GetBufferedRegion().GetSize()[0],
@@ -310,7 +331,7 @@ CUDAOpenGLVisualizationWidget::UpdateVBO(bool SizeChanged)
 		m_CurrentFrame->GetCameraParameters()[ritk::CameraParameters::K2]
 		);
 
-	TEST(m_Output);
+	std::cout << "/CUDARangeToWorld" << std::endl;
 
 	// Release CUDA resources
 	cutilSafeCall(cudaGraphicsUnmapResources(1, &m_Cuda_vbo_resource, 0));
@@ -323,10 +344,14 @@ CUDAOpenGLVisualizationWidget::UpdateVBO(bool SizeChanged)
 	// Activate the texture coordinate VBO and update its data
 	if (SizeChanged)
 	{
+		SizeX *= 2;
 		ritk::glBindBuffer(GL_ARRAY_BUFFER, m_VBOTexCoords);
 		ritk::glBufferData(GL_ARRAY_BUFFER, SizeX*SizeY * 2 * sizeof(float) + SizeX*(SizeY-2)*2*sizeof(float), m_TextureCoords, GL_DYNAMIC_DRAW);
+		SizeX /= 2;
 	}
 	CHECK_GL_ERROR();
+
+	SizeX *= 2;
 
 	// Bind the RGB texture
 	glBindTexture(GL_TEXTURE_2D, m_RGBTexture);
@@ -342,6 +367,8 @@ CUDAOpenGLVisualizationWidget::UpdateVBO(bool SizeChanged)
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 	CHECK_GL_ERROR();
 
+	SizeX /= 2;
+
 	LONGLONG C3;
 	QueryPerformanceCounter((LARGE_INTEGER*)&C3);
 
@@ -351,11 +378,17 @@ CUDAOpenGLVisualizationWidget::UpdateVBO(bool SizeChanged)
 	// Unlock
 	m_Mutex.unlock();
 
+	std::cout << "updateGL" << std::endl;
+
 	// Update the OpenGL state
 	updateGL();
 
+	std::cout << "/updateGL" << std::endl;
+
 	// Wait for all OpenGL operations to finish
 	glFinish();
+
+	std::cout << "/glFinish" << std::endl;
 }
 
 
@@ -389,6 +422,8 @@ CUDAOpenGLVisualizationWidget::ResetCamera()
 		long SizeX = m_CurrentFrame->GetBufferedRegion().GetSize()[0];
 		long SizeY = m_CurrentFrame->GetBufferedRegion().GetSize()[1];
 
+		SizeX *= 2;
+
 		// for triangle-view in opengl we need most of the vertices twice to get a surface
 		NumVertices = SizeX*SizeY + SizeX*(SizeY-2);
 		addTmp = 4;
@@ -403,6 +438,8 @@ CUDAOpenGLVisualizationWidget::ResetCamera()
 		cutilSafeCall(cudaGraphicsUnmapResources(1, &m_Cuda_vbo_resource, 0));
 
 		CoordPtr = realOut;
+
+		SizeX /= 2;
 	}
 
 	float BBMin[] = {1e16,1e16,1e16};
@@ -597,14 +634,14 @@ CUDAOpenGLVisualizationWidget::paintGL()
 		0, 1, 0);
 
 	// Apply the current translation
-	glTranslatef(m_Translation[0],m_Translation[1],0);
+	glTranslatef(m_Translation[0], m_Translation[1], 0);
 
 	// Apply the current rotation
-	glTranslatef(m_ViewCenter[0],m_ViewCenter[1],m_ViewCenter[2]);
+	glTranslatef(m_ViewCenter[0], m_ViewCenter[1], m_ViewCenter[2]);
 	glRotatef(m_Rotation[0] / 16.0, 1.0, 0.0, 0.0);
 	glRotatef(m_Rotation[1] / 16.0, 0.0, 1.0, 0.0);
 	glRotatef(m_Rotation[2] / 16.0, 0.0, 0.0, 1.0);
-	glTranslatef(-m_ViewCenter[0],-m_ViewCenter[1],-m_ViewCenter[2]);
+	glTranslatef(-m_ViewCenter[0], -m_ViewCenter[1], -m_ViewCenter[2]);
 
 	// Default drawing color
 	glColor3f(1,1,1);

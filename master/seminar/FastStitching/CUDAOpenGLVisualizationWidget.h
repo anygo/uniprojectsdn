@@ -50,6 +50,8 @@ public:
 	// Set the range clamping
 	void SetRangeClamping(float min, float max);
 
+	void Stitch();
+
 signals:
 	/// Signal to establish communication between SetTOFData and NewDataAvailable
 	void NewDataAvailable(bool SizeChanged);
@@ -197,6 +199,10 @@ protected:
 
 	/// true if points instead of triangles
 	bool m_renderPoints;
+
+
+	float4* m_CurWCs;
+	float4* m_PrevWCs;
 };
 
 #endif // CUDAOPENGLVISUALIZATIONWIDGET_H__

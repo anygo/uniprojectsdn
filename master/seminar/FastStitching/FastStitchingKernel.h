@@ -17,11 +17,33 @@ texture<float, 2, cudaReadModeElementType> InputImageTexture;
 //----------------------------------------------------------------------------
 #define DivUp(a,b) ((a % b != 0) ? (a/b + 1) : (a/b))
 
+//----------------------------------------------------------------------------
+__global__ void
+CUDANearestNeighborBFKernel(unsigned int NX, unsigned int NY, float4* source, float4* target, unsigned int* corr )
+{
+
+	int tid = blockIdx.x*blockDim.x + threadIdx.x;
+
+	// 2D index and linear index within this thread block
+	int tu = threadIdx.x;
+	int tv = threadIdx.y;
+
+	// Global 2D index and linear index.
+//	float gu = blockIdx.x*BlockSizeX+tu;
+//	float gv = blockIdx.y*BlockSizeY+tv;
+
+	// Check for out-of-bounds
+
+
+	// DO Calculate the Correspondences...
+
+}
+
 
 //----------------------------------------------------------------------------
 template<unsigned int BlockSizeX, unsigned int BlockSizeY>
 __global__ void
-CUDARangeToWorldKernel(int bla, unsigned int NX, unsigned int NY, float4* Output, float fx, float fy, float cx, float cy, float k1, float k2)
+CUDARangeToWorldKernel(unsigned int NX, unsigned int NY, float4* Output, float4* duplicate, float fx, float fy, float cx, float cy, float k1, float k2)
 {
 	// 2D index and linear index within this thread block
 	int tu = threadIdx.x;
@@ -55,6 +77,10 @@ CUDARangeToWorldKernel(int bla, unsigned int NX, unsigned int NY, float4* Output
 	// World coordinates
 	WC = make_float4(x, y, value, 1.0f);
 
+	
+	// Set the WC for the duplicate without Mesh Structure
+	duplicate[(int)(gv*NX + gu)] = WC;
+
 	// Mesh
 	// the size of the outputImg is twice the size of the input because one line does not only
 	// represent the points of one line but the triangles of one strip
@@ -62,12 +88,13 @@ CUDARangeToWorldKernel(int bla, unsigned int NX, unsigned int NY, float4* Output
 	int ou = 2*gu;
 	if ( gv != NY-1 )
 	{
-		Output[(int)(gv*oNX+ou+bla*640*480)] = WC;
+		Output[(int)(gv*oNX+ou)] = WC;
 	}
 	if ( gv != 0 )
 	{
-		Output[(int)((gv-1)*oNX+ou+1+bla*640*480)] = WC;
+		Output[(int)((gv-1)*oNX+ou+1)] = WC;
 	}
+
 }
 
 

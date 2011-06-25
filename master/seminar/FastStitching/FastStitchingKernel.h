@@ -71,4 +71,49 @@ CUDARangeToWorldKernel(unsigned int NX, unsigned int NY, float4* Output, float f
 }
 
 
+
+template<unsigned int BlockSizeX, unsigned int BlockSizeY>
+__global__ void
+TESTKernel(float4* Output)
+{
+	// 2D index and linear index within this thread block
+	int tu = threadIdx.x;
+	int tv = threadIdx.y;
+
+	int NX = 640;
+	int NY = 480;
+
+	// Global 2D index and linear index.
+	float gu = blockIdx.x*BlockSizeX+tu;
+	float gv = blockIdx.y*BlockSizeY+tv;
+
+	// Check for out-of-bounds
+	if ( gu >= NX || gv >= NY )
+		return;
+
+	// Mesh
+	// the size of the outputImg is twice the size of the input because one line does not only
+	// represent the points of one line but the triangles of one strip
+	int oNX = 2*NX;
+	int ou = 2*gu;
+
+	if ( gv != NY-1 )
+	{
+		float4 prev = Output[(int)(gv*oNX+ou)];
+		prev.z *= 3;
+		Output[(int)(gv*oNX+ou)] = prev;
+	}
+	if ( gv != 0 )
+	{
+		float4 prev = Output[(int)((gv-1)*oNX+ou+1)];
+		prev.z *= 3;
+		Output[(int)((gv-1)*oNX+ou+1)] = prev;
+	}
+}
+
+
+
+
+
+
 #endif // FASTSTITCHINGKERNEL_H__

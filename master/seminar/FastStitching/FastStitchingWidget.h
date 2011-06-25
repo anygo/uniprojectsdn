@@ -45,6 +45,7 @@ public:
 signals:
 			void SetMinSignal(int value);
 			void SetMaxSignal(int value);
+			void SOMETHING();
 
 protected:
 	/// Mutex used to synchronize rendering and data update
@@ -52,9 +53,6 @@ protected:
 
 	/// The current frame
 	ritk::RImageF2::ConstPointer m_CurrentFrame;
-
-	/// The previous frame
-	ritk::RImageF2::ConstPointer m_PreviousFrame;
 };
 
 #endif // FASTSTITCHINGWIDGET_H__

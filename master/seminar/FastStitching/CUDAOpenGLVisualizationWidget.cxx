@@ -12,6 +12,11 @@
 #include <math.h>
 #include <algorithm>
 
+#include <QTime>
+#include <vtkPoints.h>
+#include <vtkLandmarkTransform.h>
+#include <vtkMatrix4x4.h>
+
 #include "Manager.h"
 #include "CudaRegularMemoryImportImageContainer.h"
 
@@ -21,6 +26,9 @@ void
 CUDARangeToWorld(float4* duplicate, const cudaArray *InputImageArray, float4 *DeviceOutput, int w, int h, float fx, float fy, float cx, float cy, float k1, float k2);
 
 
+extern "C"
+void
+CUDANearestNeighborBF(float4* source, float4* target, float4* source_out, float4* target_out, int* indices, int numLandmarks);
 
 
 #define CHECK_GL_ERROR()													\
@@ -57,11 +65,7 @@ QGLWidget(parent)
 	m_CurWCs = NULL;
 	m_PrevWCs = NULL;
 
-	// Initialize GPU Memory to hold the previous and current world data
-	cutilSafeCall(cudaMalloc((void**)&(m_CurWCs), 640*480*sizeof(float4)));
-	cutilSafeCall(cudaMalloc((void**)&(m_PrevWCs), 640*480*sizeof(float4)));
-
-	m_renderPoints = false;
+	m_renderPoints = true;
 
 	m_FullscreenFlag = false;
 
@@ -114,12 +118,15 @@ QGLWidget(parent)
 
 	// Shader
 	m_LUTID = 0;
-	m_Alpha = 0.5;
+	m_Alpha = 0.0;
 	m_ShaderProgram = 0;
 
 	// Internal communication
 	connect(this, SIGNAL(NewDataAvailable(bool)), this, SLOT(UpdateVBO(bool)), Qt::BlockingQueuedConnection);
 	connect(this, SIGNAL(ResetCameraSignal()), this, SLOT(ResetCamera()));
+
+
+	connect(this, SIGNAL(BLAAAA()), this, SLOT(Stitch()));
 }
 
 
@@ -142,15 +149,89 @@ CUDAOpenGLVisualizationWidget::~CUDAOpenGLVisualizationWidget()
 	if ( m_RangeTextureData )
 		delete[] m_RangeTextureData;
 
-	if(m_InputImgArr)
+	if ( m_InputImgArr )
 		cutilSafeCall(cudaFreeArray(m_InputImgArr));
 }
 
 //----------------------------------------------------------------------------
 void CUDAOpenGLVisualizationWidget::Stitch() 
 {
+	std::cout << "Stitch(): ";
 
-	
+	QTime t;
+	t.start();
+
+	// compute sampling grid;
+	const int numLandmarks = 3000;
+
+	int indices[numLandmarks];
+	int numPoints = m_TextureSize[0] * m_TextureSize[1];
+	int step = numPoints / numLandmarks;
+
+	int cur = 0;
+	for (int i = 0; i < numLandmarks; ++i, cur += step)
+	{
+		indices[i] = cur;
+	}
+
+	int* dev_indices;
+	cutilSafeCall(cudaMalloc((void**)&(dev_indices), numLandmarks*sizeof(int)));
+	cutilSafeCall(cudaMemcpy(dev_indices, indices, numLandmarks*sizeof(int), cudaMemcpyHostToDevice));
+
+	float4 source[numLandmarks];
+	float4 target[numLandmarks];
+	float4* dev_source;
+	float4* dev_target;
+	cutilSafeCall(cudaMalloc((void**)&(dev_source), numLandmarks*sizeof(float4)));
+	cutilSafeCall(cudaMalloc((void**)&(dev_target), numLandmarks*sizeof(float4)));
+
+	// find closest points (stitch current frame -> previous frame)
+	CUDANearestNeighborBF(m_CurWCs, m_PrevWCs, dev_source, dev_target, dev_indices, numLandmarks);
+
+	cutilSafeCall(cudaMemcpy(source, dev_source, numLandmarks*sizeof(float4), cudaMemcpyDeviceToHost));
+	cutilSafeCall(cudaMemcpy(target, dev_target, numLandmarks*sizeof(float4), cudaMemcpyDeviceToHost));
+
+
+	/*for (int j = 0, i = 0; j < 100; ++j, i = rand() % numLandmarks)
+		std::cout << "(" << source[i].x << ", " << source[i].y << ", " << source[i].z << ") -> (" <<
+							target[i].x << ", " << target[i].y << ", " << target[i].z << ")" << std::endl;*/
+
+	//for (int i = 0; i < 
+
+	std::cout << t.elapsed() << " ms / ";
+
+	vtkPoints* p1 = vtkPoints::New();
+	vtkPoints* p2 = vtkPoints::New();
+
+	for (int i = 0; i < numLandmarks; ++i)
+	{
+		if (source[i].x != source[i].x)
+			continue;
+		p1->InsertNextPoint(source[i].x, source[i].y, source[i].z);
+		p2->InsertNextPoint(target[i].x, target[i].y, target[i].z);	
+	}
+
+	std::cout << t.elapsed() << " ms / ";
+
+	vtkLandmarkTransform* landmarkTransform = vtkLandmarkTransform::New();
+	landmarkTransform->SetSourceLandmarks(p1);
+	landmarkTransform->SetTargetLandmarks(p2);
+
+	landmarkTransform->Update();
+	/*vtkMatrix4x4* m = landmarkTransform->GetMatrix();
+
+	std::cout << *m << std::endl;*/
+
+
+	landmarkTransform->Delete();
+	p2->Delete();
+	p1->Delete();
+
+	cutilSafeCall(cudaFree(dev_target));
+	cutilSafeCall(cudaFree(dev_source));
+	cutilSafeCall(cudaFree(dev_indices));
+
+	std::cout << t.elapsed() << " ms" << std::endl;
 }
 
 //----------------------------------------------------------------------------
@@ -287,7 +368,7 @@ CUDAOpenGLVisualizationWidget::UpdateVBO(bool SizeChanged)
 
 	if(SizeX * SizeY != m_AllocatedSize)
 	{
-		if(m_InputImgArr)
+		if (m_InputImgArr)
 			cutilSafeCall(cudaFreeArray(m_InputImgArr));
 
 		cudaChannelFormatDesc ChannelDesc = cudaCreateChannelDesc(32,0,0,0,cudaChannelFormatKindFloat);
@@ -297,6 +378,15 @@ CUDAOpenGLVisualizationWidget::UpdateVBO(bool SizeChanged)
 		ritk::glBindBuffer(GL_ARRAY_BUFFER, m_VBOVertices);
 		ritk::glBufferData(GL_ARRAY_BUFFER, SizeX*SizeY * 4*sizeof(float) + SizeX*(SizeY-2) * 4*sizeof(float), 0, GL_DYNAMIC_DRAW);
 		cutilSafeCall(cudaGraphicsGLRegisterBuffer(&m_Cuda_vbo_resource, m_VBOVertices, cudaGraphicsMapFlagsWriteDiscard));
+
+		// Initialize GPU Memory to hold the previous and current world coords
+		if (m_CurWCs)
+			cutilSafeCall(cudaFree(m_CurWCs));
+		if (m_PrevWCs)
+			cutilSafeCall(cudaFree(m_PrevWCs));
+
+		cutilSafeCall(cudaMalloc((void**)&(m_CurWCs), SizeX*SizeY*sizeof(float4)));
+		cutilSafeCall(cudaMalloc((void**)&(m_PrevWCs), SizeX*SizeY*sizeof(float4)));
 
 		m_AllocatedSize = SizeX * SizeY;
 	}
@@ -309,7 +399,7 @@ CUDAOpenGLVisualizationWidget::UpdateVBO(bool SizeChanged)
 	cutilSafeCall(cudaGraphicsMapResources(1, &m_Cuda_vbo_resource, 0));
 	cutilSafeCall(cudaGraphicsResourceGetMappedPointer((void **)&m_Output, &num_bytes, m_Cuda_vbo_resource));
 
-
+	// swap previous and current frame pointer s.t. the old coords don't get lost
 	float4* tmp = m_CurWCs;
 	m_CurWCs = m_PrevWCs;
 	m_PrevWCs = tmp;
@@ -672,7 +762,7 @@ CUDAOpenGLVisualizationWidget::paintGL()
 	int outputWidth = m_CurrentFrame->GetBufferedRegion().GetSize()[0]*2;
 	for(int i=0; i<m_CurrentFrame->GetBufferedRegion().GetSize()[1]-1; ++i)
 	{
-		if(m_renderPoints)
+		if (m_renderPoints)
 			glDrawArrays(GL_POINTS, i*outputWidth, outputWidth);
 		else
 			glDrawArrays(GL_TRIANGLE_STRIP, i*outputWidth, outputWidth);

@@ -30,16 +30,10 @@ CUDARangeToWorld(float4* duplicate, const cudaArray *InputImageArray, float4 *De
 
 extern "C"
 void
-CUDANearestNeighborBF(float4* source, float4 *target)
-{
-	
-	unsigned int correspondences[2][2000];
-	unsigned int* dev_cor;
-	
-	CUDA_SAFE_CALL(cudaMalloc((void**)&dev_cor, 4000*sizeof(unsigned int)));
-	
+CUDANearestNeighborBF(float4* source, float4* target, float4* source_out, float4* target_out, int* indices, int numLandmarks)
+{	
 	// Kernel Invocation
-	CUDANearestNeighborBFKernel<<<DivUp(2000, CUDA_THREADS_PER_BLOCK), CUDA_THREADS_PER_BLOCK>>>(640, 480, source, target, dev_cor);
-	
-	
+	CUDANearestNeighborBFKernel<<<DivUp(numLandmarks, CUDA_THREADS_PER_BLOCK), CUDA_THREADS_PER_BLOCK>>>(source, target, source_out, target_out, indices, numLandmarks);
+
+	CUT_CHECK_ERROR("Kernel execution failed");
 }

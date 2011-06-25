@@ -6,6 +6,7 @@
 #include <driver_types.h>
 #include <channel_descriptor.h>
 #include <cuda_runtime_api.h>
+#include <float.h>
 
 
 // Texture that holds the input image
@@ -17,26 +18,41 @@ texture<float, 2, cudaReadModeElementType> InputImageTexture;
 //----------------------------------------------------------------------------
 #define DivUp(a,b) ((a % b != 0) ? (a/b + 1) : (a/b))
 
+
 //----------------------------------------------------------------------------
 __global__ void
-CUDANearestNeighborBFKernel(unsigned int NX, unsigned int NY, float4* source, float4* target, unsigned int* corr )
+CUDANearestNeighborBFKernel(float4* source, float4* target, float4* source_out, float4* target_out, int* indices, int numLandmarks)
 {
-
 	int tid = blockIdx.x*blockDim.x + threadIdx.x;
 
-	// 2D index and linear index within this thread block
-	int tu = threadIdx.x;
-	int tv = threadIdx.y;
+	float minDist = FLT_MAX;
+	float4 nn = make_float4(1,1,1,1);
 
-	// Global 2D index and linear index.
-//	float gu = blockIdx.x*BlockSizeX+tu;
-//	float gv = blockIdx.y*BlockSizeY+tv;
+	int idx = indices[tid];
+	float4 src = source[idx];
+	/*while (src.x != src.x)
+		src = source[++idx % (640*480)];
+	indices[tid] = idx;*/
 
-	// Check for out-of-bounds
+	for (int i = 0; i < numLandmarks; ++i)
+	{
+		int idx = indices[i];
+		float4 cur = target[idx];
+		/*while (cur.x != cur.x)
+			cur = target[++idx % (640*480)];
+		indices[i] = idx;*/
+		
+		float dist = (src.x - cur.x)*(src.x - cur.x) + (src.y - cur.y)*(src.y - cur.y) + (src.z - cur.z)*(src.z - cur.z);
 
+		if (dist < minDist)
+		{
+			minDist = dist;
+			nn = cur;
+		}
+	}
 
-	// DO Calculate the Correspondences...
-
+	source_out[tid] = src;
+	target_out[tid] = nn;
 }
 
 
@@ -77,7 +93,6 @@ CUDARangeToWorldKernel(unsigned int NX, unsigned int NY, float4* Output, float4*
 	// World coordinates
 	WC = make_float4(x, y, value, 1.0f);
 
-	
 	// Set the WC for the duplicate without Mesh Structure
 	duplicate[(int)(gv*NX + gu)] = WC;
 

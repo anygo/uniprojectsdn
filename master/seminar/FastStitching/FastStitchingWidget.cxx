@@ -15,9 +15,9 @@ QWidget(parent)
 	connect(this->m_RangeIntervalClampPushButton,	SIGNAL(clicked()),					this,	SLOT(ClampRangeInterval())				);
 	connect(this,									SIGNAL(SetMinSignal(int)),			this,	SLOT(SetMinValue(int))					);
 	connect(this,									SIGNAL(SetMaxSignal(int)),			this,	SLOT(SetMaxValue(int))					);
+	connect(this,									SIGNAL(SOMETHING()),				m_VisualizationWidget3D, SLOT(Stitch())			);
 
 	m_CurrentFrame = NULL;
-	m_PreviousFrame = NULL;
 }
 
 FastStitchingWidget::~FastStitchingWidget()
@@ -37,14 +37,14 @@ FastStitchingWidget::SetRangeData(ritk::RImageF2::ConstPointer Data)
 		this->m_RangeIntervalClampPushButton->setEnabled(true);
 
 		ClampRangeInterval();
-
 	}
-
-	m_PreviousFrame = m_CurrentFrame;
 	m_CurrentFrame = Data;
 
 	m_VisualizationWidget3D->SetRangeData(m_CurrentFrame);
-	//m_VisualizationWidget3D->SetRangeData(m_PreviousFrame);
+
+	static int counter;
+	if (++counter > 2)
+		emit SOMETHING();
 }
 
 

@@ -50,9 +50,6 @@ FastStitchingPlugin::ProcessEvent(ritk::Event::Pointer EventP)
 		ritk::NewFrameEvent::RImageConstPointer CurrentFrameP = NewFrameEventP->RImage;
 		// Here comes your code. Access range data with CurrentFrame.
 		// ...
-	
-		m_Widget->m_VisualizationWidget3D->Stitch();
-
 		static int counter = 0;
 		Timer::StartTimer();
 		if (++counter % m_Widget->m_SpinBoxSkipFrames->value() == 0)

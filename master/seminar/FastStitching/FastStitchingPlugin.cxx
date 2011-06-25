@@ -51,10 +51,13 @@ FastStitchingPlugin::ProcessEvent(ritk::Event::Pointer EventP)
 		// Here comes your code. Access range data with CurrentFrame.
 		// ...
 	
+		m_Widget->m_VisualizationWidget3D->Stitch();
+
 		static int counter = 0;
 		Timer::StartTimer();
 		if (++counter % m_Widget->m_SpinBoxSkipFrames->value() == 0)
 			m_Widget->SetRangeData(CurrentFrameP);
+
 		Timer::StopTimer();
 		Timer::GetElapsedTime(&m_Runtime[0],&m_Runtime[1]);
 	}

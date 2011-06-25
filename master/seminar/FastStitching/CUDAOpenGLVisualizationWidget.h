@@ -21,6 +21,9 @@ class CUDAOpenGLVisualizationWidget : public QGLWidget
 {
 	Q_OBJECT
 
+	public slots:
+		void Stitch();
+
 public:
 
 	/// Constructor
@@ -50,7 +53,7 @@ public:
 	// Set the range clamping
 	void SetRangeClamping(float min, float max);
 
-	void Stitch();
+	
 
 signals:
 	/// Signal to establish communication between SetTOFData and NewDataAvailable

@@ -20,6 +20,10 @@ extern "C"
 void
 CUDARangeToWorld(const cudaArray *InputImageArray, float4 *DeviceOutput, int w, int h, float fx, float fy, float cx, float cy, float k1, float k2);
 
+extern "C"
+void
+TEST(float4* DeviceOutput);
+
 #define CHECK_GL_ERROR()													\
 {																			\
 	GLenum errCode = glGetError();											\
@@ -44,8 +48,10 @@ static void qNormalizeAngle(int &angle)
 CUDAOpenGLVisualizationWidget::CUDAOpenGLVisualizationWidget(QWidget *parent) :
 QGLWidget(parent)
 {
+	//cutilSafeCall(cudaThreadExit());
 	cutilSafeCall(cudaSetDevice(cutGetMaxGflopsDeviceId()));
 	cutilSafeCall(cudaGLSetGLDevice(cutGetMaxGflopsDeviceId()));
+	
 	m_AllocatedSize = 0;
 	m_InputImgArr = NULL;
 	m_Output = NULL;
@@ -103,7 +109,7 @@ QGLWidget(parent)
 
 	// Shader
 	m_LUTID = 0;
-	m_Alpha = 0.5;
+	m_Alpha = 0.;
 	m_ShaderProgram = 0;
 
 	// Internal communication
@@ -130,55 +136,6 @@ CUDAOpenGLVisualizationWidget::~CUDAOpenGLVisualizationWidget()
 
 	if(m_InputImgArr)
 		cutilSafeCall(cudaFreeArray(m_InputImgArr));
-}
-
-
-//----------------------------------------------------------------------------
-void
-CUDAOpenGLVisualizationWidget::SetRangeClamping(float min, float max)
-{
-	m_Mutex.lock();
-
-	m_RangeBoundaries[0] = min;
-	m_RangeBoundaries[1] = max;
-
-	m_Mutex.unlock();
-}
-
-
-//----------------------------------------------------------------------------
-void
-CUDAOpenGLVisualizationWidget::SetLUTAlpha(float value)
-{
-	m_Mutex.lock();
-
-	m_Alpha = value;
-
-	m_Mutex.unlock();
-
-	updateGL();
-}
-
-
-//----------------------------------------------------------------------------
-void
-CUDAOpenGLVisualizationWidget::SetLUT(unsigned int ID)
-{
-	m_Mutex.lock();
-
-	m_LUTID = ID;
-
-	m_Mutex.unlock();
-
-	updateGL();
-}
-
-
-//----------------------------------------------------------------------------
-void
-CUDAOpenGLVisualizationWidget::SetRenderType(bool renderPoints)
-{
-	m_renderPoints = renderPoints;
 }
 
 
@@ -224,7 +181,7 @@ CUDAOpenGLVisualizationWidget::SetRangeData(ritk::RImageF2::ConstPointer Data)
 		// Update coords
 		for ( long l = 0; l < SizeX*SizeY + SizeX*(SizeY-2); l++ )
 		{
-			if(l%2==0)
+			if (l%2==0)
 			{
 				m_TextureCoords[l*2+0] = (l%(SizeX*2))/((SizeX*2)*1.f);
 				m_TextureCoords[l*2+1] = (l/(SizeX*2))/(SizeY*1.f) ;
@@ -271,7 +228,7 @@ CUDAOpenGLVisualizationWidget::SetRangeData(ritk::RImageF2::ConstPointer Data)
 	const float *RData = m_CurrentFrame->GetRangeImage()->GetBufferPointer();
 	float Scale = 1.f/(m_RangeBoundaries[1]-m_RangeBoundaries[0]);
 
-	for ( long l = 0; l < SizeX*SizeY; l++,RTexturePtr++ )
+	for ( long l = 0; l < SizeX*SizeY; l++, RTexturePtr++ )
 	{
 		float val = RData[l];
 		if ( val < m_RangeBoundaries[0] )
@@ -299,67 +256,106 @@ CUDAOpenGLVisualizationWidget::SetRangeData(ritk::RImageF2::ConstPointer Data)
 
 
 //----------------------------------------------------------------------------
-void
-CUDAOpenGLVisualizationWidget::SetTranslation(int dx, int dy)
-{
-	m_Translation[0] -= dx;
-	m_Translation[1] -= dy;
-	/*m_EyePos[0] += dx;
-	m_EyePos[1] += dy;
-	m_ViewCenter[0] += dx;
-	m_ViewCenter[1] += dy;*/
-}
-
-
-//----------------------------------------------------------------------------
-void
-CUDAOpenGLVisualizationWidget::SetXRotation(int angle)
-{
-	qNormalizeAngle(angle);
-	if ( angle != m_Rotation[0] ) 
-	{
-		m_Rotation[0] = angle;
-	}
-}
-
-
-//----------------------------------------------------------------------------
 void 
-CUDAOpenGLVisualizationWidget::SetYRotation(int angle)
-{
-	qNormalizeAngle(angle);
-	if ( angle != m_Rotation[1] ) 
-	{
-		m_Rotation[1] = angle;
-	}
-}
-
-
-//----------------------------------------------------------------------------
-void 
-CUDAOpenGLVisualizationWidget::SetZRotation(int angle)
-{
-	qNormalizeAngle(angle);
-	if ( angle != m_Rotation[2] ) 
-	{
-		m_Rotation[2] = angle;
-	}
-}
-
-
-//----------------------------------------------------------------------------
-void 
-CUDAOpenGLVisualizationWidget::UpdateZoom(float delta)
+CUDAOpenGLVisualizationWidget::UpdateVBO(bool SizeChanged)
 {
 	// Lock the mutex
 	m_Mutex.lock();
 
-	// Update the zoom
-	m_RawZoom += delta;
-	m_Zoom = (tanh(m_RawZoom)+1)*2;
+	// To be on the safe side
+	this->makeCurrent();
 
-	// Lock the mutex
+	// The number of vertices that we have to process
+	/*long SizeX = m_CurrentFrame->GetBufferedRegion().GetSize()[0];
+	long SizeY = m_CurrentFrame->GetBufferedRegion().GetSize()[1];*/
+	long SizeX = m_TextureSize[0];
+	long SizeY = m_TextureSize[1];
+
+	if (SizeX * SizeY != m_AllocatedSize)
+	{
+		if (m_InputImgArr)
+			cutilSafeCall(cudaFreeArray(m_InputImgArr));
+
+		cudaChannelFormatDesc ChannelDesc = cudaCreateChannelDesc(32, 0, 0, 0, cudaChannelFormatKindFloat);
+		cutilSafeCall(cudaMallocArray(&m_InputImgArr, &ChannelDesc, SizeX, SizeY));
+
+		cutilSafeCall(cudaGraphicsUnregisterResource(m_Cuda_vbo_resource));
+		ritk::glBindBuffer(GL_ARRAY_BUFFER, m_VBOVertices);
+		ritk::glBufferData(GL_ARRAY_BUFFER, (SizeX*SizeY + SizeX*(SizeY-2)) * 4*sizeof(float), 0, GL_DYNAMIC_DRAW);
+		cutilSafeCall(cudaGraphicsGLRegisterBuffer(&m_Cuda_vbo_resource, m_VBOVertices, cudaGraphicsMapFlagsWriteDiscard));
+
+		m_AllocatedSize = SizeX * SizeY;
+	}
+
+	// Copy the input data to the device
+	cutilSafeCall(cudaMemcpyToArray(m_InputImgArr, 0, 0, m_CurrentFrame->GetRangeImage()->GetBufferPointer(), SizeX*SizeY * sizeof(float), cudaMemcpyHostToDevice));
+
+	// CUDA/OpenGL interoperability
+	size_t num_bytes;
+	cutilSafeCall(cudaGraphicsMapResources(1, &m_Cuda_vbo_resource, 0));
+	cutilSafeCall(cudaGraphicsResourceGetMappedPointer((void **)&m_Output, &num_bytes, m_Cuda_vbo_resource));
+
+	// Compute the world coordinates
+	CUDARangeToWorld
+		(
+		m_InputImgArr, 
+		m_Output,
+		m_CurrentFrame->GetBufferedRegion().GetSize()[0],
+		m_CurrentFrame->GetBufferedRegion().GetSize()[1],
+		m_CurrentFrame->GetCameraParameters()[ritk::CameraParameters::FX],
+		m_CurrentFrame->GetCameraParameters()[ritk::CameraParameters::FY],
+		m_CurrentFrame->GetCameraParameters()[ritk::CameraParameters::CX],
+		m_CurrentFrame->GetCameraParameters()[ritk::CameraParameters::CY],
+		m_CurrentFrame->GetCameraParameters()[ritk::CameraParameters::K1],
+		m_CurrentFrame->GetCameraParameters()[ritk::CameraParameters::K2]
+		);
+
+	TEST(m_Output);
+
+	// Release CUDA resources
+	cutilSafeCall(cudaGraphicsUnmapResources(1, &m_Cuda_vbo_resource, 0));
+
+	CHECK_GL_ERROR();
+
+	LONGLONG C2;
+	QueryPerformanceCounter((LARGE_INTEGER*)&C2);
+
+	// Activate the texture coordinate VBO and update its data
+	if (SizeChanged)
+	{
+		ritk::glBindBuffer(GL_ARRAY_BUFFER, m_VBOTexCoords);
+		ritk::glBufferData(GL_ARRAY_BUFFER, SizeX*SizeY * 2 * sizeof(float) + SizeX*(SizeY-2)*2*sizeof(float), m_TextureCoords, GL_DYNAMIC_DRAW);
+	}
+	CHECK_GL_ERROR();
+
+	// Bind the RGB texture
+	glBindTexture(GL_TEXTURE_2D, m_RGBTexture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, SizeX, SizeY, 0, GL_RGB, GL_UNSIGNED_BYTE, m_RGBTextureData);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+	CHECK_GL_ERROR();
+
+	// Bind the range texture
+	glBindTexture(GL_TEXTURE_2D, m_RangeTexture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, SizeX, SizeY, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, m_RangeTextureData);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+	CHECK_GL_ERROR();
+
+	LONGLONG C3;
+	QueryPerformanceCounter((LARGE_INTEGER*)&C3);
+
+	// Synchronize
+	m_VBOInitialized = true;
+
+	// Unlock
 	m_Mutex.unlock();
+
+	// Update the OpenGL state
+	updateGL();
+
+	// Wait for all OpenGL operations to finish
+	glFinish();
 }
 
 
@@ -476,106 +472,6 @@ CUDAOpenGLVisualizationWidget::ResetCamera()
 
 	if(m_Output)
 		delete[] realOut;
-}
-
-
-//----------------------------------------------------------------------------
-void 
-CUDAOpenGLVisualizationWidget::UpdateVBO(bool SizeChanged)
-{
-	// Lock the mutex
-	m_Mutex.lock();
-
-	// To be on the safe side
-	this->makeCurrent();
-
-	// The number of vertices that we have to process
-	long SizeX = m_CurrentFrame->GetBufferedRegion().GetSize()[0];
-	long SizeY = m_CurrentFrame->GetBufferedRegion().GetSize()[1];
-
-	if(SizeX * SizeY != m_AllocatedSize)
-	{
-		if(m_InputImgArr)
-			cutilSafeCall(cudaFreeArray(m_InputImgArr));
-		cudaChannelFormatDesc ChannelDesc = cudaCreateChannelDesc(32,0,0,0,cudaChannelFormatKindFloat);
-		cutilSafeCall(cudaMallocArray(&m_InputImgArr,&ChannelDesc,SizeX,SizeY));
-
-		cutilSafeCall(cudaGraphicsUnregisterResource(m_Cuda_vbo_resource));
-		ritk::glBindBuffer(GL_ARRAY_BUFFER, m_VBOVertices);
-		ritk::glBufferData(GL_ARRAY_BUFFER, SizeX*SizeY * 4*sizeof(float) + SizeX*(SizeY-2) * 4*sizeof(float), 0, GL_DYNAMIC_DRAW);
-		cutilSafeCall(cudaGraphicsGLRegisterBuffer(&m_Cuda_vbo_resource, m_VBOVertices, cudaGraphicsMapFlagsWriteDiscard));
-
-		m_AllocatedSize = SizeX * SizeY;
-	}
-
-	// Copy the input data to the device
-	cutilSafeCall(cudaMemcpyToArray(m_InputImgArr, 0, 0, m_CurrentFrame->GetRangeImage()->GetBufferPointer(), SizeX*SizeY * sizeof(float), cudaMemcpyHostToDevice));
-
-	// CUDA/OpenGL interoperability
-	size_t num_bytes;
-	cutilSafeCall(cudaGraphicsMapResources(1, &m_Cuda_vbo_resource, 0));
-	cutilSafeCall(cudaGraphicsResourceGetMappedPointer((void **)&m_Output, &num_bytes, m_Cuda_vbo_resource));
-
-
-	// Compute the world coordinates
-	CUDARangeToWorld
-		(
-		m_InputImgArr, 
-		m_Output,
-		m_CurrentFrame->GetBufferedRegion().GetSize()[0],
-		m_CurrentFrame->GetBufferedRegion().GetSize()[1],
-		m_CurrentFrame->GetCameraParameters()[ritk::CameraParameters::FX],
-		m_CurrentFrame->GetCameraParameters()[ritk::CameraParameters::FY],
-		m_CurrentFrame->GetCameraParameters()[ritk::CameraParameters::CX],
-		m_CurrentFrame->GetCameraParameters()[ritk::CameraParameters::CY],
-		m_CurrentFrame->GetCameraParameters()[ritk::CameraParameters::K1],
-		m_CurrentFrame->GetCameraParameters()[ritk::CameraParameters::K2]
-		);
-
-	// Release CUDA resources
-	cutilSafeCall(cudaGraphicsUnmapResources(1, &m_Cuda_vbo_resource, 0));
-
-	CHECK_GL_ERROR();
-
-	LONGLONG C2;
-	QueryPerformanceCounter((LARGE_INTEGER*)&C2);
-
-	// Activate the texture coordinate VBO and update its data
-	if (SizeChanged)
-	{
-		ritk::glBindBuffer(GL_ARRAY_BUFFER, m_VBOTexCoords);
-		ritk::glBufferData(GL_ARRAY_BUFFER, SizeX*SizeY * 2 * sizeof(float) + SizeX*(SizeY-2)*2*sizeof(float), m_TextureCoords, GL_DYNAMIC_DRAW);
-	}
-	CHECK_GL_ERROR();
-
-	// Bind the RGB texture
-	glBindTexture(GL_TEXTURE_2D, m_RGBTexture);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, SizeX, SizeY, 0, GL_RGB, GL_UNSIGNED_BYTE, m_RGBTextureData);
-	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-	CHECK_GL_ERROR();
-
-	// Bind the range texture
-	glBindTexture(GL_TEXTURE_2D, m_RangeTexture);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, SizeX, SizeY, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, m_RangeTextureData);
-	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-	CHECK_GL_ERROR();
-
-	LONGLONG C3;
-	QueryPerformanceCounter((LARGE_INTEGER*)&C3);
-
-	// Synchronize
-	m_VBOInitialized = true;
-
-	// Unlock
-	m_Mutex.unlock();
-
-	// Update the OpenGL state
-	updateGL();
-
-	// Wait for all OpenGL operations to finish
-	glFinish();
 }
 
 
@@ -771,6 +667,120 @@ CUDAOpenGLVisualizationWidget::paintGL()
 	m_Mutex.unlock();
 }
 
+
+
+//----------------------------------------------------------------------------
+void
+CUDAOpenGLVisualizationWidget::SetTranslation(int dx, int dy)
+{
+	m_Translation[0] -= dx;
+	m_Translation[1] -= dy;
+	/*m_EyePos[0] += dx;
+	m_EyePos[1] += dy;
+	m_ViewCenter[0] += dx;
+	m_ViewCenter[1] += dy;*/
+}
+
+
+//----------------------------------------------------------------------------
+void
+CUDAOpenGLVisualizationWidget::SetXRotation(int angle)
+{
+	qNormalizeAngle(angle);
+	if ( angle != m_Rotation[0] ) 
+	{
+		m_Rotation[0] = angle;
+	}
+}
+
+
+//----------------------------------------------------------------------------
+void 
+CUDAOpenGLVisualizationWidget::SetYRotation(int angle)
+{
+	qNormalizeAngle(angle);
+	if ( angle != m_Rotation[1] ) 
+	{
+		m_Rotation[1] = angle;
+	}
+}
+
+
+//----------------------------------------------------------------------------
+void 
+CUDAOpenGLVisualizationWidget::SetZRotation(int angle)
+{
+	qNormalizeAngle(angle);
+	if ( angle != m_Rotation[2] ) 
+	{
+		m_Rotation[2] = angle;
+	}
+}
+
+
+//----------------------------------------------------------------------------
+void 
+CUDAOpenGLVisualizationWidget::UpdateZoom(float delta)
+{
+	// Lock the mutex
+	m_Mutex.lock();
+
+	// Update the zoom
+	m_RawZoom += delta;
+	m_Zoom = (tanh(m_RawZoom)+1)*2;
+
+	// Lock the mutex
+	m_Mutex.unlock();
+}
+
+
+//----------------------------------------------------------------------------
+void
+CUDAOpenGLVisualizationWidget::SetRangeClamping(float min, float max)
+{
+	m_Mutex.lock();
+
+	m_RangeBoundaries[0] = min;
+	m_RangeBoundaries[1] = max;
+
+	m_Mutex.unlock();
+}
+
+
+//----------------------------------------------------------------------------
+void
+CUDAOpenGLVisualizationWidget::SetLUTAlpha(float value)
+{
+	m_Mutex.lock();
+
+	m_Alpha = value;
+
+	m_Mutex.unlock();
+
+	updateGL();
+}
+
+
+//----------------------------------------------------------------------------
+void
+CUDAOpenGLVisualizationWidget::SetLUT(unsigned int ID)
+{
+	m_Mutex.lock();
+
+	m_LUTID = ID;
+
+	m_Mutex.unlock();
+
+	updateGL();
+}
+
+
+//----------------------------------------------------------------------------
+void
+CUDAOpenGLVisualizationWidget::SetRenderType(bool renderPoints)
+{
+	m_renderPoints = renderPoints;
+}
 
 
 //----------------------------------------------------------------------------

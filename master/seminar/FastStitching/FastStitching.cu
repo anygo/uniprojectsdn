@@ -23,3 +23,14 @@ CUDARangeToWorld(const cudaArray *InputImageArray, float4 *DeviceOutput, int w, 
 
 	CUT_CHECK_ERROR("Kernel execution failed");
 }
+
+extern "C"
+void
+TEST(float4* DeviceOutput)
+{
+	// Kernel Invocation
+	dim3 DimBlock(16, 16);
+	dim3 DimGrid(DivUp(640, DimBlock.x), DivUp(480, DimBlock.y));
+	TESTKernel<16,16><<<DimGrid,DimBlock>>>(DeviceOutput);
+}
+

@@ -10,6 +10,10 @@
 
 #include "CudaContext.h"
 
+#include <vtkSmartPointer.h>
+#include <vtkMatrix4x4.h>
+
+
 /**
 *	@class		CUDAOpenGLVisualizationWidget
 *	@author		Jakob Wasza
@@ -60,6 +64,8 @@ signals:
 	void NewDataAvailable(bool SizeChanged);
 	/// Signal to establish communication with the ResetCamera method
 	void ResetCameraSignal();
+
+	void FrameStitched(float4*);
 
 
 protected:
@@ -206,6 +212,7 @@ protected:
 
 	float4* m_CurWCs;
 	float4* m_PrevWCs;
+	vtkSmartPointer<vtkMatrix4x4> m_PrevTrans;
 };
 
 #endif // CUDAOPENGLVISUALIZATIONWIDGET_H__

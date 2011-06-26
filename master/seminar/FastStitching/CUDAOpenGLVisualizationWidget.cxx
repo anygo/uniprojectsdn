@@ -16,6 +16,14 @@
 #include <vtkPoints.h>
 #include <vtkLandmarkTransform.h>
 #include <vtkMatrix4x4.h>
+#include <vtkTransform.h>
+#include <vtkPointData.h>
+#include <vtkPolyData.h>
+#include <vtkPolyDataWriter.h>
+#include <vtkFloatArray.h>
+#include <vtkSmartPointer.h>
+#include <vtkCellArray.h>
+
 
 #include "Manager.h"
 #include "CudaRegularMemoryImportImageContainer.h"
@@ -28,7 +36,17 @@ CUDARangeToWorld(float4* duplicate, const cudaArray *InputImageArray, float4 *De
 
 extern "C"
 void
-CUDANearestNeighborBF(float4* source, float4* target, float4* source_out, float4* target_out, int* indices, int numLandmarks);
+CUDAFindLandmarks(float4* source, float4* target, float4* source_out, float4* target_out, int* indices_source, int* indices_target, int numLandmarks);
+
+
+extern "C"
+void
+CUDAFindNNBF(float4* source, float4* target, int* correspondences, int numLandmarks);
+
+
+extern "C"
+void
+CUDATransfromLandmarks(float4* toBeTransformed, double matrix[4][4], int numLandmarks);
 
 
 #define CHECK_GL_ERROR()													\
@@ -126,7 +144,8 @@ QGLWidget(parent)
 	connect(this, SIGNAL(ResetCameraSignal()), this, SLOT(ResetCamera()));
 
 
-	connect(this, SIGNAL(BLAAAA()), this, SLOT(Stitch()));
+	m_PrevTrans = vtkSmartPointer<vtkMatrix4x4>::New();
+	m_PrevTrans->Identity();
 }
 
 
@@ -154,29 +173,91 @@ CUDAOpenGLVisualizationWidget::~CUDAOpenGLVisualizationWidget()
 }
 
 //----------------------------------------------------------------------------
+
+static void
+CreatePolyData(float4* stitched)
+{
+	vtkSmartPointer<vtkPoints> points =
+		vtkSmartPointer<vtkPoints>::New();
+	vtkSmartPointer<vtkCellArray> cells =
+		vtkSmartPointer<vtkCellArray>::New();
+	vtkSmartPointer<vtkPolyData> data =
+		vtkSmartPointer<vtkPolyData>::New();
+
+	float4 p;
+	for (int i = 0; i < 640*480; i += 8)
+	{
+		p = stitched[i];
+
+		if (p.x == p.x) // i.e. not QNAN
+		{
+			points->InsertNextPoint(p.x, p.y, p.z);
+		}
+	}
+
+	for (vtkIdType i = 0; i < points->GetNumberOfPoints(); i++)
+	{
+		cells->InsertNextCell(1, &i);
+	}	
+
+	// update m_Data
+	data->SetPoints(points);
+	data->SetVerts(cells);
+	data->Update();
+
+	static int counter = 0;
+	std::stringstream ss;
+	ss << "file_" << ++counter << ".vtk";
+	vtkSmartPointer<vtkPolyDataWriter> writer =
+		vtkSmartPointer<vtkPolyDataWriter>::New();
+	writer->SetFileName(ss.str().c_str());
+	writer->SetInput(data);
+	writer->SetFileTypeToASCII();
+	writer->Update();
+}
+
 void CUDAOpenGLVisualizationWidget::Stitch() 
 {
-	std::cout << "Stitch(): ";
+	m_Mutex.lock();
+
+	QTime tOverall;
+	tOverall.start();
 
 	QTime t;
 	t.start();
 
 	// compute sampling grid;
-	const int numLandmarks = 3000;
+	const int numLandmarks = 100;
+	const int clipSize = 50;
 
-	int indices[numLandmarks];
+	int indices_source[numLandmarks];
+	int indices_target[numLandmarks];
+
+	// without clipping - just use each step'th index
 	int numPoints = m_TextureSize[0] * m_TextureSize[1];
 	int step = numPoints / numLandmarks;
-
-	int cur = 0;
-	for (int i = 0; i < numLandmarks; ++i, cur += step)
+	for (int i = 0, cur = 0; i < numLandmarks; ++i, cur += step)
 	{
-		indices[i] = cur;
+		indices_target[i] = cur;
+	}
+	
+	// with clipping - some additional stuff required
+	int numPointsClipped = (m_TextureSize[0] - 2*clipSize) * (m_TextureSize[1] - 2*clipSize);
+	int stepClipped = numPointsClipped / numLandmarks;
+	for (int i = 0, cur = m_TextureSize[0] * clipSize + clipSize; i < numLandmarks; ++i, cur += stepClipped)
+	{
+		if (cur % (m_TextureSize[0] - clipSize) < clipSize)
+			cur += 2*clipSize;
+		indices_source[i] = cur;
 	}
 
-	int* dev_indices;
-	cutilSafeCall(cudaMalloc((void**)&(dev_indices), numLandmarks*sizeof(int)));
-	cutilSafeCall(cudaMemcpy(dev_indices, indices, numLandmarks*sizeof(int), cudaMemcpyHostToDevice));
+	int* dev_indices_source;
+	cutilSafeCall(cudaMalloc((void**)&(dev_indices_source), numLandmarks*sizeof(int)));
+	cutilSafeCall(cudaMemcpy(dev_indices_source, indices_source, numLandmarks*sizeof(int), cudaMemcpyHostToDevice));
+
+	int* dev_indices_target;
+	cutilSafeCall(cudaMalloc((void**)&(dev_indices_target), numLandmarks*sizeof(int)));
+	cutilSafeCall(cudaMemcpy(dev_indices_target, indices_target, numLandmarks*sizeof(int), cudaMemcpyHostToDevice));
 
 	float4 source[numLandmarks];
 	float4 target[numLandmarks];
@@ -185,53 +266,107 @@ void CUDAOpenGLVisualizationWidget::Stitch()
 	cutilSafeCall(cudaMalloc((void**)&(dev_source), numLandmarks*sizeof(float4)));
 	cutilSafeCall(cudaMalloc((void**)&(dev_target), numLandmarks*sizeof(float4)));
 
-	// find closest points (stitch current frame -> previous frame)
-	CUDANearestNeighborBF(m_CurWCs, m_PrevWCs, dev_source, dev_target, dev_indices, numLandmarks);
+	std::cout << "initialized in " << t.elapsed() << " ms" << std::endl;
+	t.start();
+	
+	// Initialized Source/Target Landmarks
+	CUDAFindLandmarks(m_CurWCs, m_PrevWCs, dev_source, dev_target, dev_indices_source, dev_indices_target, numLandmarks);
+	
+	std::cout << "CUDAFindLandmarks in " << t.elapsed() << " ms" << std::endl;
+	t.start();
 
-	cutilSafeCall(cudaMemcpy(source, dev_source, numLandmarks*sizeof(float4), cudaMemcpyDeviceToHost));
+	// create landmarkTransform only once
+	vtkLandmarkTransform* landmarkTransform = vtkLandmarkTransform::New();
+	landmarkTransform->SetModeToRigidBody();
+	vtkTransform* accumulate = vtkTransform::New();
+	accumulate->PostMultiply();
+
+	// copy target points only once
 	cutilSafeCall(cudaMemcpy(target, dev_target, numLandmarks*sizeof(float4), cudaMemcpyDeviceToHost));
 
+	// apply previous transform (init icp)
+	CUDATransfromLandmarks(dev_source, m_PrevTrans->Element, numLandmarks);
+	accumulate->Concatenate(m_PrevTrans);
 
-	/*for (int j = 0, i = 0; j < 100; ++j, i = rand() % numLandmarks)
-		std::cout << "(" << source[i].x << ", " << source[i].y << ", " << source[i].z << ") -> (" <<
-							target[i].x << ", " << target[i].y << ", " << target[i].z << ")" << std::endl;*/
+	std::cout << "previousTransform in " << t.elapsed() << " ms" << std::endl;
 
-	//for (int i = 0; i < 
+	int correspondences[numLandmarks];
+	int* dev_correspondences;
+	cutilSafeCall(cudaMalloc((void**)&(dev_correspondences), numLandmarks*sizeof(int)));
 
-	std::cout << t.elapsed() << " ms / ";
+	
+	t.start();
 
-	vtkPoints* p1 = vtkPoints::New();
-	vtkPoints* p2 = vtkPoints::New();
+	const int numIter = 50;
 
-	for (int i = 0; i < numLandmarks; ++i)
+	// Start iterating...
+	for(int k = 0; k < numIter; ++k)
 	{
-		if (source[i].x != source[i].x)
-			continue;
-		p1->InsertNextPoint(source[i].x, source[i].y, source[i].z);
-		p2->InsertNextPoint(target[i].x, target[i].y, target[i].z);	
+		// find nearest neighbors
+		CUDAFindNNBF(dev_source, dev_target, dev_correspondences, numLandmarks);
+
+		cutilSafeCall(cudaMemcpy(source, dev_source, numLandmarks*sizeof(float4), cudaMemcpyDeviceToHost));
+		cutilSafeCall(cudaMemcpy(correspondences, dev_correspondences, numLandmarks*sizeof(int), cudaMemcpyDeviceToHost));
+		
+		vtkPoints* p1 = vtkPoints::New();
+		vtkPoints* p2 = vtkPoints::New();
+
+		for (int i = 0; i < numLandmarks; ++i)
+		{
+			if (correspondences[i] == -1)
+				continue;
+
+			p1->InsertNextPoint(source[i].x, source[i].y, source[i].z);
+			p2->InsertNextPoint(target[correspondences[i]].x, target[correspondences[i]].y, target[correspondences[i]].z);	
+		}
+
+		landmarkTransform->SetSourceLandmarks(p1);
+		landmarkTransform->SetTargetLandmarks(p2);
+		landmarkTransform->Update();
+
+		accumulate->Concatenate(landmarkTransform->GetMatrix());
+
+		p2->Delete();
+		p1->Delete();
+
+		// transform points on gpu
+		CUDATransfromLandmarks(dev_source, landmarkTransform->GetMatrix()->Element, numLandmarks);
 	}
 
-	std::cout << t.elapsed() << " ms / ";
+	size_t free, total;
+	cudaMemGetInfo(&free, &total);
+	std::cout << free/(1024*1024) << " / " << total/(1024*1024) << " MB" << std::endl;
 
-	vtkLandmarkTransform* landmarkTransform = vtkLandmarkTransform::New();
-	landmarkTransform->SetSourceLandmarks(p1);
-	landmarkTransform->SetTargetLandmarks(p2);
+	std::cout << "ICP in " << t.elapsed() << " ms (avg: " << static_cast<float>(t.elapsed()) / static_cast<float>(numIter) << " ms)" << std::endl;
 
-	landmarkTransform->Update();
-	/*vtkMatrix4x4* m = landmarkTransform->GetMatrix();
+	t.start();
+	
+	// transform all points
+	CUDATransfromLandmarks(m_CurWCs, accumulate->GetMatrix()->Element, numPoints);
 
-	std::cout << *m << std::endl;*/
+	// update previous transform for next iteration
+	vtkMatrix4x4::Multiply4x4(m_PrevTrans, accumulate->GetMatrix(), m_PrevTrans);
 
+	float4 stitched[640*480];
+	cutilSafeCall(cudaMemcpy(stitched, m_CurWCs, numPoints*sizeof(float4), cudaMemcpyDeviceToHost));
 
 	landmarkTransform->Delete();
-	p2->Delete();
-	p1->Delete();
 
+	cutilSafeCall(cudaFree(dev_correspondences));
 	cutilSafeCall(cudaFree(dev_target));
 	cutilSafeCall(cudaFree(dev_source));
-	cutilSafeCall(cudaFree(dev_indices));
+	cutilSafeCall(cudaFree(dev_indices_target));
+	cutilSafeCall(cudaFree(dev_indices_source));
 
-	std::cout << t.elapsed() << " ms" << std::endl;
+
+	std::cout << "finalized in " << t.elapsed() << " ms" << std::endl;
+	std::cout << "OVERALL time: " << tOverall.elapsed() << " ms" << std::endl << std::endl;
+
+	//CreatePolyData(stitched);
+
+	m_Mutex.unlock();
+
+	emit FrameStitched(stitched);
 }
 
 //----------------------------------------------------------------------------

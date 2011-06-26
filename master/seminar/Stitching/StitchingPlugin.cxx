@@ -34,6 +34,7 @@
 #include <ClosestPointFinderBruteForceGPU.h>
 #include <ClosestPointFinderRBCCPU.h>
 #include <ClosestPointFinderRBCGPU.h>
+#include <ClosestPointFinderRBCCayton.h>
 #include <defs.h>
 
 StitchingPlugin::StitchingPlugin()
@@ -831,6 +832,7 @@ StitchingPlugin::Stitch(vtkPolyData* toBeStitched, vtkPolyData* previousFrame,
 	case 2: cpf = new ClosestPointFinderBruteForceCPU(m_Widget->m_SpinBoxLandmarks->value(), true); break;
 	case 3: cpf = new ClosestPointFinderRBCCPU(m_Widget->m_SpinBoxLandmarks->value(), static_cast<float>(m_Widget->m_DoubleSpinBoxNrOfRepsFactor->value())); break;
 	case 4: cpf = new ClosestPointFinderRBCGPU(m_Widget->m_SpinBoxLandmarks->value(), static_cast<float>(m_Widget->m_DoubleSpinBoxNrOfRepsFactor->value())); break;
+	case 5: cpf = new ClosestPointFinderRBCCayton(m_Widget->m_SpinBoxLandmarks->value(), static_cast<float>(m_Widget->m_DoubleSpinBoxNrOfRepsFactor->value())); break;
 	}
 
 	cpf->SetWeightRGB(static_cast<float>(m_Widget->m_DoubleSpinBoxRGBWeight->value()));

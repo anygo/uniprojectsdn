@@ -1,5 +1,20 @@
 #include "FastStitchingWidget.h"
 
+#include <vtkActor.h>
+#include <vtkPoints.h>
+#include <vtkLandmarkTransform.h>
+#include <vtkMatrix4x4.h>
+#include <vtkTransform.h>
+#include <vtkPointData.h>
+#include <vtkPolyData.h>
+#include <vtkPolyDataWriter.h>
+#include <vtkFloatArray.h>
+#include <vtkSmartPointer.h>
+#include <vtkCellArray.h>
+
+#include "RImage.h"
+#include "RImageActorPipeline.h"
+
 FastStitchingWidget::FastStitchingWidget(QWidget *parent) :
 QWidget(parent)
 {
@@ -15,13 +30,87 @@ QWidget(parent)
 	connect(this->m_RangeIntervalClampPushButton,	SIGNAL(clicked()),					this,	SLOT(ClampRangeInterval())				);
 	connect(this,									SIGNAL(SetMinSignal(int)),			this,	SLOT(SetMinValue(int))					);
 	connect(this,									SIGNAL(SetMaxSignal(int)),			this,	SLOT(SetMaxValue(int))					);
-	connect(this,									SIGNAL(SOMETHING()),				m_VisualizationWidget3D, SLOT(Stitch())			);
+	connect(this,									SIGNAL(NewFrameToStitch()),			m_VisualizationWidget3D, SLOT(Stitch())			);
+	connect(this->m_VisualizationWidget3D,			SIGNAL(FrameStitched(float4*)),		this,	SLOT(ShowFrame(float4*))				);
+	connect(this, 									SIGNAL(NewPolyDataAvailable()),		m_VisualizationWidget3D_VTK, SLOT(UpdateGUI())	);
 
 	m_CurrentFrame = NULL;
+
+	m_DataActor3D = vtkSmartPointer<ritk::RImageActorPipeline>::New();
 }
 
 FastStitchingWidget::~FastStitchingWidget()
 {
+}
+
+void
+FastStitchingWidget::ShowFrame(float4* stitched)
+{
+	std::cout << "hallo" << std::endl;
+
+	vtkSmartPointer<vtkPoints> points =
+		vtkSmartPointer<vtkPoints>::New();
+	vtkSmartPointer<vtkCellArray> cells =
+		vtkSmartPointer<vtkCellArray>::New();
+	vtkSmartPointer<vtkDataArray> colors =
+		vtkSmartPointer<vtkUnsignedCharArray>::New();
+	vtkSmartPointer<vtkPolyData> data =
+		vtkSmartPointer<vtkPolyData>::New();
+
+	colors->SetNumberOfComponents(4);
+
+	float4 p;
+	for (int i = 0; i < 640*480; i += 8)
+	{
+		p = stitched[i];
+
+		if (p.x == p.x) // i.e. not QNAN
+		{
+			double colorTuple[4] = { 255, 255, 255, 255};
+			points->InsertNextPoint(p.x, p.y, p.z);
+			colors->InsertNextTuple(colorTuple);
+		}
+	}
+
+	for (vtkIdType i = 0; i < points->GetNumberOfPoints(); i++)
+	{
+		cells->InsertNextCell(1, &i);
+	}	
+
+	// update m_Data
+	data->SetPoints(points);
+	data->SetVerts(cells);
+	data->GetPointData()->SetScalars(colors);
+	data->Modified();
+	data->Update();
+
+		
+	m_DataActor3D->SetVisualizationMode(ritk::RImageActorPipeline::RGB);
+
+	/*m_DataActor3D->SetData(m_CurrentFrame);
+	m_DataActor3D->Modified();*/
+	//m_VisualizationWidget3D_VTK->AddActor(m_DataActor3D);
+
+	m_DataActor3D->SetData(data, true);
+	m_DataActor3D->Modified();
+
+	std::cout << data->GetPoints()->GetNumberOfPoints() << " points" << std::endl;
+
+	m_VisualizationWidget3D_VTK->AddActor(m_DataActor3D);
+
+
+	// write to file
+	/*static int counter = 0;
+	std::stringstream ss;
+	ss << "file_" << ++counter << ".vtk";
+	vtkSmartPointer<vtkPolyDataWriter> writer =
+		vtkSmartPointer<vtkPolyDataWriter>::New();
+	writer->SetFileName(ss.str().c_str());
+	writer->SetInput(data);
+	writer->SetFileTypeToASCII();
+	writer->Update();*/
+	
+	emit NewPolyDataAvailable();
 }
 
 //----------------------------------------------------------------------------
@@ -43,8 +132,8 @@ FastStitchingWidget::SetRangeData(ritk::RImageF2::ConstPointer Data)
 	m_VisualizationWidget3D->SetRangeData(m_CurrentFrame);
 
 	static int counter;
-	if (++counter > 2)
-		emit SOMETHING();
+	if (++counter > 1)
+		emit NewFrameToStitch();
 }
 
 

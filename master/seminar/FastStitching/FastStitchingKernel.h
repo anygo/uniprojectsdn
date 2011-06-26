@@ -8,6 +8,9 @@
 #include <cuda_runtime_api.h>
 #include <float.h>
 
+// const memory for transformation matrix
+__constant__ float dev_matrix[16];
+
 
 // Texture that holds the input image
 //----------------------------------------------------------------------------
@@ -21,38 +24,80 @@ texture<float, 2, cudaReadModeElementType> InputImageTexture;
 
 //----------------------------------------------------------------------------
 __global__ void
-CUDANearestNeighborBFKernel(float4* source, float4* target, float4* source_out, float4* target_out, int* indices, int numLandmarks)
+CUDAFindLandmarksKernel(float4* source, float4* target, float4* source_out, float4* target_out, int* indices_source, int* indices_target, int numLandmarks)
 {
 	int tid = blockIdx.x*blockDim.x + threadIdx.x;
 
-	float minDist = FLT_MAX;
-	float4 nn = make_float4(1,1,1,1);
-
-	int idx = indices[tid];
+	// check and copy source point
+	int idx = indices_source[tid];
 	float4 src = source[idx];
-	/*while (src.x != src.x)
-		src = source[++idx % (640*480)];
-	indices[tid] = idx;*/
-
-	for (int i = 0; i < numLandmarks; ++i)
+	if (src.x != src.x)
 	{
-		int idx = indices[i];
-		float4 cur = target[idx];
-		/*while (cur.x != cur.x)
-			cur = target[++idx % (640*480)];
-		indices[i] = idx;*/
-		
-		float dist = (src.x - cur.x)*(src.x - cur.x) + (src.y - cur.y)*(src.y - cur.y) + (src.z - cur.z)*(src.z - cur.z);
-
-		if (dist < minDist)
-		{
-			minDist = dist;
-			nn = cur;
-		}
+		indices_source[tid] = -1;
+		source_out[tid].x = sqrtf(-1.f);
+	} else
+	{
+		source_out[tid] = src;
 	}
 
-	source_out[tid] = src;
-	target_out[tid] = nn;
+	// check and copy target point
+	idx = indices_target[tid];
+	float4 tgt = target[idx];
+	if (tgt.x != tgt.x)
+	{
+		indices_target[tid] = -1;
+		target_out[tid].x = sqrtf(-1.f);
+	} else
+	{
+		target_out[tid] = tgt;
+	}
+}
+
+__global__ void
+CUDAFindNNBFKernel(float4* source, float4* target, int* correspondences, int numLandmarks)
+{
+	int tid = blockIdx.x*blockDim.x + threadIdx.x;
+
+	// check and copy source point
+	float4 src = source[tid];
+	if(src.x != src.x) 
+	{
+		correspondences[tid] = -1;
+		return;
+	} 
+	
+	float minDist = FLT_MAX;
+	int nn = -1;
+
+	for(int i = 0; i < numLandmarks; ++i)
+	{
+		float4 cur = target[i];
+		if(cur.x != cur.x)
+			continue;
+		float dist = (src.x - cur.x) * (src.x - cur.x) + (src.y - cur.y) * (src.y - cur.y) + (src.z - cur.z) * (src.z - cur.z);
+		if(dist < minDist)
+		{
+			minDist = dist;
+			nn = i;
+		}
+	}
+	correspondences[tid] = nn;
+}
+
+__global__ void
+CUDATransformLandmarksKernel(float4* toBeTransformed)
+{
+	int tid = blockIdx.x*blockDim.x + threadIdx.x;
+
+	float4 point = toBeTransformed[tid];
+
+	float x = point.x * dev_matrix[0] + point.y * dev_matrix[1] + point.z * dev_matrix[2] + dev_matrix[3];
+	float y = point.x * dev_matrix[4] + point.y * dev_matrix[5] + point.z * dev_matrix[6] + dev_matrix[7];
+	float z = point.x * dev_matrix[8] + point.y * dev_matrix[9] + point.z * dev_matrix[10] + dev_matrix[11];
+	float w = point.x * dev_matrix[12] + point.y * dev_matrix[13] + point.z * dev_matrix[14] + dev_matrix[15];
+
+	float4 transformed = make_float4(x/w, y/w, z/w, 1.f);
+	toBeTransformed[tid] = transformed;
 }
 
 

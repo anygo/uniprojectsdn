@@ -11,6 +11,7 @@
 #include "Ui_FastStitchingWidget.h"
 
 #include "RImage.h"
+#include "RImageActorPipeline.h"
 
 class FastStitchingWidget : public QWidget, public Ui_FastStitchingWidget
 {
@@ -24,6 +25,7 @@ public:
 
 	public slots:
 		void SetRangeData(ritk::RImageF2::ConstPointer Data);
+		void ShowFrame(float4*);
 
 		protected slots:
 			/// Connected to the alpha slider. Delegates the normalized value to the OpenGL widget
@@ -45,7 +47,8 @@ public:
 signals:
 			void SetMinSignal(int value);
 			void SetMaxSignal(int value);
-			void SOMETHING();
+			void NewFrameToStitch();
+			void NewPolyDataAvailable();
 
 protected:
 	/// Mutex used to synchronize rendering and data update
@@ -53,6 +56,8 @@ protected:
 
 	/// The current frame
 	ritk::RImageF2::ConstPointer m_CurrentFrame;
+
+	vtkSmartPointer<ritk::RImageActorPipeline> m_DataActor3D;
 };
 
 #endif // FASTSTITCHINGWIDGET_H__

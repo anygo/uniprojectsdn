@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>880</width>
-    <height>646</height>
+    <width>910</width>
+    <height>565</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -24,7 +24,7 @@
      </property>
     </widget>
    </item>
-   <item row="0" column="1">
+   <item row="0" column="2">
     <widget class="QFrame" name="frame">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
@@ -243,6 +243,16 @@
      </layout>
     </widget>
    </item>
+   <item row="0" column="1">
+    <widget class="ritk::VisualizationWidget3D" name="m_VisualizationWidget3D_VTK" native="true">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+    </widget>
+   </item>
   </layout>
  </widget>
  <customwidgets>
@@ -250,6 +260,12 @@
    <class>CUDAOpenGLVisualizationWidget</class>
    <extends>QWidget</extends>
    <header>CUDAOpenGLVisualizationWidget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>ritk::VisualizationWidget3D</class>
+   <extends>QWidget</extends>
+   <header location="global">visualizationwidget3d.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

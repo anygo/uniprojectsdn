@@ -207,7 +207,7 @@
                   </size>
                  </property>
                  <property name="currentIndex">
-                  <number>4</number>
+                  <number>5</number>
                  </property>
                  <item>
                   <property name="text">
@@ -232,6 +232,11 @@
                  <item>
                   <property name="text">
                    <string>RandomBallCover GPU</string>
+                  </property>
+                 </item>
+                 <item>
+                  <property name="text">
+                   <string>RandomBallCover Cayton</string>
                   </property>
                  </item>
                 </widget>

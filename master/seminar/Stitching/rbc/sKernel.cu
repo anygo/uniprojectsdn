@@ -5,10 +5,10 @@
 #ifndef SKERNEL_CU
 #define SKERNEL_CU
 
-#include<stdio.h>
-#include<math.h>
+#include <stdio.h>
+#include <math.h>
 #include "sKernel.h"
-#include "defs.h"
+#include "defsRBC.h"
 #include "utils.h"
 
 __global__ void sumKernel(charMatrix in, intMatrix sum, intMatrix sumaux, unint n){

@@ -7,7 +7,6 @@ void
 ClosestPointFinderRBCCayton::SetTarget(PointCoords* targetCoords, PointColors* targetColors, PointCoords* sourceCoords, PointColors* sourceColors)
 { 
 	ClosestPointFinder::SetTarget(targetCoords, targetColors, sourceCoords, sourceColors);
-	initRBC();
 }
 
 
@@ -63,7 +62,7 @@ ClosestPointFinderRBCCayton::initRBC()
 
 	QTime t;
 	t.start();
-	buildRBC( m_Target, &m_rbcS, numReps, numReps );
+	buildRBC( m_Target, &m_rbcS, numReps, numReps);
 	std::cout << "buiildRBC(): " << t.elapsed() << std::endl;
 }
 

@@ -8,12 +8,12 @@
 #include "utilsGPU.h"
 #include "utils.h"
 #include "rbc.h"
-#include "defs.h"
+#include "defsRBC.h"
 #include "kernels.h"
 #include "kernelWrap.h"
 #include "brute.h"
-#include<stdio.h>
-#include<cuda.h>
+#include <stdio.h>
+#include <cuda.h>
 //#include<gsl/gsl_sort.h>
 
 void bruteRangeCount(matrix x, matrix q, real *ranges, unint *cnts){

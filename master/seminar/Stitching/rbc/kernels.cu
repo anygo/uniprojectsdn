@@ -5,10 +5,10 @@
 #ifndef KERNELS_CU
 #define KERNELS_CU
 
-#include<cuda.h>
-#include "defs.h"
+#include <cuda.h>
+#include "defsRBC.h"
 #include "kernels.h"
-#include<stdio.h>
+#include <stdio.h>
 
 // This kernel does the same thing as nnKernel, except it only considers pairs as 
 // specified by the compPlan. 

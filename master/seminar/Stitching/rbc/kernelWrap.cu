@@ -5,8 +5,8 @@
 #ifndef KERNELWRAP_CU
 #define KERNELWRAP_CU
 
-#include<cuda.h>
-#include<stdio.h>
+#include <cuda.h>
+#include <stdio.h>
 #include "kernels.h"
 #include "defsRBC.h"
 

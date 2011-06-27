@@ -672,7 +672,7 @@ StitchingPlugin::ExtractValidPoints()
 	double p[3];
 	for (vtkIdType i = 0; i < m_Data->GetNumberOfPoints(); ++i)
 	{	
-		if (rand() % 4 != 0)
+		if (rand() % 2 != 0)
 			continue;
 
 		m_Data->GetPoint(i, p);

@@ -5,9 +5,9 @@
 #ifndef RBC_CU
 #define RBC_CU
 
-#include<time.h>
-#include<stdio.h>
-#include<cuda.h>
+#include <time.h>
+#include <stdio.h>
+#include <cuda.h>
 #include "utils.h"
 #include "defsRBC.h"
 #include "utilsGPU.h"
@@ -156,10 +156,10 @@ void buildRBC(const matrix x, rbcStruct *rbcS, unint numReps, unint s){
   //Now set everything up for the scans
   matrix dD;
   dD.pr=dD.r=ptsAtOnce; dD.c=rbcS->dx.r; dD.pc=rbcS->dx.pr; dD.ld=dD.pc;
-  ( cudaMalloc( (void**)&dD.mat, dD.pr*dD.pc*sizeof(*dD.mat) ) );
+  cudaMalloc( (void**)&dD.mat, dD.pr*dD.pc*sizeof(*dD.mat) );
   
   real *dranges;
-  ( cudaMalloc( (void**)&dranges, ptsAtOnce*sizeof(real) ) );
+  cudaMalloc( (void**)&dranges, ptsAtOnce*sizeof(real) );
 
   charMatrix ir;
   ir.r=dD.r; ir.pr=dD.pr; ir.c=dD.c; ir.pc=dD.pc; ir.ld=dD.ld;
@@ -169,10 +169,10 @@ void buildRBC(const matrix x, rbcStruct *rbcS, unint numReps, unint s){
 
   intMatrix dSums; //used to compute memory addresses.
   dSums.r=dir.r; dSums.pr=dir.pr; dSums.c=dir.c; dSums.pc=dir.pc; dSums.ld=dir.ld;
-  ( cudaMalloc( (void**)&dSums.mat, dSums.pc*dSums.pr*sizeof(*dSums.mat) ) );
+  cudaMalloc( (void**)&dSums.mat, dSums.pc*dSums.pr*sizeof(*dSums.mat) );
 
   unint *dCnts;
-  ( cudaMalloc( (void**)&dCnts, ptsAtOnce*sizeof(*dCnts) ) );
+  cudaMalloc( (void**)&dCnts, ptsAtOnce*sizeof(*dCnts) );
   
   //Do the scans to build the dxMap
   unint numLeft = rbcS->dr.r; //points left to process
@@ -195,14 +195,15 @@ void buildRBC(const matrix x, rbcStruct *rbcS, unint numReps, unint s){
     numLeft -= pi;
     row += pi;
   }
-  
-  cudaFree(dCnts);
-  free(ir.mat);
-  free(xmap.mat);
-  cudaFree(dranges);
-  cudaFree(dir.mat);
-  cudaFree(dSums.mat);
-  cudaFree(dD.mat);
+
+	cudaFree(dCnts);
+	  free(ir.mat);
+	  free(xmap.mat);
+	  cudaFree(dranges);
+	  cudaFree(dir.mat);
+	  cudaFree(dSums.mat);
+	  cudaFree(dD.mat);
+
 }
 
 

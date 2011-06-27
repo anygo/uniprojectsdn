@@ -5,7 +5,7 @@
 #ifndef RBC_H
 #define RBC_H
 
-#include "defs.h"
+#include "defsRBC.h"
 
 
 void buildRBC(const matrix,rbcStruct*,unint, unint);

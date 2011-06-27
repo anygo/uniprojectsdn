@@ -5,9 +5,9 @@
 #ifndef UTILSGPU_CU
 #define UTILSGPU_CU
 
-#include<cuda.h>
-#include<stdio.h>
-#include "defs.h"
+#include <cuda.h>
+#include <stdio.h>
+#include "defsRBC.h"
 #include "utilsGPU.h"
 
 void copyAndMove(matrix *dx, const matrix *x){

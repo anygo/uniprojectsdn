@@ -244,12 +244,21 @@
     </widget>
    </item>
    <item row="0" column="1">
-    <widget class="ritk::VisualizationWidget3D" name="m_VisualizationWidget3D_VTK" native="true">
+    <widget class="ritk::VisualizationUnit" name="m_VisualizationUnit">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
        <horstretch>0</horstretch>
        <verstretch>0</verstretch>
       </sizepolicy>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>200</width>
+       <height>200</height>
+      </size>
+     </property>
+     <property name="mouseTracking">
+      <bool>false</bool>
      </property>
     </widget>
    </item>
@@ -263,9 +272,9 @@
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>ritk::VisualizationWidget3D</class>
-   <extends>QWidget</extends>
-   <header location="global">visualizationwidget3d.h</header>
+   <class>ritk::VisualizationUnit</class>
+   <extends>QMainWindow</extends>
+   <header>VisualizationUnit.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

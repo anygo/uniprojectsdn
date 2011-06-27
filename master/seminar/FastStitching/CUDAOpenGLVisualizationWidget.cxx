@@ -227,7 +227,7 @@ void CUDAOpenGLVisualizationWidget::Stitch()
 	t.start();
 
 	// compute sampling grid;
-	const int numLandmarks = 100;
+	const int numLandmarks = 3000;
 	const int clipSize = 50;
 
 	int indices_source[numLandmarks];

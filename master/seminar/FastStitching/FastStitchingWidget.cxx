@@ -32,11 +32,17 @@ QWidget(parent)
 	connect(this,									SIGNAL(SetMaxSignal(int)),			this,	SLOT(SetMaxValue(int))					);
 	connect(this,									SIGNAL(NewFrameToStitch()),			m_VisualizationWidget3D, SLOT(Stitch())			);
 	connect(this->m_VisualizationWidget3D,			SIGNAL(FrameStitched(float4*)),		this,	SLOT(ShowFrame(float4*))				);
-	connect(this, 									SIGNAL(NewPolyDataAvailable()),		m_VisualizationWidget3D_VTK, SLOT(UpdateGUI())	);
 
 	m_CurrentFrame = NULL;
 
-	m_DataActor3D = vtkSmartPointer<ritk::RImageActorPipeline>::New();
+	for (int i = 0; i < BUFFERED_FRAMES; ++i)
+	{
+		m_RImage[i] = ritk::OpenGLRImageEntity::New();
+		//m_VisualizationUnit->AddEntity(m_RImage[i]);
+	}
+
+	m_VisualizationUnit->update();
+	m_VisualizationUnit->show();
 }
 
 FastStitchingWidget::~FastStitchingWidget()
@@ -46,71 +52,36 @@ FastStitchingWidget::~FastStitchingWidget()
 void
 FastStitchingWidget::ShowFrame(float4* stitched)
 {
-	std::cout << "hallo" << std::endl;
+	std::cout << "ShowFrame()" << std::endl;
 
-	vtkSmartPointer<vtkPoints> points =
-		vtkSmartPointer<vtkPoints>::New();
-	vtkSmartPointer<vtkCellArray> cells =
-		vtkSmartPointer<vtkCellArray>::New();
-	vtkSmartPointer<vtkDataArray> colors =
-		vtkSmartPointer<vtkUnsignedCharArray>::New();
-	vtkSmartPointer<vtkPolyData> data =
-		vtkSmartPointer<vtkPolyData>::New();
+	m_Mutex.lock();
 
-	colors->SetNumberOfComponents(4);
+	ritk::RImageF2::Pointer ptr;
+	ptr = ritk::RImageF2::New();
+	ptr->DeepCopy(m_CurrentFrame);
 
-	float4 p;
-	for (int i = 0; i < 640*480; i += 8)
+	QTime t;
+	t.start();
+
+	ritk::RImageF2::WorldCoordType* bufPtr = ptr->GetWorldCoordImage()->GetBufferPointer();
+	for (int i = 0; i < 640*480; ++i)
 	{
-		p = stitched[i];
-
-		if (p.x == p.x) // i.e. not QNAN
-		{
-			double colorTuple[4] = { 255, 255, 255, 255};
-			points->InsertNextPoint(p.x, p.y, p.z);
-			colors->InsertNextTuple(colorTuple);
-		}
+		ritk::RImageF2::WorldCoordType* buf = &bufPtr[i];
+		buf->GetDataPointer()[0] = stitched[i].x;
+		buf->GetDataPointer()[1] = stitched[i].y;
+		buf->GetDataPointer()[2] = stitched[i].z;
 	}
+	std::cout << "umwandeln: " << t.elapsed() << std::endl;
 
-	for (vtkIdType i = 0; i < points->GetNumberOfPoints(); i++)
-	{
-		cells->InsertNextCell(1, &i);
-	}	
+	static int ctr = 0;
+	m_RImage[ctr%BUFFERED_FRAMES]->SetRangeData((ritk::RImageF2::ConstPointer) ptr);
+	m_VisualizationUnit->AddEntity(m_RImage[ctr%BUFFERED_FRAMES]);
+	m_VisualizationUnit->update();
+	m_VisualizationUnit->show();
 
-	// update m_Data
-	data->SetPoints(points);
-	data->SetVerts(cells);
-	data->GetPointData()->SetScalars(colors);
-	data->Modified();
-	data->Update();
+	++ctr;
 
-		
-	m_DataActor3D->SetVisualizationMode(ritk::RImageActorPipeline::RGB);
-
-	/*m_DataActor3D->SetData(m_CurrentFrame);
-	m_DataActor3D->Modified();*/
-	//m_VisualizationWidget3D_VTK->AddActor(m_DataActor3D);
-
-	m_DataActor3D->SetData(data, true);
-	m_DataActor3D->Modified();
-
-	std::cout << data->GetPoints()->GetNumberOfPoints() << " points" << std::endl;
-
-	m_VisualizationWidget3D_VTK->AddActor(m_DataActor3D);
-
-
-	// write to file
-	/*static int counter = 0;
-	std::stringstream ss;
-	ss << "file_" << ++counter << ".vtk";
-	vtkSmartPointer<vtkPolyDataWriter> writer =
-		vtkSmartPointer<vtkPolyDataWriter>::New();
-	writer->SetFileName(ss.str().c_str());
-	writer->SetInput(data);
-	writer->SetFileTypeToASCII();
-	writer->Update();*/
-	
-	emit NewPolyDataAvailable();
+	m_Mutex.unlock();
 }
 
 //----------------------------------------------------------------------------
@@ -130,6 +101,7 @@ FastStitchingWidget::SetRangeData(ritk::RImageF2::ConstPointer Data)
 	m_CurrentFrame = Data;
 
 	m_VisualizationWidget3D->SetRangeData(m_CurrentFrame);
+	//m_RImage->SetRangeData(m_CurrentFrame);
 
 	static int counter;
 	if (++counter > 1)

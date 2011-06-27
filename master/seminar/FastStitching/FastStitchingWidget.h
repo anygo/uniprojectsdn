@@ -13,6 +13,10 @@
 #include "RImage.h"
 #include "RImageActorPipeline.h"
 
+#include "VisualizationUnit.h"
+
+#define BUFFERED_FRAMES 5
+
 class FastStitchingWidget : public QWidget, public Ui_FastStitchingWidget
 {
 	Q_OBJECT
@@ -48,7 +52,6 @@ signals:
 			void SetMinSignal(int value);
 			void SetMaxSignal(int value);
 			void NewFrameToStitch();
-			void NewPolyDataAvailable();
 
 protected:
 	/// Mutex used to synchronize rendering and data update
@@ -57,7 +60,7 @@ protected:
 	/// The current frame
 	ritk::RImageF2::ConstPointer m_CurrentFrame;
 
-	vtkSmartPointer<ritk::RImageActorPipeline> m_DataActor3D;
+	ritk::OpenGLRImageEntity::Pointer m_RImage[BUFFERED_FRAMES];
 };
 
 #endif // FASTSTITCHINGWIDGET_H__

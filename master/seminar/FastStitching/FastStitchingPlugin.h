@@ -26,8 +26,13 @@ public:
 	/// Intercept the event.
 	void ProcessEvent(ritk::Event::Pointer EventP);
 
+signals:
+	void UpdateGUI();
+
 protected:
-	FastStitchingWidget *m_Widget;	
+	FastStitchingWidget *m_Widget;
+
+	ritk::NewFrameEvent::RImageConstPointer m_CurrentFrame;
 };
 
 

@@ -558,35 +558,35 @@ CUDAOpenGLVisualizationWidget::UpdateVBO(bool SizeChanged)
 	// Release CUDA resources
 	cutilSafeCall(cudaGraphicsUnmapResources(1, &m_Cuda_vbo_resource, 0));
 
-	CHECK_GL_ERROR();
+	//CHECK_GL_ERROR();
 
-	LONGLONG C2;
-	QueryPerformanceCounter((LARGE_INTEGER*)&C2);
+	//LONGLONG C2;
+	//QueryPerformanceCounter((LARGE_INTEGER*)&C2);
 
-	// Activate the texture coordinate VBO and update its data
-	if (SizeChanged)
-	{
-		ritk::glBindBuffer(GL_ARRAY_BUFFER, m_VBOTexCoords);
-		ritk::glBufferData(GL_ARRAY_BUFFER, SizeX*SizeY * 2 * sizeof(float) + SizeX*(SizeY-2)*2*sizeof(float), m_TextureCoords, GL_DYNAMIC_DRAW);
-	}
-	CHECK_GL_ERROR();
+	//// Activate the texture coordinate VBO and update its data
+	//if (SizeChanged)
+	//{
+	//	ritk::glBindBuffer(GL_ARRAY_BUFFER, m_VBOTexCoords);
+	//	ritk::glBufferData(GL_ARRAY_BUFFER, SizeX*SizeY * 2 * sizeof(float) + SizeX*(SizeY-2)*2*sizeof(float), m_TextureCoords, GL_DYNAMIC_DRAW);
+	//}
+	//CHECK_GL_ERROR();
 
-	// Bind the RGB texture
-	glBindTexture(GL_TEXTURE_2D, m_RGBTexture);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, SizeX, SizeY, 0, GL_RGB, GL_UNSIGNED_BYTE, m_RGBTextureData);
-	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-	CHECK_GL_ERROR();
+	//// Bind the RGB texture
+	//glBindTexture(GL_TEXTURE_2D, m_RGBTexture);
+	//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, SizeX, SizeY, 0, GL_RGB, GL_UNSIGNED_BYTE, m_RGBTextureData);
+	//glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+	//glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+	//CHECK_GL_ERROR();
 
-	// Bind the range texture
-	glBindTexture(GL_TEXTURE_2D, m_RangeTexture);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, SizeX, SizeY, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, m_RangeTextureData);
-	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-	CHECK_GL_ERROR();
+	//// Bind the range texture
+	//glBindTexture(GL_TEXTURE_2D, m_RangeTexture);
+	//glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, SizeX, SizeY, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, m_RangeTextureData);
+	//glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+	//glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+	//CHECK_GL_ERROR();
 
-	LONGLONG C3;
-	QueryPerformanceCounter((LARGE_INTEGER*)&C3);
+	//LONGLONG C3;
+	//QueryPerformanceCounter((LARGE_INTEGER*)&C3);
 
 	// Synchronize
 	m_VBOInitialized = true;
@@ -595,10 +595,10 @@ CUDAOpenGLVisualizationWidget::UpdateVBO(bool SizeChanged)
 	m_Mutex.unlock();
 
 	// Update the OpenGL state
-	updateGL();
+	//updateGL();
 
 	// Wait for all OpenGL operations to finish
-	glFinish();
+	//glFinish();
 }
 
 
@@ -804,110 +804,110 @@ CUDAOpenGLVisualizationWidget::resizeGL(int width, int height)
 void
 CUDAOpenGLVisualizationWidget::paintGL()
 {
-	// Lock
-	m_Mutex.lock();
-
-	// Check for previous OpenGL errors
-	CHECK_GL_ERROR();
-
-	// If we have no data, return
-	if ( !m_CurrentFrame )
-	{
-		m_Mutex.unlock();
-		return;
-	}
-
-	// If the current data and the VBO are not synchronized return
-	if ( !m_VBOInitialized )
-	{
-		m_Mutex.unlock();
-		return;
-	}
-
-	// Set up viewing frustum defined by our bounding box
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	gluPerspective((GLfloat)45.0f*m_Zoom, (GLfloat)(m_Width)/(GLfloat)(m_Height), (GLfloat)m_ClippingPlanes[0], (GLfloat)m_ClippingPlanes[1]);
-
-	// Std OpenGL
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-
-	// Set up our viewing direction
-	gluLookAt(m_EyePos[0], m_EyePos[1], m_EyePos[2], 
-		m_ViewCenter[0], m_ViewCenter[1], m_ViewCenter[2], 
-		0, 1, 0);
-
-	// Apply the current translation
-	glTranslatef(m_Translation[0],m_Translation[1],0);
-
-	// Apply the current rotation
-	glTranslatef(m_ViewCenter[0],m_ViewCenter[1],m_ViewCenter[2]);
-	glRotatef(m_Rotation[0] / 16.0, 1.0, 0.0, 0.0);
-	glRotatef(m_Rotation[1] / 16.0, 0.0, 1.0, 0.0);
-	glRotatef(m_Rotation[2] / 16.0, 0.0, 0.0, 1.0);
-	glTranslatef(-m_ViewCenter[0],-m_ViewCenter[1],-m_ViewCenter[2]);
-
-	// Default drawing color
-	glColor3f(1,1,1);
-
-	// Enable shader program
-	ritk::glUseProgram(m_ShaderProgram);
-
-	// LUT texture
-	BindLUT(m_LUTID);
-	GLint LUTTextureLocation = ritk::glGetUniformLocation(m_ShaderProgram, "m_LUTTexture");
-	ritk::glActiveTexture(GL_TEXTURE0);
-
-	glBindTexture(GL_TEXTURE_1D, m_LUTTexture);
-	glEnable(GL_TEXTURE_1D);
-	ritk::glUniform1i(LUTTextureLocation, 0);
-
-	// The current alpha value for blending
-	GLint AlphaLocation = ritk::glGetUniformLocation(m_ShaderProgram, "m_Alpha");
-	ritk::glUniform1f(AlphaLocation, m_Alpha);
-
-	// The RGB image texture
-	GLint RGBTextureLocation = ritk::glGetUniformLocation(m_ShaderProgram, "m_RGBTexture");
-	ritk::glActiveTexture(GL_TEXTURE1); 
-	glBindTexture(GL_TEXTURE_2D, m_RGBTexture);
-	glEnable(GL_TEXTURE_2D);
-	ritk::glUniform1i(RGBTextureLocation, 1);
-
-	// The range image texture
-	GLint RangeTextureLocation = ritk::glGetUniformLocation(m_ShaderProgram, "m_RangeTexture");
-	ritk::glActiveTexture(GL_TEXTURE2); 
-
-	glBindTexture(GL_TEXTURE_2D, m_RangeTexture);
-	glEnable(GL_TEXTURE_2D);
-	ritk::glUniform1i(RangeTextureLocation, 2);
-
-	// Render the point cloud using the VBOs
-	glEnableClientState(GL_VERTEX_ARRAY);
-	ritk::glBindBuffer(GL_ARRAY_BUFFER, m_VBOVertices);
-
-	glVertexPointer(4, GL_FLOAT, 0, NULL);
-
-	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-	ritk::glBindBuffer(GL_ARRAY_BUFFER, m_VBOTexCoords);
-
-	glTexCoordPointer(2, GL_FLOAT, 0, NULL);
-
-	int outputWidth = m_CurrentFrame->GetBufferedRegion().GetSize()[0]*2;
-	for(int i=0; i<m_CurrentFrame->GetBufferedRegion().GetSize()[1]-1; ++i)
-	{
-		if (m_renderPoints)
-			glDrawArrays(GL_POINTS, i*outputWidth, outputWidth);
-		else
-			glDrawArrays(GL_TRIANGLE_STRIP, i*outputWidth, outputWidth);
-	}
-
-	// Check for GL errors
-	CHECK_GL_ERROR();
-
-	// Don't forget to unlock
-	m_Mutex.unlock();
+//	// Lock
+//	m_Mutex.lock();
+//
+//	// Check for previous OpenGL errors
+//	CHECK_GL_ERROR();
+//
+//	// If we have no data, return
+//	if ( !m_CurrentFrame )
+//	{
+//		m_Mutex.unlock();
+//		return;
+//	}
+//
+//	// If the current data and the VBO are not synchronized return
+//	if ( !m_VBOInitialized )
+//	{
+//		m_Mutex.unlock();
+//		return;
+//	}
+//
+//	// Set up viewing frustum defined by our bounding box
+//	glMatrixMode(GL_PROJECTION);
+//	glLoadIdentity();
+//	gluPerspective((GLfloat)45.0f*m_Zoom, (GLfloat)(m_Width)/(GLfloat)(m_Height), (GLfloat)m_ClippingPlanes[0], (GLfloat)m_ClippingPlanes[1]);
+//
+//	// Std OpenGL
+//	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+//	glMatrixMode(GL_MODELVIEW);
+//	glLoadIdentity();
+//
+//	// Set up our viewing direction
+//	gluLookAt(m_EyePos[0], m_EyePos[1], m_EyePos[2], 
+//		m_ViewCenter[0], m_ViewCenter[1], m_ViewCenter[2], 
+//		0, 1, 0);
+//
+//	// Apply the current translation
+//	glTranslatef(m_Translation[0],m_Translation[1],0);
+//
+//	// Apply the current rotation
+//	glTranslatef(m_ViewCenter[0],m_ViewCenter[1],m_ViewCenter[2]);
+//	glRotatef(m_Rotation[0] / 16.0, 1.0, 0.0, 0.0);
+//	glRotatef(m_Rotation[1] / 16.0, 0.0, 1.0, 0.0);
+//	glRotatef(m_Rotation[2] / 16.0, 0.0, 0.0, 1.0);
+//	glTranslatef(-m_ViewCenter[0],-m_ViewCenter[1],-m_ViewCenter[2]);
+//
+//	// Default drawing color
+//	glColor3f(1,1,1);
+//
+//	// Enable shader program
+//	ritk::glUseProgram(m_ShaderProgram);
+//
+//	// LUT texture
+//	BindLUT(m_LUTID);
+//	GLint LUTTextureLocation = ritk::glGetUniformLocation(m_ShaderProgram, "m_LUTTexture");
+//	ritk::glActiveTexture(GL_TEXTURE0);
+//
+//	glBindTexture(GL_TEXTURE_1D, m_LUTTexture);
+//	glEnable(GL_TEXTURE_1D);
+//	ritk::glUniform1i(LUTTextureLocation, 0);
+//
+//	// The current alpha value for blending
+//	GLint AlphaLocation = ritk::glGetUniformLocation(m_ShaderProgram, "m_Alpha");
+//	ritk::glUniform1f(AlphaLocation, m_Alpha);
+//
+//	// The RGB image texture
+//	GLint RGBTextureLocation = ritk::glGetUniformLocation(m_ShaderProgram, "m_RGBTexture");
+//	ritk::glActiveTexture(GL_TEXTURE1); 
+//	glBindTexture(GL_TEXTURE_2D, m_RGBTexture);
+//	glEnable(GL_TEXTURE_2D);
+//	ritk::glUniform1i(RGBTextureLocation, 1);
+//
+//	// The range image texture
+//	GLint RangeTextureLocation = ritk::glGetUniformLocation(m_ShaderProgram, "m_RangeTexture");
+//	ritk::glActiveTexture(GL_TEXTURE2); 
+//
+//	glBindTexture(GL_TEXTURE_2D, m_RangeTexture);
+//	glEnable(GL_TEXTURE_2D);
+//	ritk::glUniform1i(RangeTextureLocation, 2);
+//
+//	// Render the point cloud using the VBOs
+//	glEnableClientState(GL_VERTEX_ARRAY);
+//	ritk::glBindBuffer(GL_ARRAY_BUFFER, m_VBOVertices);
+//
+//	glVertexPointer(4, GL_FLOAT, 0, NULL);
+//
+//	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+//	ritk::glBindBuffer(GL_ARRAY_BUFFER, m_VBOTexCoords);
+//
+//	glTexCoordPointer(2, GL_FLOAT, 0, NULL);
+//
+//	int outputWidth = m_CurrentFrame->GetBufferedRegion().GetSize()[0]*2;
+//	for(int i=0; i<m_CurrentFrame->GetBufferedRegion().GetSize()[1]-1; ++i)
+//	{
+//		if (m_renderPoints)
+//			glDrawArrays(GL_POINTS, i*outputWidth, outputWidth);
+//		else
+//			glDrawArrays(GL_TRIANGLE_STRIP, i*outputWidth, outputWidth);
+//	}
+//
+//	// Check for GL errors
+//	CHECK_GL_ERROR();
+//
+//	// Don't forget to unlock
+//	m_Mutex.unlock();
 }
 
 

@@ -91,7 +91,7 @@
        </widget>
       </item>
       <item row="3" column="0">
-       <widget class="CUDAOpenGLVisualizationWidget" name="m_Stitcher" native="true">
+       <widget class="CUDAStitcher" name="m_Stitcher" native="true">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
           <horstretch>0</horstretch>
@@ -126,9 +126,9 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>CUDAOpenGLVisualizationWidget</class>
+   <class>CUDAStitcher</class>
    <extends>QWidget</extends>
-   <header>CUDAOpenGLVisualizationWidget.h</header>
+   <header>CUDAStitcher.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>

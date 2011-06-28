@@ -60,7 +60,7 @@ CUDAFindNNBFKernel(float4* source, float4* target, int* correspondences, int num
 
 	// check and copy source point
 	float4 src = source[tid];
-	if(src.x != src.x) 
+	if (src.x != src.x) 
 	{
 		correspondences[tid] = -1;
 		return;
@@ -69,7 +69,7 @@ CUDAFindNNBFKernel(float4* source, float4* target, int* correspondences, int num
 	float minDist = FLT_MAX;
 	int nn = -1;
 
-	for(int i = 0; i < numLandmarks; ++i)
+	for (int i = 0; i < numLandmarks; ++i)
 	{
 		float4 cur = target[i];
 		if(cur.x != cur.x)

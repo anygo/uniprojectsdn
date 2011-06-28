@@ -75,14 +75,14 @@ SET(HDRS
 	FastStitchingPluginFactory.h
 	FastStitchingPlugin.h
 	FastStitchingWidget.h
-	CUDAOpenGLVisualizationWidget.h
+	CUDAStitcher.h
 )
 
 SET(SRCS
 	FastStitchingPluginFactory.cxx
 	FastStitchingPlugin.cxx
 	FastStitchingWidget.cxx
-	CUDAOpenGLVisualizationWidget.cxx
+	CUDAStitcher.cxx
 )
 
 SET(	CUDA_HDRS
@@ -97,7 +97,7 @@ SET(  MOC_HDRS
 	FastStitchingPluginFactory.h
 	FastStitchingPlugin.h
 	FastStitchingWidget.h
-	CUDAOpenGLVisualizationWidget.h
+	CUDAStitcher.h
 )
 
 SET(  UIS

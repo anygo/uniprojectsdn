@@ -15,13 +15,13 @@
 
 
 /**
-*	@class		CUDAOpenGLVisualizationWidget
+*	@class		CUDAStitcher
 *	@author		Dominik Neumann and Felix Lugauer
 *	@brief		
 *
 *	@details
 */
-class CUDAOpenGLVisualizationWidget : public QGLWidget
+class CUDAStitcher : public QGLWidget
 {
 	Q_OBJECT
 
@@ -31,16 +31,16 @@ class CUDAOpenGLVisualizationWidget : public QGLWidget
 public:
 
 	/// Constructor
-	CUDAOpenGLVisualizationWidget(QWidget *parent=0);
+	CUDAStitcher(QWidget *parent=0);
 	/// Destructor
-	~CUDAOpenGLVisualizationWidget();
+	~CUDAStitcher();
 
 	void Prepare(ritk::RImageF2::ConstPointer Data);
 
 	
 
 signals:
-	void NewDataAvailable(bool SizeChanged);
+	void Prepared(bool SizeChanged);
 	void FrameStitched(float4*);
 
 	protected slots:
@@ -49,29 +49,7 @@ signals:
 
 protected:
 
-	// Width and height of the drawing area
-	int m_Width;
-	int m_Height;
 
-	/// Current near and farplane
-	float m_ClippingPlanes[2];
-
-	/// Current eye position and view center
-	//@{
-	float m_EyePos[3];
-	float m_ViewCenter[3];
-	//@}
-
-	/// The current rotation
-	int m_Rotation[3];
-	/// The current translation
-	int m_Translation[2];
-	/// Last mouse point
-	QPoint lastPos;
-	/// The raw zoom value
-	float m_RawZoom;
-	/// The current zoom
-	float m_Zoom;
 
 	/// Mutex used to synchronize rendering and data update
 	QMutex m_Mutex;
@@ -112,16 +90,9 @@ protected:
 	/// The LUT texture
 	GLuint m_LUTTexture;
 
-	/// The shader program
-	GLuint m_ShaderProgram;
 	/// Handles to the shader objects
 	std::vector<GLuint> m_ShaderHandles;
 
-	/// The current LUT index
-	unsigned int m_LUTID;
-
-	/// The current alpha value for blending
-	float m_Alpha;
 
 	/// Performance counters
 	int m_Counters[10];

@@ -1,13 +1,7 @@
-#include "CUDAOpenGLVisualizationWidget.h"
+#include "CUDAStitcher.h"
 
-#include "OpenGLExtensions.h"
 #include <cutil_inline.h>
-#include <cuda_gl_interop.h>
 
-#include <gl/gl.h>
-#include <gl/glu.h>
-#include "Shaders.h"
-#include "LUTs.h"
 
 #include <math.h>
 #include <algorithm>
@@ -17,12 +11,7 @@
 #include <vtkLandmarkTransform.h>
 #include <vtkMatrix4x4.h>
 #include <vtkTransform.h>
-#include <vtkPointData.h>
-#include <vtkPolyData.h>
-#include <vtkPolyDataWriter.h>
-#include <vtkFloatArray.h>
-#include <vtkSmartPointer.h>
-#include <vtkCellArray.h>
+
 
 
 #include "Manager.h"
@@ -46,15 +35,13 @@ void
 CUDATransfromLandmarks(float4* toBeTransformed, double matrix[4][4], int numLandmarks);
 
 
-CUDAOpenGLVisualizationWidget::CUDAOpenGLVisualizationWidget(QWidget *parent) :
+CUDAStitcher::CUDAStitcher(QWidget *parent) :
 QGLWidget(parent)
 {
 	//cutilSafeCall(cudaThreadExit());
 	cutilSafeCall(cudaSetDevice(cutGetMaxGflopsDeviceId()));
-	cutilSafeCall(cudaGLSetGLDevice(cutGetMaxGflopsDeviceId()));
 	m_AllocatedSize = 0;
 	m_InputImgArr = NULL;
-	m_Output = NULL;
 
 	m_CurWCs = NULL;
 	m_PrevWCs = NULL;
@@ -77,21 +64,6 @@ QGLWidget(parent)
 	m_RGBTextureData = 0;
 	m_RangeTextureData = 0;
 
-	m_ClippingPlanes[0] = 0;
-	m_ClippingPlanes[1] = 0;
-
-	// No translation by default
-	m_Translation[0] = 0;
-	m_Translation[1] = 0;
-
-	// No rotation by default
-	m_Rotation[0] = 0;
-	m_Rotation[1] = 0;
-	m_Rotation[2] = 0;
-
-	// Std zoom
-	m_RawZoom = 0.5f*log(0.5f/1.5f); // = atanh(y/2+1) 
-	m_Zoom = (tanh(m_RawZoom)+1)*2;
 
 	m_Counters[0] = 0;
 	m_Counters[1] = 0;
@@ -102,13 +74,9 @@ QGLWidget(parent)
 	m_Timers[2] = 1;
 	m_Timers[3] = 1;
 
-	// Shader
-	m_LUTID = 0;
-	m_Alpha = 0.0;
-	m_ShaderProgram = 0;
 
 	// Internal communication
-	connect(this, SIGNAL(NewDataAvailable(bool)), this, SLOT(UpdateVBO(bool)), Qt::BlockingQueuedConnection);
+	connect(this, SIGNAL(Prepared(bool)), this, SLOT(UpdateVBO(bool)), Qt::BlockingQueuedConnection);
 
 
 	m_PrevTrans = vtkSmartPointer<vtkMatrix4x4>::New();
@@ -117,10 +85,8 @@ QGLWidget(parent)
 
 
 //----------------------------------------------------------------------------
-CUDAOpenGLVisualizationWidget::~CUDAOpenGLVisualizationWidget()
+CUDAStitcher::~CUDAStitcher()
 {
-	// Clean up
-	ritk::glDeleteBuffers(1, &m_VBOVertices);
 
 	// Free GPU Memory that holds the previous and current world data
 	cutilSafeCall(cudaFree(m_CurWCs));
@@ -141,7 +107,7 @@ CUDAOpenGLVisualizationWidget::~CUDAOpenGLVisualizationWidget()
 
 //----------------------------------------------------------------------------
 void
-CUDAOpenGLVisualizationWidget::Prepare(ritk::RImageF2::ConstPointer Data)
+CUDAStitcher::Prepare(ritk::RImageF2::ConstPointer Data)
 {
 	// Lock ourself
 	m_Mutex.lock();
@@ -246,14 +212,69 @@ CUDAOpenGLVisualizationWidget::Prepare(ritk::RImageF2::ConstPointer Data)
 	// Unlock ourself
 	m_Mutex.unlock();
 
-	// Delegate the data to the UpdateVBO slot that is connected to the NewDataAvailable signal.
-	emit NewDataAvailable(SizeChanged);
+	// Delegate the data to the UpdateVBO slot that is connected to the Prepared signal.
+	emit Prepared(SizeChanged);
 }
 
+//----------------------------------------------------------------------------
+void 
+CUDAStitcher::UpdateVBO(bool SizeChanged)
+{
+	// Lock the mutex
+	m_Mutex.lock();
 
+	// To be on the safe side
+	this->makeCurrent();
+
+	// The number of vertices that we have to process
+	/*long SizeX = m_CurrentFrame->GetBufferedRegion().GetSize()[0];
+	long SizeY = m_CurrentFrame->GetBufferedRegion().GetSize()[1];*/
+	long SizeX = m_TextureSize[0];
+	long SizeY = m_TextureSize[1];
+
+	if(SizeX * SizeY != m_AllocatedSize)
+	{
+		if (m_InputImgArr)
+			cutilSafeCall(cudaFreeArray(m_InputImgArr));
+
+		cudaChannelFormatDesc ChannelDesc = cudaCreateChannelDesc(32,0,0,0,cudaChannelFormatKindFloat);
+		cutilSafeCall(cudaMallocArray(&m_InputImgArr,&ChannelDesc,SizeX,SizeY));
+
+		// Initialize GPU Memory to hold the previous and current world coords
+		if (m_CurWCs)
+			cutilSafeCall(cudaFree(m_CurWCs));
+		if (m_PrevWCs)
+			cutilSafeCall(cudaFree(m_PrevWCs));
+
+		cutilSafeCall(cudaMalloc((void**)&(m_CurWCs), SizeX*SizeY*sizeof(float4)));
+		cutilSafeCall(cudaMalloc((void**)&(m_PrevWCs), SizeX*SizeY*sizeof(float4)));
+
+		m_AllocatedSize = SizeX * SizeY;
+	}
+
+	// Copy the input data to the device
+	cutilSafeCall(cudaMemcpyToArray(m_InputImgArr, 0, 0, m_CurrentFrame->GetRangeImage()->GetBufferPointer(), SizeX*SizeY * sizeof(float), cudaMemcpyHostToDevice));
+
+	// swap previous and current frame pointer s.t. the old coords don't get lost
+	float4* tmp = m_CurWCs;
+	m_CurWCs = m_PrevWCs;
+	m_PrevWCs = tmp;
+
+	// Compute the world coordinates
+	CUDARangeToWorld
+		(
+		m_CurWCs,
+		m_InputImgArr, 
+		m_CurrentFrame->GetBufferedRegion().GetSize()[0],
+		m_CurrentFrame->GetBufferedRegion().GetSize()[1]
+		);
+
+	// Unlock
+	m_Mutex.unlock();
+}
 //----------------------------------------------------------------------------
 void
-CUDAOpenGLVisualizationWidget::Stitch() 
+CUDAStitcher::Stitch() 
 {
 	m_Mutex.lock();
 
@@ -264,7 +285,7 @@ CUDAOpenGLVisualizationWidget::Stitch()
 	t.start();
 
 	// compute sampling grid;
-	const int numLandmarks = 3000;
+	const int numLandmarks = 5000;
 	const int clipSize = 50;
 
 	int indices_source[numLandmarks];
@@ -350,7 +371,7 @@ CUDAOpenGLVisualizationWidget::Stitch()
 
 		for (int i = 0; i < numLandmarks; ++i)
 		{
-			if (correspondences[i] == -1)
+			if (correspondences[i] == -1 || source[i].x != source[i].x || target[i].x != target[i].x)
 				continue;
 
 			p1->InsertNextPoint(source[i].x, source[i].y, source[i].z);
@@ -406,59 +427,3 @@ CUDAOpenGLVisualizationWidget::Stitch()
 	emit FrameStitched(stitched);
 }
 
-//----------------------------------------------------------------------------
-void 
-CUDAOpenGLVisualizationWidget::UpdateVBO(bool SizeChanged)
-{
-	// Lock the mutex
-	m_Mutex.lock();
-
-	// To be on the safe side
-	this->makeCurrent();
-
-	// The number of vertices that we have to process
-	/*long SizeX = m_CurrentFrame->GetBufferedRegion().GetSize()[0];
-	long SizeY = m_CurrentFrame->GetBufferedRegion().GetSize()[1];*/
-	long SizeX = m_TextureSize[0];
-	long SizeY = m_TextureSize[1];
-
-	if(SizeX * SizeY != m_AllocatedSize)
-	{
-		if (m_InputImgArr)
-			cutilSafeCall(cudaFreeArray(m_InputImgArr));
-
-		cudaChannelFormatDesc ChannelDesc = cudaCreateChannelDesc(32,0,0,0,cudaChannelFormatKindFloat);
-		cutilSafeCall(cudaMallocArray(&m_InputImgArr,&ChannelDesc,SizeX,SizeY));
-
-		// Initialize GPU Memory to hold the previous and current world coords
-		if (m_CurWCs)
-			cutilSafeCall(cudaFree(m_CurWCs));
-		if (m_PrevWCs)
-			cutilSafeCall(cudaFree(m_PrevWCs));
-
-		cutilSafeCall(cudaMalloc((void**)&(m_CurWCs), SizeX*SizeY*sizeof(float4)));
-		cutilSafeCall(cudaMalloc((void**)&(m_PrevWCs), SizeX*SizeY*sizeof(float4)));
-
-		m_AllocatedSize = SizeX * SizeY;
-	}
-
-	// Copy the input data to the device
-	cutilSafeCall(cudaMemcpyToArray(m_InputImgArr, 0, 0, m_CurrentFrame->GetRangeImage()->GetBufferPointer(), SizeX*SizeY * sizeof(float), cudaMemcpyHostToDevice));
-
-	// swap previous and current frame pointer s.t. the old coords don't get lost
-	float4* tmp = m_CurWCs;
-	m_CurWCs = m_PrevWCs;
-	m_PrevWCs = tmp;
-
-	// Compute the world coordinates
-	CUDARangeToWorld
-		(
-		m_CurWCs,
-		m_InputImgArr, 
-		m_CurrentFrame->GetBufferedRegion().GetSize()[0],
-		m_CurrentFrame->GetBufferedRegion().GetSize()[1]
-		);
-
-	// Unlock
-	m_Mutex.unlock();
-}

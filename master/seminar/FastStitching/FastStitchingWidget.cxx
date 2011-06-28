@@ -21,8 +21,8 @@ QWidget(parent)
 	setupUi(this);
 
 	// Connect signals and slots
-	connect(this,									SIGNAL(NewFrameToStitch()),			m_Stitcher, SLOT(Stitch())			);
-	connect(this->m_Stitcher,			SIGNAL(FrameStitched(float4*)),		this,	SLOT(ShowFrame(float4*))				);
+	connect(this,					SIGNAL(NewFrameToStitch()),			m_Stitcher, SLOT(Stitch())			);
+	connect(this->m_Stitcher,		SIGNAL(FrameStitched(float4*)),		this,	SLOT(ShowFrame(float4*))	);
 
 	m_CurrentFrame = NULL;
 

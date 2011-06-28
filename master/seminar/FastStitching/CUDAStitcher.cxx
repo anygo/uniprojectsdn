@@ -39,7 +39,7 @@ CUDAStitcher::CUDAStitcher(QWidget *parent) :
 QGLWidget(parent)
 {
 	//cutilSafeCall(cudaThreadExit());
-	cutilSafeCall(cudaSetDevice(cutGetMaxGflopsDeviceId()));
+	//cutilSafeCall(cudaSetDevice(cutGetMaxGflopsDeviceId()));
 	m_AllocatedSize = 0;
 	m_InputImgArr = NULL;
 
@@ -285,7 +285,7 @@ CUDAStitcher::Stitch()
 	t.start();
 
 	// compute sampling grid;
-	const int numLandmarks = 5000;
+	const int numLandmarks = 2000;
 	const int clipSize = 50;
 
 	int indices_source[numLandmarks];
@@ -297,17 +297,18 @@ CUDAStitcher::Stitch()
 	for (int i = 0, cur = 0; i < numLandmarks; ++i, cur += step)
 	{
 		indices_target[i] = cur;
+		indices_source[i] = cur;
 	}
 	
 	// with clipping - some additional stuff required
-	int numPointsClipped = (m_TextureSize[0] - 2*clipSize) * (m_TextureSize[1] - 2*clipSize);
+	/*int numPointsClipped = (m_TextureSize[0] - 2*clipSize) * (m_TextureSize[1] - 2*clipSize);
 	int stepClipped = numPointsClipped / numLandmarks;
 	for (int i = 0, cur = m_TextureSize[0] * clipSize + clipSize; i < numLandmarks; ++i, cur += stepClipped)
 	{
 		if (cur % (m_TextureSize[0] - clipSize) < clipSize)
 			cur += 2*clipSize;
 		indices_source[i] = cur;
-	}
+	}*/
 
 	int* dev_indices_source;
 	cutilSafeCall(cudaMalloc((void**)&(dev_indices_source), numLandmarks*sizeof(int)));

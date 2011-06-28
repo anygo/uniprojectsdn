@@ -104,7 +104,7 @@ CUDATransformLandmarksKernel(float4* toBeTransformed)
 //----------------------------------------------------------------------------
 template<unsigned int BlockSizeX, unsigned int BlockSizeY>
 __global__ void
-CUDARangeToWorldKernel(unsigned int NX, unsigned int NY, float4* Output, float4* duplicate, float fx, float fy, float cx, float cy, float k1, float k2)
+CUDARangeToWorldKernel(unsigned int NX, unsigned int NY, float4* duplicate)
 {
 	// 2D index and linear index within this thread block
 	int tu = threadIdx.x;
@@ -140,21 +140,6 @@ CUDARangeToWorldKernel(unsigned int NX, unsigned int NY, float4* Output, float4*
 
 	// Set the WC for the duplicate without Mesh Structure
 	duplicate[(int)(gv*NX + gu)] = WC;
-
-	// Mesh
-	// the size of the outputImg is twice the size of the input because one line does not only
-	// represent the points of one line but the triangles of one strip
-	int oNX = 2*NX;
-	int ou = 2*gu;
-	if ( gv != NY-1 )
-	{
-		Output[(int)(gv*oNX+ou)] = WC;
-	}
-	if ( gv != 0 )
-	{
-		Output[(int)((gv-1)*oNX+ou+1)] = WC;
-	}
-
 }
 
 

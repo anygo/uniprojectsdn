@@ -27,31 +27,14 @@ public:
 	/// Destructor
 	~FastStitchingWidget();
 
-	public slots:
-		void SetRangeData(ritk::RImageF2::ConstPointer Data);
-		void ShowFrame(float4*);
+public slots:
+	void SetRangeData(ritk::RImageF2::ConstPointer Data);
+	void ShowFrame(float4*);
 
-		protected slots:
-			/// Connected to the alpha slider. Delegates the normalized value to the OpenGL widget
-			void LUTAlphaSliderMoved(int value);
-			/// Connected to the LUT combo box. Delegates the index to the OpenGL widget
-			void LUTIndexChanged(int index);
-			/// Connected to the Radiobuttons
-			void RadioButtonPolyDataClicked();
+//protected slots:
 
-			// Connected to the widget's range interval min spinbox
-			void RangeIntervalMinChanged(double d);
-			// Connected to the widget's range interval max spinbox
-			void RangeIntervalMaxChanged(double d);
-			// Connected to the widget's clamp range interval button
-			void ClampRangeInterval();
-
-			void SetMinValue(int value);
-			void SetMaxValue(int value);
 signals:
-			void SetMinSignal(int value);
-			void SetMaxSignal(int value);
-			void NewFrameToStitch();
+	void NewFrameToStitch();
 
 protected:
 	/// Mutex used to synchronize rendering and data update

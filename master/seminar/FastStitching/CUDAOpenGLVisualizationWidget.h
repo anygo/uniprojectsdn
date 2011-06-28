@@ -16,8 +16,8 @@
 
 /**
 *	@class		CUDAOpenGLVisualizationWidget
-*	@author		Jakob Wasza
-*	@brief		A visualization widget that uses OpenGL
+*	@author		Dominik Neumann and Felix Lugauer
+*	@brief		
 *
 *	@details
 */
@@ -35,96 +35,19 @@ public:
 	/// Destructor
 	~CUDAOpenGLVisualizationWidget();
 
-	/**	@brief	Set the range data to render 
-	*	@param	Data	The data to render
-	*
-	*	@details
-	*	A call to this method will set the range data to render.
-	*	In order to comply with the OpenGL render context this method
-	*	will pass the data to the UpdateVBO() slot via the NewDataAvailable() signal.
-	*/
-	void SetRangeData(ritk::RImageF2::ConstPointer Data);
-
-	/// Set the alpha value for blending
-	void SetLUTAlpha(float value);
-
-	/// Set the LUT ID
-	void SetLUT(unsigned int ID);
-
-	/// Set the render type of the data
-	void SetRenderType(bool renderPoints);
-
-	// Set the range clamping
-	void SetRangeClamping(float min, float max);
+	void Prepare(ritk::RImageF2::ConstPointer Data);
 
 	
 
 signals:
-	/// Signal to establish communication between SetTOFData and NewDataAvailable
 	void NewDataAvailable(bool SizeChanged);
-	/// Signal to establish communication with the ResetCamera method
-	void ResetCameraSignal();
-
 	void FrameStitched(float4*);
 
-
-protected:
-	/**	@name	Does the OpenGL part */
-	//@{
-	void initializeGL();
-	void resizeGL(int width, int height);
-	void paintGL();
-	//@}
-
-	bool BindLUT(unsigned int LUTID);
-
-	GLuint LoadShader(const char *FileName, bool VertexFlag);
-
-	/**	@name	Intercept mouse events */
-	//@{
-	void mouseMoveEvent(QMouseEvent *e);
-	void mousePressEvent(QMouseEvent *e);
-	void wheelEvent(QWheelEvent*);
-	//@}
-
-	/**	@name	Keyboard events */
-	//@{
-	void keyPressEvent(QKeyEvent *e);
-	//@}
-
-	void SetFullScreenMode(bool b);
-
 	protected slots:
-		/**	@brief	Update the internal VBOs 
-		*
-		*	@details
-		*	Calling this method will update the internal VBOs to match the current frame. 
-		*	Note that this method is supposed to be called within the widgets main thread
-		*	in order to comply with the OpenGL render context!
-		*	@sa SetTOFData
-		*/
 		void UpdateVBO(bool SizeChanged);
 
-		/**	@name Mouse rotation */
-		//@{
-		void SetXRotation(int angle);
-		void SetYRotation(int angle);
-		void SetZRotation(int angle);
-		void SetTranslation(int dx, int dy);
-		//@}
-
-		/// Update the current zoom
-		void UpdateZoom(float delta);
-
-		/// Reset the camera
-		void ResetCamera();
 
 protected:
-	/// Flag that indicates whether this widget (in particular the OpenGL extensions are initialized)
-	bool m_InitFlag;
-
-	/// Fullscreen flag
-	bool m_FullscreenFlag;
 
 	// Width and height of the drawing area
 	int m_Width;
@@ -176,8 +99,6 @@ protected:
 	unsigned char *m_RangeTextureData;
 	//@}
 
-	/// Flag to control whether the VBOs are ready for use
-	bool m_VBOInitialized;
 	/// The VBO for the vertex coords
 	GLuint m_VBOVertices;
 	/// The VBO for the texture coords

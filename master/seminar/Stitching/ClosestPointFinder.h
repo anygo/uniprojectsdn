@@ -27,6 +27,19 @@ public:
 		m_SourceColors = sourceColors;
 	}
 
+	virtual inline void Update(int points)
+	{
+		if(m_NrOfPoints != points)
+		{
+			delete[] m_Indices;
+			delete[] m_Distances;
+
+			m_NrOfPoints = points;
+			m_Indices = new unsigned short[m_NrOfPoints];
+			m_Distances = new float[m_NrOfPoints];
+		}
+	}
+
 	virtual inline void SetWeightRGB(float weight) { m_WeightRGB = weight; }
 	virtual inline void SetMetric(int metric) { m_Metric = metric; }
 	virtual inline float* GetDistances() { return m_Distances; }

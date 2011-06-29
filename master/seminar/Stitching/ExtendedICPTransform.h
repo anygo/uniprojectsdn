@@ -6,6 +6,7 @@
 #include <vtkLandmarkTransform.h>
 #include <vtkSmartPointer.h>
 #include <vtkPolyData.h>
+#include <vtkMatrix4x4.h>
 
 #include "defs.h"
 #include "ClosestPointFinder.h"

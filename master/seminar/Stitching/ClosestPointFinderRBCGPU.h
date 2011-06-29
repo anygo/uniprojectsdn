@@ -4,6 +4,8 @@
 #include "ClosestPointFinder.h"
 #include <list>
 #include <vector>
+#include <algorithm>
+#include <limits>
 
 
 /**	@class		ClosestPointFinderRBCCPU
@@ -24,24 +26,29 @@ class ClosestPointFinderRBCGPU : public ClosestPointFinder
 	} Representative;
 
 public:
-	ClosestPointFinderRBCGPU(int NrOfPoints, float nrOfRepsFactor) : ClosestPointFinder(NrOfPoints), m_NrOfRepsFactor(nrOfRepsFactor) { }
+	ClosestPointFinderRBCGPU(int NrOfPoints, float nrOfRepsFactor);
+
 	~ClosestPointFinderRBCGPU();
 
+	void SetTarget(PointCoords* targetCoords, PointColors* targetColors, PointCoords* sourceCoords, PointColors* sourceColors);
+	void Update(int nLandmarks);
+
 	unsigned short* FindClosestPoints(PointCoords* sourceCoords, PointColors* sourceColors);
-	void SetTarget(PointCoords* targetCoords, PointColors* targetColors, PointCoords* sourceCoords, PointColors* sourceColors) {
-		ClosestPointFinder::SetTarget(targetCoords, targetColors, sourceCoords, sourceColors);
-		initRBC();
-	}
+
 	inline bool usesGPU() { return true; }
 
 protected:
 	void initRBC();
-	float DistanceTargetTarget(unsigned short i, unsigned short j);
 
 	int m_NrOfReps;
+	float m_NrOfRepsFactor;
+
 	std::vector<Representative> m_Representatives;
 	RepGPU* m_RepsGPU;
-	float m_NrOfRepsFactor;
+	unsigned short* m_Reps;
+	unsigned short* m_PointToRep;
+	unsigned short* m_RepsIndices;
+	
 };
 
 

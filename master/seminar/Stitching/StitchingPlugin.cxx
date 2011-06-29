@@ -28,8 +28,6 @@
 #include <vtkRendererCollection.h>
 
 // our includes
-#include <ExtendedICPTransform.h>
-#include <ClosestPointFinder.h>
 #include <ClosestPointFinderBruteForceCPU.h>
 #include <ClosestPointFinderBruteForceGPU.h>
 #include <ClosestPointFinderRBCCPU.h>
@@ -61,6 +59,8 @@ StitchingPlugin::StitchingPlugin()
 	connect(m_Widget->m_PushButtonHistoryStitchSelection,	SIGNAL(clicked()),								this, SLOT(StitchSelectedActors()));
 	connect(m_Widget->m_PushButtonHistoryUndoTransform,		SIGNAL(clicked()),								this, SLOT(UndoTransformForSelectedActors()));
 	connect(m_Widget->m_ListWidgetHistory,					SIGNAL(itemDoubleClicked(QListWidgetItem*)),	this, SLOT(HighlightActor(QListWidgetItem*)));
+	connect(m_Widget->m_ComboBoxClosestPointFinder,			SIGNAL(currentIndexChanged(int)),				this, SLOT(ResetCPF(int)));
+	connect(m_Widget->m_SpinBoxLandmarks,					SIGNAL(valueChanged(int)),						this, SLOT(UpdateCPF(int)));
 
 	// progress bar signals
 	connect(this, SIGNAL(UpdateProgressBar(int)),		m_Widget->m_ProgressBar, SLOT(setValue(int)));
@@ -76,10 +76,26 @@ StitchingPlugin::StitchingPlugin()
 	// initialize member objects
 	m_Data = vtkSmartPointer<vtkPolyData>::New();
 	m_FramesProcessed = 0;
+
+	// iterative closest point (ICP) transformation
+	m_icp = vtkSmartPointer<ExtendedICPTransform>::New();
+
+	// initialize ClosestPointFinder
+	switch (m_Widget->m_ComboBoxClosestPointFinder->currentIndex())
+	{
+	case 0: m_cpf = new ClosestPointFinderBruteForceGPU(m_Widget->m_SpinBoxLandmarks->value()); break;
+	case 1: m_cpf = new ClosestPointFinderBruteForceCPU(m_Widget->m_SpinBoxLandmarks->value(), false); break;
+	case 2: m_cpf = new ClosestPointFinderBruteForceCPU(m_Widget->m_SpinBoxLandmarks->value(), true); break;
+	case 3: m_cpf = new ClosestPointFinderRBCCPU(m_Widget->m_SpinBoxLandmarks->value(), static_cast<float>(m_Widget->m_DoubleSpinBoxNrOfRepsFactor->value())); break;
+	case 4: m_cpf = new ClosestPointFinderRBCGPU(m_Widget->m_SpinBoxLandmarks->value(), static_cast<float>(m_Widget->m_DoubleSpinBoxNrOfRepsFactor->value())); break;
+	case 5: m_cpf = new ClosestPointFinderRBCCayton(m_Widget->m_SpinBoxLandmarks->value(), static_cast<float>(m_Widget->m_DoubleSpinBoxNrOfRepsFactor->value())); break;
+	}
 }
 
 StitchingPlugin::~StitchingPlugin()
 {
+	// delete ClosestPointFinder
+	delete m_cpf;
 	delete m_Widget;
 }
 //----------------------------------------------------------------------------
@@ -804,6 +820,34 @@ StitchingPlugin::InitializeHistory()
 
 	emit UpdateGUI();
 }
+
+//----------------------------------------------------------------------------
+void
+StitchingPlugin::UpdateCPF(int nrLandmarks) 
+{
+	std::cout << "Nr of Landmarks changed...updating" << std::endl;
+	m_cpf->Update(nrLandmarks);
+}
+//----------------------------------------------------------------------------
+void
+StitchingPlugin::ResetCPF(int selection) 
+{
+
+	std::cout << " Selection changed!" << std::endl;
+
+	// reset ClosestPointFinder if values have changed
+	switch (selection)
+	{
+	case 0: m_cpf = new ClosestPointFinderBruteForceGPU(m_Widget->m_SpinBoxLandmarks->value()); break;
+	case 1: m_cpf = new ClosestPointFinderBruteForceCPU(m_Widget->m_SpinBoxLandmarks->value(), false); break;
+	case 2: m_cpf = new ClosestPointFinderBruteForceCPU(m_Widget->m_SpinBoxLandmarks->value(), true); break;
+	case 3: m_cpf = new ClosestPointFinderRBCCPU(m_Widget->m_SpinBoxLandmarks->value(), static_cast<float>(m_Widget->m_DoubleSpinBoxNrOfRepsFactor->value())); break;
+	case 4: m_cpf = new ClosestPointFinderRBCGPU(m_Widget->m_SpinBoxLandmarks->value(), static_cast<float>(m_Widget->m_DoubleSpinBoxNrOfRepsFactor->value())); break;
+	case 5: m_cpf = new ClosestPointFinderRBCCayton(m_Widget->m_SpinBoxLandmarks->value(), static_cast<float>(m_Widget->m_DoubleSpinBoxNrOfRepsFactor->value())); break;
+	}
+
+	m_icp->SetClosestPointFinder(m_cpf);
+}
 //----------------------------------------------------------------------------
 void
 StitchingPlugin::Stitch(vtkPolyData* toBeStitched, vtkPolyData* previousFrame,
@@ -811,6 +855,7 @@ StitchingPlugin::Stitch(vtkPolyData* toBeStitched, vtkPolyData* previousFrame,
 						vtkPolyData* outputStitchedPolyData,
 						vtkMatrix4x4* outputTransformationMatrix)
 {
+
 	// get a subvolume of the original data
 	vtkSmartPointer<vtkPolyData> voi = 
 		vtkSmartPointer<vtkPolyData>::New();
@@ -823,19 +868,9 @@ StitchingPlugin::Stitch(vtkPolyData* toBeStitched, vtkPolyData* previousFrame,
 		return;
 	}
 
-	// initialize ClosestPointFinder
-	ClosestPointFinder* cpf; 
-	switch (m_Widget->m_ComboBoxClosestPointFinder->currentIndex())
-	{
-	case 0: cpf = new ClosestPointFinderBruteForceGPU(m_Widget->m_SpinBoxLandmarks->value()); break;
-	case 1: cpf = new ClosestPointFinderBruteForceCPU(m_Widget->m_SpinBoxLandmarks->value(), false); break;
-	case 2: cpf = new ClosestPointFinderBruteForceCPU(m_Widget->m_SpinBoxLandmarks->value(), true); break;
-	case 3: cpf = new ClosestPointFinderRBCCPU(m_Widget->m_SpinBoxLandmarks->value(), static_cast<float>(m_Widget->m_DoubleSpinBoxNrOfRepsFactor->value())); break;
-	case 4: cpf = new ClosestPointFinderRBCGPU(m_Widget->m_SpinBoxLandmarks->value(), static_cast<float>(m_Widget->m_DoubleSpinBoxNrOfRepsFactor->value())); break;
-	case 5: cpf = new ClosestPointFinderRBCCayton(m_Widget->m_SpinBoxLandmarks->value(), static_cast<float>(m_Widget->m_DoubleSpinBoxNrOfRepsFactor->value())); break;
-	}
+	m_icp = vtkSmartPointer<ExtendedICPTransform>::New();
 
-	cpf->SetWeightRGB(static_cast<float>(m_Widget->m_DoubleSpinBoxRGBWeight->value()));
+	m_cpf->SetWeightRGB(static_cast<float>(m_Widget->m_DoubleSpinBoxRGBWeight->value()));
 
 	int metric;
 	switch (m_Widget->m_ComboBoxMetric->currentIndex())
@@ -844,59 +879,56 @@ StitchingPlugin::Stitch(vtkPolyData* toBeStitched, vtkPolyData* previousFrame,
 	case 1: metric = ABSOLUTE_DISTANCE; break;
 	case 2: metric = SQUARED_DISTANCE; break;
 	}
-	cpf->SetMetric(metric);
-
-	// iterative closest point (ICP) transformation
-	vtkSmartPointer<ExtendedICPTransform> icp = 
-		vtkSmartPointer<ExtendedICPTransform>::New();
+	m_cpf->SetMetric(metric);
 
 	// configure icp
-	icp->SetSource(voi);
-	icp->SetTarget(previousFrame);
-	icp->SetNumLandmarks(m_Widget->m_SpinBoxLandmarks->value());
-	icp->GetLandmarkTransform()->SetModeToRigidBody();
-	icp->SetMaxMeanDist(static_cast<float>(m_Widget->m_DoubleSpinBoxMaxRMS->value()));
-	icp->SetMaxIter(m_Widget->m_SpinBoxMaxIterations->value());
-	icp->SetRemoveOutliers(m_Widget->m_CheckBoxRemoveOutliers->isChecked());
-	icp->SetOutlierRate(static_cast<float>(m_Widget->m_DoubleSpinBoxOutlierRate->value()));
-	icp->SetApplyPreviousTransform(m_Widget->m_CheckBoxUsePreviousTransformation->isChecked());
-	icp->SetPreviousTransformMatrix(previousTransformationMatrix);
+	m_icp->SetClosestPointFinder(m_cpf);
+
+	m_icp->SetSource(voi);
+	m_icp->SetTarget(previousFrame);
+	m_icp->SetNumLandmarks(m_Widget->m_SpinBoxLandmarks->value());
+	m_icp->GetLandmarkTransform()->SetModeToRigidBody();
+	m_icp->SetMaxMeanDist(static_cast<float>(m_Widget->m_DoubleSpinBoxMaxRMS->value()));
+	m_icp->SetMaxIter(m_Widget->m_SpinBoxMaxIterations->value());
+	m_icp->SetRemoveOutliers(m_Widget->m_CheckBoxRemoveOutliers->isChecked());
+	m_icp->SetOutlierRate(static_cast<float>(m_Widget->m_DoubleSpinBoxOutlierRate->value()));
+	m_icp->SetApplyPreviousTransform(m_Widget->m_CheckBoxUsePreviousTransformation->isChecked());
+	m_icp->SetPreviousTransformMatrix(previousTransformationMatrix);
 
 	// new stuff... strange
 	double* bounds = voi->GetBounds();
 	double boundDiagonal = sqrt((bounds[1] - bounds[0])*(bounds[1] - bounds[0]) + (bounds[3] - bounds[2])*(bounds[3] - bounds[2]) + (bounds[5] - bounds[4])*(bounds[5] - bounds[4]));
-	icp->SetNormalizeRGBToDistanceValuesFactor(static_cast<float>(boundDiagonal / sqrt(3.0)));
+	m_icp->SetNormalizeRGBToDistanceValuesFactor(static_cast<float>(boundDiagonal / sqrt(3.0)));
 
 	// transform vtkPolyData in our own structures and clip simultaneously
 	QTime timeClip;
 	timeClip.start();
-	icp->vtkPolyDataToPointCoordsAndColors(m_Widget->m_DoubleSpinBoxClipPercentage->value());
+	m_icp->vtkPolyDataToPointCoordsAndColors(m_Widget->m_DoubleSpinBoxClipPercentage->value());
 	CLIP_TIME = timeClip.elapsed();
 
 	QTime timeICP;
 	timeICP.start();
 
-	icp->SetClosestPointFinder(cpf);
-	icp->Modified();
-	icp->Update();
+	m_icp->Modified();
+	m_icp->Update();
 
 	ICP_TIME = timeICP.elapsed();
 
 	// update icp runtime, etc
-	m_Widget->m_LabelICPMeanTargetDistance->setText(QString::number(icp->GetMeanTargetDistance(), 'f', 2));
+	m_Widget->m_LabelICPMeanTargetDistance->setText(QString::number(m_icp->GetMeanTargetDistance(), 'f', 2));
 	
 
 	QTime timeTransform;
 	timeTransform.start();
 	// update output parameter
-	outputTransformationMatrix->DeepCopy(icp->GetMatrix());
+	outputTransformationMatrix->DeepCopy(m_icp->GetMatrix());
 
 	// perform the transform
 	vtkSmartPointer<vtkTransformPolyDataFilter> icpTransformFilter =
 		vtkSmartPointer<vtkTransformPolyDataFilter>::New();
 
 	icpTransformFilter->SetInput(toBeStitched);
-	icpTransformFilter->SetTransform(icp);
+	icpTransformFilter->SetTransform(m_icp);
 	icpTransformFilter->Update();
 
 	outputStitchedPolyData->DeepCopy(icpTransformFilter->GetOutput());
@@ -910,9 +942,7 @@ StitchingPlugin::Stitch(vtkPolyData* toBeStitched, vtkPolyData* previousFrame,
 	}
 
 	// update debug information in GUI
-	m_Widget->m_LabelICPIterations->setText(QString::number(icp->GetNumIter()));
-	m_Widget->m_LabelICPError->setText(QString::number(icp->GetMeanDist()));
+	m_Widget->m_LabelICPIterations->setText(QString::number(m_icp->GetNumIter()));
+	m_Widget->m_LabelICPError->setText(QString::number(m_icp->GetMeanDist()));
 
-	// cleanup
-	delete cpf; // delete ClosestPointFinder
 }

@@ -7,6 +7,8 @@
 
 #include "RImage.h"
 #include "RImageActorPipeline.h"
+#include <ClosestPointFinder.h>
+#include <ExtendedICPTransform.h>
 
 typedef ritk::RImageF2					RImageType;
 typedef RImageType::Pointer				RImagePointer;
@@ -44,6 +46,7 @@ class StitchingPlugin : public ritk::ApplicationPlugin
 public:
 	/// Constructor
 	StitchingPlugin();
+
 	/// Destructor
 	~StitchingPlugin();
 
@@ -79,6 +82,8 @@ protected slots:
 	void UndoTransformForSelectedActors();
 	void HighlightActor(QListWidgetItem*);
 	void ComputeStats();
+	void ResetCPF(int selection); 
+	void UpdateCPF(int numLandmarks);
 
 
 protected:
@@ -102,6 +107,8 @@ protected:
 	vtkSmartPointer<ritk::RImageActorPipeline>	m_DataActor3D;
 	ritk::NewFrameEvent::RImageConstPointer		m_CurrentFrame;
 	vtkSmartPointer<vtkPolyData>				m_Data;
+	vtkSmartPointer<ExtendedICPTransform>		m_icp;
+	ClosestPointFinder*							m_cpf; 
 
 };
 

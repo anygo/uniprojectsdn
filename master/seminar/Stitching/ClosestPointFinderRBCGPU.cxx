@@ -1,34 +1,99 @@
 #include "ClosestPointFinderRBCGPU.h"
 
-#include <limits>
 #include <iostream>
-#include <algorithm>
 #include <QTime>
 
 // stupid MS C++ warning - we know what we are doing
 #pragma warning( disable : 4996 )
 
+
+extern "C"
+void initGPUMemory(int nrOfPoints);
+
+extern "C"
+void updateGPUConfig(float weightRGB, int metric);
+
+extern "C"
+void transferToGPU(PointCoords* targetCoords, PointColors* targetColors, PointCoords* sourceCoords, PointColors* sourceColors);
+
+extern "C"
+void cleanupGPUCommon();
+
+/////////////////////
+
 extern "C"
 void initGPUCommon(PointCoords* targetCoords, PointColors* targetColors, PointCoords* sourceCoords, PointColors* sourceColors, float weightRGB, int metric, int nrOfPoints);
-
 
 extern "C"
 void initGPURBC(int nrOfReps, RepGPU* repsGPU, unsigned short* repsIndices);
 
 extern "C"
-void PointsToReps(int nrOfReps, unsigned short* pointToRep, unsigned short* reps);
+void cleanupGPURBC(); 
 
 extern "C"
-void cleanupGPURBC(int nrOfReps, RepGPU* repsGPU);
+void PointsToReps(int nrOfReps, unsigned short* pointToRep, unsigned short* reps);
 
 extern "C"
 void FindClosestPointsRBC(int nrOfReps, unsigned short* indices, float* distances);
 
 
+ClosestPointFinderRBCGPU::ClosestPointFinderRBCGPU(int NrOfPoints, float nrOfRepsFactor) : ClosestPointFinder(NrOfPoints), m_NrOfRepsFactor(nrOfRepsFactor) 
+{
+	m_NrOfReps = std::min( MAX_REPRESENTATIVES, static_cast<int>(m_NrOfRepsFactor * sqrt(static_cast<float>(m_NrOfPoints))) );
+
+	// initialize GPU RBC struct and other data structures
+	m_Reps = new unsigned short[m_NrOfReps];
+	m_RepsGPU = new RepGPU[m_NrOfReps];	
+	m_PointToRep = new unsigned short[m_NrOfPoints];
+	m_RepsIndices = new unsigned short[m_NrOfPoints];
+
+	initGPUMemory(m_NrOfPoints);
+}
+
 ClosestPointFinderRBCGPU::~ClosestPointFinderRBCGPU()
 { 
-	cleanupGPURBC(m_NrOfReps, m_RepsGPU);
-	delete[] m_RepsGPU; 
+	delete[] m_RepsGPU;
+	delete[] m_PointToRep;
+	delete[] m_Reps;
+	delete[] m_RepsIndices;
+
+	// Delete GPU Device Memory
+	cleanupGPURBC();
+	cleanupGPUCommon();
+}
+
+void ClosestPointFinderRBCGPU::SetTarget(PointCoords* targetCoords, PointColors* targetColors, PointCoords* sourceCoords, PointColors* sourceColors) 
+{
+	ClosestPointFinder::SetTarget(targetCoords, targetColors, sourceCoords, sourceColors);
+	updateGPUConfig(m_WeightRGB, m_Metric);
+	transferToGPU(targetCoords, targetColors, sourceCoords, sourceColors); // <- we actually dont need our own data struct pointer...
+	initRBC();
+}
+
+void ClosestPointFinderRBCGPU::Update(int points)
+{
+	if(points != m_NrOfPoints)
+	{
+		std::cout << "Reallocating RBC Stuff" << std::endl;
+		ClosestPointFinder::Update(points);
+		m_NrOfReps = std::min(MAX_REPRESENTATIVES, static_cast<int>(m_NrOfRepsFactor * sqrt(static_cast<float>(m_NrOfPoints))));
+
+		delete[] m_RepsGPU;
+		delete[] m_PointToRep;
+		delete[] m_Reps;
+		delete[] m_RepsIndices;
+
+		// initialize GPU RBC struct and other data structures
+		m_Reps = new unsigned short[m_NrOfReps];
+		m_RepsGPU = new RepGPU[m_NrOfReps];	
+		m_PointToRep = new unsigned short[m_NrOfPoints];
+		m_RepsIndices = new unsigned short[m_NrOfPoints];
+		
+		// release and newly allocate memory
+		cleanupGPUCommon();
+		initGPUMemory(m_NrOfPoints);
+	}
+
 }
 
 unsigned short*
@@ -40,18 +105,10 @@ ClosestPointFinderRBCGPU::FindClosestPoints(PointCoords* sourceCoords, PointColo
 	return m_Indices;
 }
 //----------------------------------------------------------------------------
-
 void
 ClosestPointFinderRBCGPU::initRBC()
 {
-	m_NrOfReps = std::min(MAX_REPRESENTATIVES, static_cast<int>(m_NrOfRepsFactor * sqrt(static_cast<float>(m_NrOfPoints))));
-
-	// initialize GPU for RBC initialization
-	initGPUCommon(m_TargetCoords, m_TargetColors, m_SourceCoords, m_SourceColors, m_WeightRGB, m_Metric, m_NrOfPoints);
-
-	unsigned short* reps = new unsigned short[m_NrOfReps];
-	unsigned short* pointToRep = new unsigned short[m_NrOfPoints];
-
+	m_Representatives.clear();
 
 	for (int i = 0; i < m_NrOfReps; ++i)
 	{
@@ -72,23 +129,20 @@ ClosestPointFinderRBCGPU::initRBC()
 		r.index = rep;
 		m_Representatives.push_back(r);
 
-		reps[i] = rep;
+		m_Reps[i] = rep;
 	}
 
 	// find closest representative to each point on gpu
-	PointsToReps(m_NrOfReps, pointToRep, reps);
+	PointsToReps(m_NrOfReps, m_PointToRep, m_Reps);
 
 	for (int i = 0; i < m_NrOfPoints; ++i)
 	{
-		m_Representatives[pointToRep[i]].points.push_back(i);
+		m_Representatives[m_PointToRep[i]].points.push_back(i);
 	}
 
 	DBG << "Random Ball Cover initialized (" << m_NrOfReps << " Representatives)." << std::endl;
-
-	// initialize GPU RBC struct
-	m_RepsGPU = new RepGPU[m_NrOfReps];
-	unsigned short* repsIndices = new unsigned short[m_NrOfPoints];
-	unsigned short* offsetPtr = repsIndices;
+	
+	unsigned short* offsetPtr = m_RepsIndices;
 
 	for (int i = 0; i < m_NrOfReps; ++i)
 	{
@@ -101,35 +155,6 @@ ClosestPointFinderRBCGPU::initRBC()
 	}
 
 	DBG << "Copying data to gpu..." << std::endl;
-	initGPURBC(m_NrOfReps, m_RepsGPU, repsIndices);
+	initGPURBC(m_NrOfReps, m_RepsGPU, m_RepsIndices);
 
-	delete[] pointToRep;
-	delete[] reps;
-	delete[] repsIndices;
-}
-
-float
-ClosestPointFinderRBCGPU::DistanceTargetTarget(unsigned short i, unsigned short j)
-{
-	float x_dist = m_TargetCoords[i].x - m_TargetCoords[j].x; 
-	float y_dist = m_TargetCoords[i].y - m_TargetCoords[j].y;
-	float z_dist = m_TargetCoords[i].z - m_TargetCoords[j].z;
-	float spaceDist; 
-
-	switch (m_Metric)
-	{
-	case ABSOLUTE_DISTANCE: spaceDist = abs(x_dist) + abs(y_dist) + abs(z_dist); break;
-	case LOG_ABSOLUTE_DISTANCE: spaceDist = log(abs(x_dist) + abs(y_dist) + abs(z_dist) + 1.f); break;
-	case SQUARED_DISTANCE: spaceDist = (x_dist * x_dist) + (y_dist * y_dist) + (z_dist * z_dist); break;
-	}
-
-
-	// always use euclidean distance for colors...
-	float r_dist = m_TargetColors[i].r - m_TargetColors[j].r; 
-	float g_dist = m_TargetColors[i].g - m_TargetColors[j].g;
-	float b_dist = m_TargetColors[i].b - m_TargetColors[j].b;
-	float colorDist = (r_dist * r_dist) + (g_dist * g_dist) + (b_dist * b_dist);
-	float dist = (1 - m_WeightRGB) * spaceDist + m_WeightRGB * colorDist;
-
-	return static_cast<float>(dist);
 }

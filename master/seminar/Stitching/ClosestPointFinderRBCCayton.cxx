@@ -63,6 +63,6 @@ ClosestPointFinderRBCCayton::initRBC()
 	QTime t;
 	t.start();
 	buildRBC( m_Target, &m_rbcS, numReps, numReps);
-	std::cout << "buiildRBC(): " << t.elapsed() << std::endl;
+	std::cout << "buildRBC(): " << t.elapsed() << std::endl;
 }
 

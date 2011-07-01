@@ -9,6 +9,7 @@
 #include "RImageActorPipeline.h"
 #include <ClosestPointFinder.h>
 #include <ExtendedICPTransform.h>
+#include <cutil_inline.h>
 
 typedef ritk::RImageF2					RImageType;
 typedef RImageType::Pointer				RImagePointer;
@@ -94,7 +95,6 @@ protected:
 
 	// our functions
 	void ExtractValidPoints();
-	void Clip(vtkPolyData *toBeClipped);
 	void Clean(vtkPolyData *toBeCleaned);
 	void LoadFrame();
 	void CleanFrame();
@@ -113,6 +113,12 @@ protected:
 	vtkSmartPointer<vtkPolyData>				m_Data;
 	vtkSmartPointer<ExtendedICPTransform>		m_icp;
 	ClosestPointFinder*							m_cpf; 
+	float*										m_TextureCoords;
+	float4*										m_devWCs;
+	float4*										m_WCs;
+	unsigned char*								m_RangeTextureData;
+	cudaArray*									m_InputImgArr;
+		
 
 };
 

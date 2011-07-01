@@ -26,6 +26,8 @@
 #include <vtkClipPolyData.h>
 #include <vtkProperty.h>
 #include <vtkRendererCollection.h>
+#include <vtkUnsignedCharArray.h>
+#include <itkImageRegionConstIterator.h>
 
 // our includes
 #include <ClosestPointFinderBruteForceCPU.h>
@@ -34,7 +36,10 @@
 #include <ClosestPointFinderRBCGPU.h>
 #include <ClosestPointFinderRBCCayton.h>
 #include <defs.h>
-#include <cutil_inline.h>
+
+extern "C"
+void
+CUDARangeToWorld(float4* duplicate, const cudaArray *InputImageArray, int w, int h);
 
 StitchingPlugin::StitchingPlugin()
 {
@@ -80,6 +85,29 @@ StitchingPlugin::StitchingPlugin()
 
 	// initialize member objects
 	m_Data = vtkSmartPointer<vtkPolyData>::New();
+
+	m_RangeTextureData = new unsigned char[SizeX*SizeY];
+	m_WCs = new float4[SizeX*SizeY];
+	m_TextureCoords = new float[SizeX*SizeY*2 + SizeX*(SizeY-2)*2];
+		// Update coords
+		for ( long l = 0; l < SizeX*SizeY + SizeX*(SizeY-2); l++ )
+		{
+			if (l%2==0)
+			{
+				m_TextureCoords[l*2+0] = (l%(SizeX*2))/((SizeX*2)*1.f);
+				m_TextureCoords[l*2+1] = (l/(SizeX*2))/(SizeY*1.f) ;
+			}
+			else
+			{
+				m_TextureCoords[l*2+0] = (l%(SizeX*2)-1)/((SizeX*2)*1.f);
+				m_TextureCoords[l*2+1] = (l/(SizeX*2)+1)/(SizeY*1.f);
+			}
+		}
+
+	cudaChannelFormatDesc ChannelDesc = cudaCreateChannelDesc(32, 0, 0, 0, cudaChannelFormatKindFloat);
+	cutilSafeCall(cudaMallocArray(&m_InputImgArr, &ChannelDesc, SizeX, SizeY));
+	cutilSafeCall(cudaMalloc((void**)&(m_devWCs), SizeX*SizeY*sizeof(float4)));
+
 	m_FramesProcessed = 0;
 
 	// iterative closest point (ICP) transformation
@@ -102,6 +130,14 @@ StitchingPlugin::StitchingPlugin()
 
 StitchingPlugin::~StitchingPlugin()
 {
+	delete[] m_TextureCoords;
+	delete[] m_RangeTextureData;
+	delete[] m_WCs;
+
+	// Free GPU Memory that holds the previous and current world data
+	cutilSafeCall(cudaFreeArray(m_InputImgArr));
+	cutilSafeCall(cudaFree(m_devWCs));
+
 	// delete ClosestPointFinder
 	delete m_cpf;
 	delete m_Widget;
@@ -119,7 +155,8 @@ StitchingPlugin::GetPluginGUI()
 	return m_Widget;
 }
 //----------------------------------------------------------------------------
-void StitchingPlugin::RecordFrame()
+void
+StitchingPlugin::RecordFrame()
 {
 	try
 	{
@@ -144,7 +181,8 @@ void StitchingPlugin::RecordFrame()
 	m_Widget->m_CheckBoxShowSelectedActors->setText(QString("Show ") + QString::number(m_Widget->m_ListWidgetHistory->selectedItems().count()) + 
 		QString("/") + QString::number(m_Widget->m_ListWidgetHistory->count()) + " Actors");
 }
-void StitchingPlugin::LiveStitching()
+void
+StitchingPlugin::LiveStitching()
 {
 	try
 	{
@@ -178,6 +216,7 @@ StitchingPlugin::ProcessEvent(ritk::Event::Pointer EventP)
 			}
 
 			m_CurrentFrame = NewFrameEventP->RImage;
+
 
 			// run autostitching for each frame if checkbox is checked
 			if (m_Widget->m_RadioButtonRecord->isChecked() && m_FramesProcessed % m_Widget->m_SpinBoxFrameStep->value() == 0)
@@ -683,38 +722,46 @@ StitchingPlugin::LoadStitch()
 void
 StitchingPlugin::LoadFrame()
 {
-	m_DataActor3D->SetData(m_CurrentFrame);
-	m_Data->DeepCopy(m_DataActor3D->GetData());
+	QTime t;
+	t.start();
+	// Copy the input data to the device
+	cutilSafeCall(cudaMemcpyToArray(m_InputImgArr, 0, 0, m_CurrentFrame->GetRangeImage()->GetBufferPointer(), SizeX*SizeY*sizeof(float), cudaMemcpyHostToDevice));
 
-	// remove invalid points
-	ExtractValidPoints();
-}
-//----------------------------------------------------------------------------
-void
-StitchingPlugin::ExtractValidPoints()
-{
+	// Compute the world coordinates
+	CUDARangeToWorld(m_devWCs, m_InputImgArr, SizeX, SizeY);
+
+	cutilSafeCall(cudaMemcpy(m_WCs, m_devWCs, SizeX*SizeY*sizeof(float4), cudaMemcpyDeviceToHost));
+
+	std::cout << t.elapsed() << " ms (cuda)" << std::endl;
+	t.start();
 	vtkSmartPointer<vtkPoints> points =
 		vtkSmartPointer<vtkPoints>::New();
-	vtkSmartPointer<vtkCellArray> cells =
-		vtkSmartPointer<vtkCellArray>::New();
+
 	vtkSmartPointer<vtkDataArray> colors =
 		vtkSmartPointer<vtkUnsignedCharArray>::New();
-
 	colors->SetNumberOfComponents(4);
 
-	double p[3];
-	for (vtkIdType i = 0; i < m_Data->GetNumberOfPoints(); ++i)
-	{	
-		if (rand() % 2 != 0)
-			continue;
+	vtkSmartPointer<vtkCellArray> cells =
+		vtkSmartPointer<vtkCellArray>::New();
 
-		m_Data->GetPoint(i, p);
+	typedef itk::ImageRegionConstIterator<RImageType::RGBImageType> IteratorType;
+	IteratorType it(m_CurrentFrame->GetRGBImage(), m_CurrentFrame->GetRGBImage()->GetRequestedRegion());
 
-		if (p[0] == p[0]) // i.e. not QNAN
+	float4 p;
+	it.GoToBegin();
+
+	for(int i = 0; i < SizeX*SizeY; i += 2, ++it, ++it)
+	{
+
+		p = m_WCs[i];
+
+		if (p.x == p.x) // i.e. not QNAN
 		{
-			points->InsertNextPoint(p[0], p[1], p[2]);
-			double* tmp = m_Data->GetPointData()->GetScalars()->GetTuple(i);
-			colors->InsertNextTuple(tmp);
+			points->InsertNextPoint(p.x, p.y, p.z);
+			float r = it.Value()[0];
+			float g = it.Value()[1];
+			float b = it.Value()[2];
+			colors->InsertNextTuple4(r, g, b, 255);
 		}
 	}
 
@@ -728,40 +775,40 @@ StitchingPlugin::ExtractValidPoints()
 	m_Data->GetPointData()->SetScalars(colors);
 	m_Data->SetVerts(cells);
 	m_Data->Update();
+
+	std::cout << t.elapsed() << " ms" << std::endl;
+
 }
 //----------------------------------------------------------------------------
 void
-StitchingPlugin::Clip(vtkPolyData *toBeClipped)
+StitchingPlugin::ExtractValidPoints()
 {
-	double percentage = m_Widget->m_DoubleSpinBoxClipPercentage->value();
+	//vtkSmartPointer<vtkPoints> points =
+	//	vtkSmartPointer<vtkPoints>::New();
 
-	if (percentage == 0.0)
-		return;
 
-	vtkSmartPointer<vtkClipPolyData> clipper =
-		vtkSmartPointer<vtkClipPolyData>::New();	
-	vtkSmartPointer<vtkBox> box =
-		vtkSmartPointer<vtkBox>::New();
+	//double p[3];
+	//vtkDataArray* scalarsPtr = m_Data->GetPointData()->GetScalars();
 
-	double bounds[6];
+	//it.GoToBegin();
+	//for (vtkIdType i = 0; i < m_Data->GetNumberOfPoints(); ++i, ++it)
+	//{	
+	//	if (rand() % 2 != 0)
+	//		continue;
 
-	toBeClipped->GetBounds(bounds);
+	//	m_Data->GetPoint(i, p);
 
-	// modify x, y (and z) bounds
-	bounds[0] += percentage*(bounds[1] - bounds[0]);
-	bounds[1] -= percentage*(bounds[1] - bounds[0]);
-	bounds[2] += percentage*(bounds[3] - bounds[2]);
-	bounds[3] -= percentage*(bounds[3] - bounds[2]);
-	bounds[4] += percentage*(bounds[5] - bounds[4]);
-	bounds[5] -= percentage*(bounds[5] - bounds[4]);
+	//	if (p[0] == p[0]) // i.e. not QNAN
+	//	{
+	//		points->InsertNextPoint(p[0], p[1], p[2]);
+	//		float r = it.Value()[0];
+	//		float g = it.Value()[1];
+	//		float b = it.Value()[2];
+	//		colors->InsertNextTuple4(r, g, b, 255);
+	//	}
+	//}
 
-	box->SetBounds(bounds);
-	clipper->SetClipFunction(box);
-	clipper->InsideOutOn();
-	clipper->SetInput(toBeClipped);
-	clipper->Update();
 
-	toBeClipped->ShallowCopy(clipper->GetOutput());
 }
 //----------------------------------------------------------------------------
 void
@@ -842,20 +889,6 @@ void
 StitchingPlugin::ResetCPF() 
 {
 	m_ResetRequired = true;
-	std::cout << " Selection changed!" << std::endl;
-
-	// reset ClosestPointFinder if values have changed
-	/*switch (selection)
-	{
-	case 0: m_cpf = new ClosestPointFinderBruteForceGPU(m_Widget->m_SpinBoxLandmarks->value()); break;
-	case 1: m_cpf = new ClosestPointFinderBruteForceCPU(m_Widget->m_SpinBoxLandmarks->value(), false); break;
-	case 2: m_cpf = new ClosestPointFinderBruteForceCPU(m_Widget->m_SpinBoxLandmarks->value(), true); break;
-	case 3: m_cpf = new ClosestPointFinderRBCCPU(m_Widget->m_SpinBoxLandmarks->value(), static_cast<float>(m_Widget->m_DoubleSpinBoxNrOfRepsFactor->value())); break;
-	case 4: m_cpf = new ClosestPointFinderRBCGPU(m_Widget->m_SpinBoxLandmarks->value(), static_cast<float>(m_Widget->m_DoubleSpinBoxNrOfRepsFactor->value())); break;
-	case 5: m_cpf = new ClosestPointFinderRBCCayton(m_Widget->m_SpinBoxLandmarks->value(), static_cast<float>(m_Widget->m_DoubleSpinBoxNrOfRepsFactor->value())); break;
-	}
-
-	m_icp->SetClosestPointFinder(m_cpf);*/
 }
 //----------------------------------------------------------------------------
 void
@@ -864,9 +897,9 @@ StitchingPlugin::Stitch(vtkPolyData* toBeStitched, vtkPolyData* previousFrame,
 						vtkPolyData* outputStitchedPolyData,
 						vtkMatrix4x4* outputTransformationMatrix)
 {
-	size_t free, total;
+	/*size_t free, total;
 	cudaMemGetInfo(&free, &total);
-	std::cout << free/(1024*1024) << " / " << total/(1024*1024) << " MB" << std::endl;
+	std::cout << free/(1024*1024) << " / " << total/(1024*1024) << " MB" << std::endl;*/
 
 	if (m_ResetRequired)
 	{

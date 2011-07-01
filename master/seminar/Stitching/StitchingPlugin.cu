@@ -2,6 +2,34 @@
 #include "defs.h"
 
 
+
+
+
+extern "C"
+void
+CUDARangeToWorld(float4* duplicate, const cudaArray *InputImageArray, int w, int h)
+{
+	// Set input image texture parameters and bind texture to the array. Texture is defined in the kernel
+	InputImageTexture.addressMode[0] = cudaAddressModeClamp;
+	InputImageTexture.addressMode[1] = cudaAddressModeClamp;
+	InputImageTexture.filterMode = cudaFilterModePoint;
+	InputImageTexture.normalized = false;
+	cutilSafeCall(cudaBindTextureToArray(InputImageTexture, InputImageArray));
+	
+	// Kernel Invocation
+	dim3 DimBlock(16, 16);
+	dim3 DimGrid(DivUp(w, DimBlock.x), DivUp(h, DimBlock.y));
+	CUDARangeToWorldKernel<16,16><<<DimGrid,DimBlock>>>(w, h, duplicate);
+
+	// Unbind texture
+	cutilSafeCall(cudaUnbindTexture(InputImageTexture));
+
+	CUT_CHECK_ERROR("Kernel execution failed");
+}
+
+
+
+
 ///////////////////////////////////////////////////////////////////////////////
 // Common
 ///////////////////////////////////////////////////////////////////////////////

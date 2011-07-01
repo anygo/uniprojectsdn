@@ -23,6 +23,56 @@ __constant__ unsigned short* dev_reps;
 __constant__ RepGPU dev_repsGPU[MAX_REPRESENTATIVES];
 
 
+// Texture that holds the input image
+//----------------------------------------------------------------------------
+texture<float, 2, cudaReadModeElementType> InputImageTexture;
+
+
+
+
+template<unsigned int BlockSizeX, unsigned int BlockSizeY>
+__global__ void
+CUDARangeToWorldKernel(unsigned int NX, unsigned int NY, float4* duplicate)
+{
+	// 2D index and linear index within this thread block
+	int tu = threadIdx.x;
+	int tv = threadIdx.y;
+
+	// Global 2D index and linear index.
+	float gu = blockIdx.x*BlockSizeX+tu;
+	float gv = blockIdx.y*BlockSizeY+tv;
+
+	// Check for out-of-bounds
+	if ( gu >= NX || gv >= NY )
+		return;
+
+	// The range value
+	float value = tex2D(InputImageTexture, gu, gv);
+
+	// The corresponding x,y,z triple
+	float4 WC;
+
+	if ( value < 500.f )
+		value = sqrtf(-1.0f);
+
+	float X2Z = 1.209f;
+	float Y2Z = 0.9132f;
+	float fNormalizedX = gu / NX - 0.5f; // check for float
+	float x = fNormalizedX * value * X2Z;
+
+	float fNormalizedY = 0.5f - gv / NY;
+	float y = fNormalizedY * value * Y2Z;
+
+	// World coordinates
+	WC = make_float4(x, y, value, 1.0f);
+
+	// Set the WC for the duplicate without Mesh Structure
+	duplicate[(int)(gv*NX + gu)] = WC;
+}
+
+
+
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // Common

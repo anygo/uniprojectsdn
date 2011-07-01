@@ -16,7 +16,7 @@ class ClosestPointFinder
 {
 public:
 	ClosestPointFinder(int nrPoints) : m_NrOfPoints(nrPoints), m_Indices(new unsigned short[nrPoints]), m_Distances(new float[nrPoints]) {}
-	virtual ~ClosestPointFinder() { std::cout << "~ClosestPointFinder()" << std::endl; delete[] m_Indices; delete[] m_Distances; }
+	virtual ~ClosestPointFinder() { delete[] m_Indices; delete[] m_Distances; }
 
 	virtual unsigned short* FindClosestPoints(PointCoords* sourceCoords, PointColors* sourceColors) = 0;
 

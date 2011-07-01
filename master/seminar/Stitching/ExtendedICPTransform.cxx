@@ -150,15 +150,22 @@ ExtendedICPTransform::vtkPolyDataToPointCoordsAndColors(double percentage)
 	bounds[4] += percentage*(bounds[5] - bounds[4]);
 	bounds[5] -= percentage*(bounds[5] - bounds[4]);
 
+	vtkDataArray* scalarsPtr;
+	PointCoords* curCoords;
+	PointColors* curColors;
+
+	scalarsPtr = m_Source->GetPointData()->GetScalars();
 	for (int i = 0, j = 0; i < m_NumLandmarks; ++i, j = (j + stepSource) % m_Source->GetNumberOfPoints())
 	{
-		m_SourceCoords[i].x = m_Source->GetPoint(static_cast<vtkIdType>(j))[0];
-		m_SourceCoords[i].y = m_Source->GetPoint(static_cast<vtkIdType>(j))[1];
-		m_SourceCoords[i].z = m_Source->GetPoint(static_cast<vtkIdType>(j))[2];
+		curCoords = &m_SourceCoords[i];
+		double* curPoint = m_Source->GetPoint(static_cast<vtkIdType>(j));
+		curCoords->x = curPoint[0];
+		curCoords->y = curPoint[1];
+		curCoords->z = curPoint[2];
 
-		if (!(  m_SourceCoords[i].x >= bounds[0] && m_SourceCoords[i].x <= bounds[1] &&
-				m_SourceCoords[i].y >= bounds[2] && m_SourceCoords[i].y <= bounds[3] &&
-				m_SourceCoords[i].z >= bounds[4] && m_SourceCoords[i].z <= bounds[5]
+		if (!(  curCoords->x >= bounds[0] && curCoords->x <= bounds[1] &&
+				curCoords->y >= bounds[2] && curCoords->y <= bounds[3] &&
+				curCoords->z >= bounds[4] && curCoords->z <= bounds[5]
 			))
 		{
 			--i;
@@ -166,35 +173,39 @@ ExtendedICPTransform::vtkPolyDataToPointCoordsAndColors(double percentage)
 		}
 
 		// conversion from RGB to rgb (r = R/(R+G+B), ...)
-		// and normalization w.r.t. bounding boxes of RGB cube and bounding box of pointcloud
-		float r_g_b = m_Source->GetPointData()->GetScalars()->GetTuple(static_cast<vtkIdType>(j))[0] +
-			m_Source->GetPointData()->GetScalars()->GetTuple(static_cast<vtkIdType>(j))[1] +
-			m_Source->GetPointData()->GetScalars()->GetTuple(static_cast<vtkIdType>(j))[2];
+
+		double* tuple = scalarsPtr->GetTuple(static_cast<vtkIdType>(j));
+		float r_g_b = tuple[0] + tuple[1] + tuple[2];
 
 		float factor = m_NormalizeRGBToDistanceValuesFactor / std::max(r_g_b, FLT_EPSILON);
 
-		m_SourceColors[i].r = m_Source->GetPointData()->GetScalars()->GetTuple(static_cast<vtkIdType>(j))[0] * factor;
-		m_SourceColors[i].g = m_Source->GetPointData()->GetScalars()->GetTuple(static_cast<vtkIdType>(j))[1] * factor;
-		m_SourceColors[i].b = m_Source->GetPointData()->GetScalars()->GetTuple(static_cast<vtkIdType>(j))[2] * factor;
+		curColors = &m_SourceColors[i];
+
+		curColors->r = tuple[0] * factor;
+		curColors->g = tuple[1] * factor;
+		curColors->b = tuple[2] * factor;
 	}
 
+	scalarsPtr = m_Target->GetPointData()->GetScalars();
 	for (int i = 0, j = 0; i < m_NumLandmarks; ++i, j += stepTarget)
 	{
-		m_TargetCoords[i].x = m_Target->GetPoint(static_cast<vtkIdType>(j))[0];
-		m_TargetCoords[i].y = m_Target->GetPoint(static_cast<vtkIdType>(j))[1];
-		m_TargetCoords[i].z = m_Target->GetPoint(static_cast<vtkIdType>(j))[2];
+		curCoords = &m_TargetCoords[i];
+		double* curPoint = m_Target->GetPoint(static_cast<vtkIdType>(j));
+		curCoords->x = curPoint[0];
+		curCoords->y = curPoint[1];
+		curCoords->z = curPoint[2];
 
 		// conversion from RGB to rgb (r = R/(R+G+B), ...)
-		// and normalization w.r.t. bounding boxes of RGB cube and bounding box of pointcloud
-		float r_g_b = m_Target->GetPointData()->GetScalars()->GetTuple(static_cast<vtkIdType>(j))[0] +
-			m_Target->GetPointData()->GetScalars()->GetTuple(static_cast<vtkIdType>(j))[1] +
-			m_Target->GetPointData()->GetScalars()->GetTuple(static_cast<vtkIdType>(j))[2];
+		double* tuple = scalarsPtr->GetTuple(static_cast<vtkIdType>(j));
+		float r_g_b = tuple[0] + tuple[1] + tuple[2];
 
 		float factor = m_NormalizeRGBToDistanceValuesFactor / std::max(r_g_b, FLT_EPSILON);
 
-		m_TargetColors[i].r = m_Target->GetPointData()->GetScalars()->GetTuple(static_cast<vtkIdType>(j))[0] * factor;
-		m_TargetColors[i].g = m_Target->GetPointData()->GetScalars()->GetTuple(static_cast<vtkIdType>(j))[1] * factor;
-		m_TargetColors[i].b = m_Target->GetPointData()->GetScalars()->GetTuple(static_cast<vtkIdType>(j))[2] * factor;
+		curColors = &m_TargetColors[i];
+
+		curColors->r = tuple[0] * factor;
+		curColors->g = tuple[1] * factor;
+		curColors->b = tuple[2] * factor;
 	}
 }
 //----------------------------------------------------------------------------
@@ -210,7 +221,7 @@ ExtendedICPTransform::InternalUpdate()
 	QTime ts;
 	ts.start();
 	m_ClosestPointFinder->SetTarget(m_TargetCoords, m_TargetColors, m_SourceCoords, m_SourceColors);
-	std::cout << "SetTarget() " << ts.elapsed() << " ms" << std::endl;
+	//std::cout << "SetTarget() " << ts.elapsed() << " ms" << std::endl;
 
 
 	vtkSmartPointer<vtkTransform> accumulate =
@@ -368,7 +379,7 @@ ExtendedICPTransform::InternalUpdate()
 	} 
 	DBG << std::endl;
 
-	std::cout << "avg findTimeElapsed: " << static_cast<double>(findTimeElapsed) / static_cast<double>(m_NumIter) << std::endl;
+	//std::cout << "avg findTimeElapsed: " << static_cast<double>(findTimeElapsed) / static_cast<double>(m_NumIter) << std::endl;
 
 	// now recover accumulated result
 	this->Matrix->DeepCopy(accumulate->GetMatrix());

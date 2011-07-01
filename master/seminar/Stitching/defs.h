@@ -5,6 +5,9 @@
 #define CUDA_THREADS_PER_BLOCK 128
 #define CUDA_BUFFER_SIZE ( CUDA_THREADS_PER_BLOCK )
 
+#define SizeX 640
+#define SizeY 480
+
 // GLOBAL TIME STATS
 static int OVERALL_TIME;
 static int LOAD_TIME;

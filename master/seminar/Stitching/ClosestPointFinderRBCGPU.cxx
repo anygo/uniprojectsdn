@@ -54,7 +54,6 @@ ClosestPointFinderRBCGPU::~ClosestPointFinderRBCGPU()
 	delete[] m_Reps;
 	delete[] m_RepsIndices;
 
-	std::cout << "~ClosestPointFinderRBCGPU()" << std::endl;
 	// Delete GPU Device Memory
 	cleanupGPURBC();
 	cleanupGPUCommon();

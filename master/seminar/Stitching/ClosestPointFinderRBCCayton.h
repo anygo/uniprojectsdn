@@ -34,7 +34,6 @@ public:
 
 	~ClosestPointFinderRBCCayton() 
 	{
-		std::cout << "Desturcotr" << std::endl;
 		delete[] nnsRBC;
 		
 

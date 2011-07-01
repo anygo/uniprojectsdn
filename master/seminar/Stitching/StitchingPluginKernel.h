@@ -19,6 +19,7 @@ GPUConfig host_conf[1];
 // RBC
 __constant__ unsigned short* dev_representatives;
 __constant__ unsigned short* dev_pointToRep;
+__constant__ unsigned short* dev_reps;
 __constant__ RepGPU dev_repsGPU[MAX_REPRESENTATIVES];
 
 

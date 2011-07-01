@@ -8,10 +8,7 @@
 
 
 extern "C"
-void initGPUMemory(int nrOfPoints);
-
-extern "C"
-void updateGPUConfig(float weightRGB, int metric);
+void initGPUMemory(int nrOfPoints, float weightRGB, int metric);
 
 extern "C"
 void transferToGPU(PointCoords* targetCoords, PointColors* targetColors, PointCoords* sourceCoords, PointColors* sourceColors);
@@ -47,7 +44,7 @@ ClosestPointFinderRBCGPU::ClosestPointFinderRBCGPU(int NrOfPoints, float nrOfRep
 	m_PointToRep = new unsigned short[m_NrOfPoints];
 	m_RepsIndices = new unsigned short[m_NrOfPoints];
 
-	initGPUMemory(m_NrOfPoints);
+	m_Initialized = false;
 }
 
 ClosestPointFinderRBCGPU::~ClosestPointFinderRBCGPU()
@@ -57,6 +54,7 @@ ClosestPointFinderRBCGPU::~ClosestPointFinderRBCGPU()
 	delete[] m_Reps;
 	delete[] m_RepsIndices;
 
+	std::cout << "~ClosestPointFinderRBCGPU()" << std::endl;
 	// Delete GPU Device Memory
 	cleanupGPURBC();
 	cleanupGPUCommon();
@@ -64,36 +62,14 @@ ClosestPointFinderRBCGPU::~ClosestPointFinderRBCGPU()
 
 void ClosestPointFinderRBCGPU::SetTarget(PointCoords* targetCoords, PointColors* targetColors, PointCoords* sourceCoords, PointColors* sourceColors) 
 {
-	ClosestPointFinder::SetTarget(targetCoords, targetColors, sourceCoords, sourceColors);
-	updateGPUConfig(m_WeightRGB, m_Metric);
-	transferToGPU(targetCoords, targetColors, sourceCoords, sourceColors); // <- we actually dont need our own data struct pointer...
-	initRBC();
-}
-
-void ClosestPointFinderRBCGPU::Update(int points)
-{
-	if(points != m_NrOfPoints)
+	if (!m_Initialized)
 	{
-		std::cout << "Reallocating RBC Stuff" << std::endl;
-		ClosestPointFinder::Update(points);
-		m_NrOfReps = std::min(MAX_REPRESENTATIVES, static_cast<int>(m_NrOfRepsFactor * sqrt(static_cast<float>(m_NrOfPoints))));
-
-		delete[] m_RepsGPU;
-		delete[] m_PointToRep;
-		delete[] m_Reps;
-		delete[] m_RepsIndices;
-
-		// initialize GPU RBC struct and other data structures
-		m_Reps = new unsigned short[m_NrOfReps];
-		m_RepsGPU = new RepGPU[m_NrOfReps];	
-		m_PointToRep = new unsigned short[m_NrOfPoints];
-		m_RepsIndices = new unsigned short[m_NrOfPoints];
-		
-		// release and newly allocate memory
-		cleanupGPUCommon();
-		initGPUMemory(m_NrOfPoints);
+		initGPUMemory(m_NrOfPoints, m_WeightRGB, m_Metric);
+		m_Initialized = true;
 	}
-
+	ClosestPointFinder::SetTarget(targetCoords, targetColors, sourceCoords, sourceColors);
+	transferToGPU(m_TargetCoords, m_TargetColors, m_SourceCoords, m_SourceColors); // <- we actually dont need our own data struct pointer...
+	initRBC();
 }
 
 unsigned short*

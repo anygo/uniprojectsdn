@@ -22,16 +22,28 @@ vtkStandardNewMacro(ExtendedICPTransform);
 
 
 extern "C"
-void TransformPointsDirectlyOnGPU(double transformationMatrix[4][4], PointCoords* writeTo, float* distances);
+void TransformPointsDirectlyOnGPU(double transformationMatrix[4][4], PointCoords* writeTo, float* m_Distances);
 
 ExtendedICPTransform::ExtendedICPTransform() : vtkLinearTransform()
 {
 	m_Source = vtkSmartPointer<vtkPolyData>::New();
 	m_Target = vtkSmartPointer<vtkPolyData>::New();
 	m_LandmarkTransform = vtkSmartPointer<vtkLandmarkTransform>::New();
+	m_SourceCoords = NULL;
+	m_SourceColors = NULL;
+	m_TargetCoords = NULL;
+	m_TargetColors = NULL;
+	m_Distances = NULL;
 }
 
-ExtendedICPTransform::~ExtendedICPTransform() {}
+ExtendedICPTransform::~ExtendedICPTransform()
+{
+	if(m_SourceCoords) delete[] m_SourceCoords;
+	if(m_SourceColors) delete[] m_SourceColors;
+	if(m_TargetCoords) delete[] m_TargetCoords;
+	if(m_TargetColors) delete[] m_TargetColors;
+	if(m_Distances)	delete[] m_Distances;
+}
 //----------------------------------------------------------------------------
 void
 ExtendedICPTransform::Inverse()
@@ -138,11 +150,6 @@ ExtendedICPTransform::vtkPolyDataToPointCoordsAndColors(double percentage)
 	bounds[4] += percentage*(bounds[5] - bounds[4]);
 	bounds[5] -= percentage*(bounds[5] - bounds[4]);
 
-	m_SourceCoords = new PointCoords[m_NumLandmarks];
-	m_SourceColors = new PointColors[m_NumLandmarks];
-	m_TargetCoords = new PointCoords[m_NumLandmarks];
-	m_TargetColors = new PointColors[m_NumLandmarks];
-
 	for (int i = 0, j = 0; i < m_NumLandmarks; ++i, j = (j + stepSource) % m_Source->GetNumberOfPoints())
 	{
 		m_SourceCoords[i].x = m_Source->GetPoint(static_cast<vtkIdType>(j))[0];
@@ -194,24 +201,17 @@ ExtendedICPTransform::vtkPolyDataToPointCoordsAndColors(double percentage)
 void
 ExtendedICPTransform::InternalUpdate() 
 {
+	// for some reason, we need this
+	m_Points1->Modified();
+	m_Points2->Modified();
+	m_Closestp->Modified();
+
 	// configure ClosestPointFinder
 	QTime ts;
 	ts.start();
 	m_ClosestPointFinder->SetTarget(m_TargetCoords, m_TargetColors, m_SourceCoords, m_SourceColors);
 	std::cout << "SetTarget() " << ts.elapsed() << " ms" << std::endl;
 
-	// allocate some points used for icp
-	vtkSmartPointer<vtkPoints> points1 =
-		vtkSmartPointer<vtkPoints>::New();
-	points1->SetNumberOfPoints(m_NumLandmarks);
-
-	vtkSmartPointer<vtkPoints> points2 =
-		vtkSmartPointer<vtkPoints>::New();
-	points2->SetNumberOfPoints(m_NumLandmarks);
-
-	vtkSmartPointer<vtkPoints> closestp =
-		vtkSmartPointer<vtkPoints>::New();
-	closestp->SetNumberOfPoints(m_NumLandmarks);
 
 	vtkSmartPointer<vtkTransform> accumulate =
 		vtkTransform::New();
@@ -225,13 +225,11 @@ ExtendedICPTransform::InternalUpdate()
 	}
 
 	double p1[3], p2[3];
-	// for gpu based distance computation
-	float* distances = new float[m_NumLandmarks];
 	unsigned short* indices;
 
 	for (int i = 0; i < m_NumLandmarks; i++)
 	{
-		points1->SetPoint(static_cast<vtkIdType>(i), m_SourceCoords[i].x, m_SourceCoords[i].y, m_SourceCoords[i].z);
+		m_Points1->SetPoint(static_cast<vtkIdType>(i), m_SourceCoords[i].x, m_SourceCoords[i].y, m_SourceCoords[i].z);
 	}
 
 	// go
@@ -242,8 +240,8 @@ ExtendedICPTransform::InternalUpdate()
 	}
 
 	vtkSmartPointer<vtkPoints> temp;
-	vtkSmartPointer<vtkPoints> a = points1;
-	vtkSmartPointer<vtkPoints> b = points2;
+	vtkSmartPointer<vtkPoints> a = m_Points1;
+	vtkSmartPointer<vtkPoints> b = m_Points2;
 
 	float totaldist;
 	m_NumIter = 0;
@@ -284,9 +282,9 @@ ExtendedICPTransform::InternalUpdate()
 			}
 
 			// calling Modified() is necessary otherwise object properties won't change
-			closestp->SetNumberOfPoints(number);
+			m_Closestp->SetNumberOfPoints(number);
 			a2->SetNumberOfPoints(number);
-			closestp->Modified();
+			m_Closestp->Modified();
 			a2->Modified();
 
 			int count = 0;
@@ -295,7 +293,7 @@ ExtendedICPTransform::InternalUpdate()
 				if(dists[i] <= threshold) 
 				{
 					int index = indices[i];
-					closestp->SetPoint(count, m_TargetCoords[index].x, m_TargetCoords[index].y, m_TargetCoords[index].z);
+					m_Closestp->SetPoint(count, m_TargetCoords[index].x, m_TargetCoords[index].y, m_TargetCoords[index].z);
 					a2->SetPoint(count, m_SourceCoords[i].x, m_SourceCoords[i].y, m_SourceCoords[i].z);
 					++count;
 				}
@@ -307,12 +305,13 @@ ExtendedICPTransform::InternalUpdate()
 			for(int i = 0; i < m_NumLandmarks; ++i)
 			{
 				int index = indices[i];
-				closestp->SetPoint(i, m_TargetCoords[index].x, m_TargetCoords[index].y, m_TargetCoords[index].z);
+				m_Closestp->SetPoint(i, m_TargetCoords[index].x, m_TargetCoords[index].y, m_TargetCoords[index].z);
 			}
 			m_LandmarkTransform->SetSourceLandmarks(a);
 		}
+
 		// build the landmark transform
-		m_LandmarkTransform->SetTargetLandmarks(closestp);
+		m_LandmarkTransform->SetTargetLandmarks(m_Closestp);
 		m_LandmarkTransform->Update();
 
 		// concatenate transformation matrices
@@ -330,10 +329,10 @@ ExtendedICPTransform::InternalUpdate()
 		// transform on gpu
 		if (m_ClosestPointFinder->usesGPU())
 		{	
-			TransformPointsDirectlyOnGPU(m_LandmarkTransform->GetMatrix()->Element, m_SourceCoords, distances);
+			TransformPointsDirectlyOnGPU(m_LandmarkTransform->GetMatrix()->Element, m_SourceCoords, m_Distances);
 			for(int i = 0; i < m_NumLandmarks; i++)
 			{
-				totaldist += distances[i];
+				totaldist += m_Distances[i];
 				b->SetPoint(i, m_SourceCoords[i].x, m_SourceCoords[i].y, m_SourceCoords[i].z);
 			}	
 
@@ -374,6 +373,4 @@ ExtendedICPTransform::InternalUpdate()
 	// now recover accumulated result
 	this->Matrix->DeepCopy(accumulate->GetMatrix());
 
-	// cleanup data structure for gpu version
-	delete[] distances;
 }

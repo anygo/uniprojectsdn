@@ -34,6 +34,7 @@
 #include <ClosestPointFinderRBCGPU.h>
 #include <ClosestPointFinderRBCCayton.h>
 #include <defs.h>
+#include <cutil_inline.h>
 
 StitchingPlugin::StitchingPlugin()
 {
@@ -59,8 +60,12 @@ StitchingPlugin::StitchingPlugin()
 	connect(m_Widget->m_PushButtonHistoryStitchSelection,	SIGNAL(clicked()),								this, SLOT(StitchSelectedActors()));
 	connect(m_Widget->m_PushButtonHistoryUndoTransform,		SIGNAL(clicked()),								this, SLOT(UndoTransformForSelectedActors()));
 	connect(m_Widget->m_ListWidgetHistory,					SIGNAL(itemDoubleClicked(QListWidgetItem*)),	this, SLOT(HighlightActor(QListWidgetItem*)));
-	connect(m_Widget->m_ComboBoxClosestPointFinder,			SIGNAL(currentIndexChanged(int)),				this, SLOT(ResetCPF(int)));
-	connect(m_Widget->m_SpinBoxLandmarks,					SIGNAL(valueChanged(int)),						this, SLOT(UpdateCPF(int)));
+	connect(m_Widget->m_ComboBoxClosestPointFinder,			SIGNAL(currentIndexChanged(int)),				this, SLOT(ResetCPF()));
+	connect(m_Widget->m_SpinBoxLandmarks,					SIGNAL(valueChanged(int)),						this, SLOT(ResetCPF()));
+	connect(m_Widget->m_DoubleSpinBoxRGBWeight,				SIGNAL(valueChanged(double)),					this, SLOT(ResetCPF()));
+	connect(m_Widget->m_ComboBoxMetric,						SIGNAL(currentIndexChanged(int)),				this, SLOT(ResetCPF()));
+	connect(this,											SIGNAL(RecordFrameAvailable()),					this, SLOT(RecordFrame()));
+	connect(this,											SIGNAL(LiveStitchingFrameAvailable()),			this, SLOT(LiveStitching()));
 
 	// progress bar signals
 	connect(this, SIGNAL(UpdateProgressBar(int)),		m_Widget->m_ProgressBar, SLOT(setValue(int)));
@@ -90,6 +95,9 @@ StitchingPlugin::StitchingPlugin()
 	case 4: m_cpf = new ClosestPointFinderRBCGPU(m_Widget->m_SpinBoxLandmarks->value(), static_cast<float>(m_Widget->m_DoubleSpinBoxNrOfRepsFactor->value())); break;
 	case 5: m_cpf = new ClosestPointFinderRBCCayton(m_Widget->m_SpinBoxLandmarks->value(), static_cast<float>(m_Widget->m_DoubleSpinBoxNrOfRepsFactor->value())); break;
 	}
+
+	// dirty hack
+	m_ResetRequired = true;
 }
 
 StitchingPlugin::~StitchingPlugin()
@@ -111,6 +119,45 @@ StitchingPlugin::GetPluginGUI()
 	return m_Widget;
 }
 //----------------------------------------------------------------------------
+void StitchingPlugin::RecordFrame()
+{
+	try
+	{
+		LoadFrame();
+	} catch (std::exception &e)
+	{
+		std::cout << "Exception: \"" << e.what() << "\""<< std::endl;
+		return;
+	}
+
+	// add next actor
+	int listSize = m_Widget->m_ListWidgetHistory->count();
+	HistoryListItem* hli = new HistoryListItem();
+	hli->setText(QDateTime::currentDateTime().time().toString("hh:mm:ss:zzz"));
+	hli->m_actor = vtkSmartPointer<ritk::RImageActorPipeline>::New();
+	hli->m_actor->SetData(m_Data, true);
+	hli->m_transform = vtkSmartPointer<vtkMatrix4x4>::New();
+	hli->m_transform->Identity();
+	m_Widget->m_ListWidgetHistory->insertItem(listSize, hli);
+	hli->setSelected(true);
+
+	m_Widget->m_CheckBoxShowSelectedActors->setText(QString("Show ") + QString::number(m_Widget->m_ListWidgetHistory->selectedItems().count()) + 
+		QString("/") + QString::number(m_Widget->m_ListWidgetHistory->count()) + " Actors");
+}
+void StitchingPlugin::LiveStitching()
+{
+	try
+	{
+		LoadStitch();
+	} catch (std::exception &e)
+	{
+		std::cout << "Exception: \"" << e.what() << "\""<< std::endl;
+		return;
+	}
+
+	m_Widget->m_CheckBoxShowSelectedActors->setText(QString("Show ") + QString::number(m_Widget->m_ListWidgetHistory->selectedItems().count()) + 
+		QString("/") + QString::number(m_Widget->m_ListWidgetHistory->count()) + " Actors");
+}
 void
 StitchingPlugin::ProcessEvent(ritk::Event::Pointer EventP)
 {
@@ -135,42 +182,11 @@ StitchingPlugin::ProcessEvent(ritk::Event::Pointer EventP)
 			// run autostitching for each frame if checkbox is checked
 			if (m_Widget->m_RadioButtonRecord->isChecked() && m_FramesProcessed % m_Widget->m_SpinBoxFrameStep->value() == 0)
 			{
-				try
-				{
-					LoadFrame();
-				} catch (std::exception &e)
-				{
-					std::cout << "Exception: \"" << e.what() << "\""<< std::endl;
-					return;
-				}
-				
-				// add next actor
-				int listSize = m_Widget->m_ListWidgetHistory->count();
-				HistoryListItem* hli = new HistoryListItem();
-				hli->setText(QDateTime::currentDateTime().time().toString("hh:mm:ss:zzz"));
-				hli->m_actor = vtkSmartPointer<ritk::RImageActorPipeline>::New();
-				hli->m_actor->SetData(m_Data, true);
-				hli->m_transform = vtkSmartPointer<vtkMatrix4x4>::New();
-				hli->m_transform->Identity();
-				m_Widget->m_ListWidgetHistory->insertItem(listSize, hli);
-				//hli->setSelected(true);
-
-				m_Widget->m_CheckBoxShowSelectedActors->setText(QString("Show ") + QString::number(m_Widget->m_ListWidgetHistory->selectedItems().count()) + 
-					QString("/") + QString::number(m_Widget->m_ListWidgetHistory->count()) + " Actors");
+				emit RecordFrameAvailable();
 			}
 			else if (m_Widget->m_RadioButtonLiveStitching->isChecked() && m_FramesProcessed % m_Widget->m_SpinBoxFrameStep->value() == 0)
 			{
-				try
-				{
-					LoadStitch();
-				} catch (std::exception &e)
-				{
-					std::cout << "Exception: \"" << e.what() << "\""<< std::endl;
-					return;
-				}
-
-				m_Widget->m_CheckBoxShowSelectedActors->setText(QString("Show ") + QString::number(m_Widget->m_ListWidgetHistory->selectedItems().count()) + 
-					QString("/") + QString::number(m_Widget->m_ListWidgetHistory->count()) + " Actors");
+				emit LiveStitchingFrameAvailable();
 			}
 
 			// unlock mutex
@@ -191,7 +207,7 @@ StitchingPlugin::ShowHideActors()
 	int numPoints = 0;
 	for (int i = 0; i < m_Widget->m_ListWidgetHistory->count(); ++i)
 	{
-		HistoryListItem* hli = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
+		HistoryListItem* hli = static_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
 		if (hli->isSelected() && m_Widget->m_CheckBoxShowSelectedActors->isChecked())
 		{
 			m_Widget->m_VisualizationWidget3D->AddActor(hli->m_actor);
@@ -215,7 +231,7 @@ StitchingPlugin::ShowHideActors()
 void
 StitchingPlugin::HighlightActor(QListWidgetItem* item)
 {
-	HistoryListItem* hli = reinterpret_cast<HistoryListItem*>(item);
+	HistoryListItem* hli = static_cast<HistoryListItem*>(item);
 
 	// toggle colormode
 	int mode = hli->m_actor->GetMapper()->GetColorMode();
@@ -245,7 +261,7 @@ StitchingPlugin::DeleteSelectedActors()
 	// delete all selected steps from history and from memory
 	for (int i = 0; i < m_Widget->m_ListWidgetHistory->count(); ++i)
 	{
-		HistoryListItem* hli = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
+		HistoryListItem* hli = static_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
 		if (hli->isSelected())
 		{
 			DBG << "deleting actor " << i << std::endl;
@@ -261,7 +277,7 @@ StitchingPlugin::DeleteSelectedActors()
 	// run backwards through toDelete and delete those items from History and from memory
 	for (int i = toDelete.size() - 1; i >= 0; --i)
 	{
-		HistoryListItem* hli = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->takeItem(toDelete.at(i)));
+		HistoryListItem* hli = static_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->takeItem(toDelete.at(i)));
 		delete hli;
 	}
 
@@ -294,7 +310,7 @@ StitchingPlugin::MergeSelectedActors()
 	// add the data of each actor to the appendFilter and store the last transformation
 	for (int i = 0; i < m_Widget->m_ListWidgetHistory->count(); ++i)
 	{
-		HistoryListItem* hli2 = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
+		HistoryListItem* hli2 = static_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
 
 		if (hli2->isSelected())
 		{
@@ -362,7 +378,7 @@ StitchingPlugin::CleanSelectedActors()
 	int numPoints = 0;
 	for (int i = 0; i < m_Widget->m_ListWidgetHistory->count(); ++i)
 	{
-		HistoryListItem* hli = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
+		HistoryListItem* hli = static_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
 		if (hli->isSelected())
 		{
 			DBG << "cleaning actor " << i << std::endl;
@@ -403,7 +419,7 @@ StitchingPlugin::StitchSelectedActors()
 	// ignore the first one, because it can not be stitched to anything
 	for (int i = 1; i < m_Widget->m_ListWidgetHistory->count(); ++i)
 	{
-		HistoryListItem* hli = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
+		HistoryListItem* hli = static_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
 		if (hli->isSelected())
 		{
 			DBG << "stitching actor " << i << std::endl;
@@ -414,7 +430,7 @@ StitchingPlugin::StitchSelectedActors()
 			//emit UpdateGUI();
 			QCoreApplication::processEvents();
 
-			HistoryListItem* hli_prev = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i - 1));
+			HistoryListItem* hli_prev = static_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i - 1));
 
 			t.start();
 			try
@@ -457,7 +473,7 @@ StitchingPlugin::UndoTransformForSelectedActors()
 	// take the inverse of the transform s.t. we get the original data back (approximately)
 	for (int i = 0; i < m_Widget->m_ListWidgetHistory->count(); ++i)
 	{
-		HistoryListItem* hli = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
+		HistoryListItem* hli = static_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
 		if (hli->isSelected())
 		{
 			DBG << "undoing transform for actor " << i << std::endl;
@@ -518,7 +534,7 @@ StitchingPlugin::SaveSelectedActors()
 	int fileCount = 0;
 	for (int i = 0; i < m_Widget->m_ListWidgetHistory->count(); ++i)
 	{
-		HistoryListItem* hli = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
+		HistoryListItem* hli = static_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
 		if (hli->isSelected())
 		{
 			QString partFileName = outputFile + QString::number(fileCount++) + ".vtk";
@@ -546,7 +562,7 @@ StitchingPlugin::Delaunay2DSelectedActors()
 	// triangulation for each selected history entry - may take some time...
 	for (int i = 0; i < m_Widget->m_ListWidgetHistory->count(); ++i)
 	{
-		HistoryListItem* hli = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
+		HistoryListItem* hli = static_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
 		if (hli->isSelected())
 		{
 			vtkSmartPointer<vtkTransform> t = 
@@ -644,7 +660,7 @@ StitchingPlugin::LoadStitch()
 	hli->m_transform = vtkSmartPointer<vtkMatrix4x4>::New();
 
 	// get the previous history entry
-	HistoryListItem* hli_last = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(listSize - 1));
+	HistoryListItem* hli_last = static_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(listSize - 1));
 
 	// stitch to just loaded frame to the previous frame (given by last history entry)
 	Stitch(m_Data, hli_last->m_actor->GetData(), hli_last->m_transform, hli->m_actor->GetData(), hli->m_transform);
@@ -661,6 +677,7 @@ StitchingPlugin::LoadStitch()
 
 	// stats...
 	emit UpdateStats();
+	QCoreApplication::processEvents();
 }
 //----------------------------------------------------------------------------
 void
@@ -752,7 +769,7 @@ StitchingPlugin::ChangePointSize()
 {
 	for (int i = 0; i < m_Widget->m_ListWidgetHistory->count(); ++i)
 	{
-		HistoryListItem* hli = reinterpret_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
+		HistoryListItem* hli = static_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
 		if (hli->isSelected())
 		{
 			hli->m_actor->GetProperty()->SetPointSize(m_Widget->m_HorizontalSliderPointSize->value());
@@ -806,7 +823,6 @@ StitchingPlugin::InitializeHistory()
 {
 	// clear history
 	m_Widget->m_ListWidgetHistory->selectAll();
-	DeleteSelectedActors();
 
 	// add first actor
 	HistoryListItem* hli = new HistoryListItem();
@@ -823,20 +839,13 @@ StitchingPlugin::InitializeHistory()
 
 //----------------------------------------------------------------------------
 void
-StitchingPlugin::UpdateCPF(int nrLandmarks) 
+StitchingPlugin::ResetCPF() 
 {
-	std::cout << "Nr of Landmarks changed...updating" << std::endl;
-	m_cpf->Update(nrLandmarks);
-}
-//----------------------------------------------------------------------------
-void
-StitchingPlugin::ResetCPF(int selection) 
-{
-
+	m_ResetRequired = true;
 	std::cout << " Selection changed!" << std::endl;
 
 	// reset ClosestPointFinder if values have changed
-	switch (selection)
+	/*switch (selection)
 	{
 	case 0: m_cpf = new ClosestPointFinderBruteForceGPU(m_Widget->m_SpinBoxLandmarks->value()); break;
 	case 1: m_cpf = new ClosestPointFinderBruteForceCPU(m_Widget->m_SpinBoxLandmarks->value(), false); break;
@@ -846,7 +855,7 @@ StitchingPlugin::ResetCPF(int selection)
 	case 5: m_cpf = new ClosestPointFinderRBCCayton(m_Widget->m_SpinBoxLandmarks->value(), static_cast<float>(m_Widget->m_DoubleSpinBoxNrOfRepsFactor->value())); break;
 	}
 
-	m_icp->SetClosestPointFinder(m_cpf);
+	m_icp->SetClosestPointFinder(m_cpf);*/
 }
 //----------------------------------------------------------------------------
 void
@@ -855,6 +864,41 @@ StitchingPlugin::Stitch(vtkPolyData* toBeStitched, vtkPolyData* previousFrame,
 						vtkPolyData* outputStitchedPolyData,
 						vtkMatrix4x4* outputTransformationMatrix)
 {
+	size_t free, total;
+	cudaMemGetInfo(&free, &total);
+	std::cout << free/(1024*1024) << " / " << total/(1024*1024) << " MB" << std::endl;
+
+	if (m_ResetRequired)
+	{
+		switch (m_Widget->m_ComboBoxClosestPointFinder->currentIndex())
+		{
+		case 0: m_cpf = new ClosestPointFinderBruteForceGPU(m_Widget->m_SpinBoxLandmarks->value()); break;
+		case 1: m_cpf = new ClosestPointFinderBruteForceCPU(m_Widget->m_SpinBoxLandmarks->value(), false); break;
+		case 2: m_cpf = new ClosestPointFinderBruteForceCPU(m_Widget->m_SpinBoxLandmarks->value(), true); break;
+		case 3: m_cpf = new ClosestPointFinderRBCCPU(m_Widget->m_SpinBoxLandmarks->value(), static_cast<float>(m_Widget->m_DoubleSpinBoxNrOfRepsFactor->value())); break;
+		case 4: m_cpf = new ClosestPointFinderRBCGPU(m_Widget->m_SpinBoxLandmarks->value(), static_cast<float>(m_Widget->m_DoubleSpinBoxNrOfRepsFactor->value())); break;
+		case 5: m_cpf = new ClosestPointFinderRBCCayton(m_Widget->m_SpinBoxLandmarks->value(), static_cast<float>(m_Widget->m_DoubleSpinBoxNrOfRepsFactor->value())); break;
+		}
+
+		int metric;
+		switch (m_Widget->m_ComboBoxMetric->currentIndex())
+		{
+		case 0: metric = LOG_ABSOLUTE_DISTANCE; break;
+		case 1: metric = ABSOLUTE_DISTANCE; break;
+		case 2: metric = SQUARED_DISTANCE; break;
+		}
+
+		m_cpf->SetMetric(metric);
+		m_cpf->SetWeightRGB(m_Widget->m_DoubleSpinBoxRGBWeight->value());
+
+		m_icp = vtkSmartPointer<ExtendedICPTransform>::New();
+		m_icp->SetClosestPointFinder(m_cpf);
+		m_icp->GetLandmarkTransform()->SetModeToRigidBody();
+		m_icp->SetNumLandmarks(m_Widget->m_SpinBoxLandmarks->value());
+
+		m_ResetRequired = false;
+	}
+
 
 	// get a subvolume of the original data
 	vtkSmartPointer<vtkPolyData> voi = 
@@ -868,26 +912,8 @@ StitchingPlugin::Stitch(vtkPolyData* toBeStitched, vtkPolyData* previousFrame,
 		return;
 	}
 
-	m_icp = vtkSmartPointer<ExtendedICPTransform>::New();
-
-	m_cpf->SetWeightRGB(static_cast<float>(m_Widget->m_DoubleSpinBoxRGBWeight->value()));
-
-	int metric;
-	switch (m_Widget->m_ComboBoxMetric->currentIndex())
-	{
-	case 0: metric = LOG_ABSOLUTE_DISTANCE; break;
-	case 1: metric = ABSOLUTE_DISTANCE; break;
-	case 2: metric = SQUARED_DISTANCE; break;
-	}
-	m_cpf->SetMetric(metric);
-
-	// configure icp
-	m_icp->SetClosestPointFinder(m_cpf);
-
 	m_icp->SetSource(voi);
 	m_icp->SetTarget(previousFrame);
-	m_icp->SetNumLandmarks(m_Widget->m_SpinBoxLandmarks->value());
-	m_icp->GetLandmarkTransform()->SetModeToRigidBody();
 	m_icp->SetMaxMeanDist(static_cast<float>(m_Widget->m_DoubleSpinBoxMaxRMS->value()));
 	m_icp->SetMaxIter(m_Widget->m_SpinBoxMaxIterations->value());
 	m_icp->SetRemoveOutliers(m_Widget->m_CheckBoxRemoveOutliers->isChecked());

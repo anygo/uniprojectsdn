@@ -2,6 +2,7 @@
 #define DEFSRBC_H
 
 #include <float.h>
+#include <cutil_inline.h>
 // C99 but not part of MS VS Compiler, again shame on MS...
 // -> so were using "unsigned __int32"
 //#include <stdint.h>
@@ -46,8 +47,8 @@ typedef float real;
 //decrease an int to the next multiple of BLOCK_SIZE
 #define DPAD(i) ( ((i)%BLOCK_SIZE)==0 ? (i):((i)/BLOCK_SIZE)*BLOCK_SIZE ) 
 
-#define MAX(i,j) ((i) > (j) ? (i) : (j))
-#define MIN(i,j) ((i) <= (j) ? (i) : (j))
+//#define MAX(i,j) ((i) > (j) ? (i) : (j))
+//#define MIN(i,j) ((i) <= (j) ? (i) : (j))
 #define MAXi(i,j,k,l) ((i) > (j) ? (k) : (l)) //indexed version
 #define MINi(i,j,k,l) ((i) <= (j) ? (k) : (l))
 

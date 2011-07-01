@@ -37,7 +37,33 @@ public:
 	// set and get methods
 	inline void SetMaxIter(int iter) { m_MaxIter = iter; }
 	inline int GetMaxIter() { return m_MaxIter; }
-	inline void SetNumLandmarks(int landmarks) { m_NumLandmarks = landmarks; }
+	inline void SetNumLandmarks(int landmarks) { 
+
+		m_NumLandmarks = landmarks;
+
+		if(m_SourceCoords) delete[] m_SourceCoords;
+		if(m_SourceColors) delete[] m_SourceColors;
+		if(m_TargetCoords) delete[] m_TargetCoords;
+		if(m_TargetColors) delete[] m_TargetColors;
+		if(m_Distances) delete[] m_Distances;
+
+		// allocate some points used for icp
+		m_SourceCoords = new PointCoords[m_NumLandmarks];
+		m_SourceColors = new PointColors[m_NumLandmarks];
+		m_TargetCoords = new PointCoords[m_NumLandmarks];
+		m_TargetColors = new PointColors[m_NumLandmarks];
+
+		// for gpu based distance computation
+		m_Distances = new float[m_NumLandmarks];
+		
+		m_Points1 = vtkSmartPointer<vtkPoints>::New();
+		m_Points1->SetNumberOfPoints(m_NumLandmarks);
+		m_Points2 = vtkSmartPointer<vtkPoints>::New();
+		m_Points2->SetNumberOfPoints(m_NumLandmarks);
+		m_Closestp = vtkSmartPointer<vtkPoints>::New();
+		m_Closestp->SetNumberOfPoints(m_NumLandmarks);
+
+	}
 	inline int GetNumLandmarks() { return m_MaxIter; }
 	inline void SetMaxMeanDist(float dist) { m_MaxMeanDist = dist; }
 	inline int GetMaxMeanDist() { return m_MaxMeanDist; }
@@ -69,7 +95,12 @@ protected:
 	PointColors* m_SourceColors;
 	PointColors* m_TargetColors;
 
+	vtkSmartPointer<vtkPoints> m_Points1;
+	vtkSmartPointer<vtkPoints> m_Points2;
+	vtkSmartPointer<vtkPoints> m_Closestp;
+
 	ClosestPointFinder* m_ClosestPointFinder;
+	float* m_Distances;
 
 	int m_MaxIter;
 	int m_NumLandmarks;

@@ -44,10 +44,12 @@ void TransformPointsDirectlyOnGPU(double transformationMatrix[4][4], PointCoords
 }
 
 extern "C"
-void initGPUMemory(int nrOfPoints)
+void initGPUMemory(int nrOfPoints, float weightRGB, int metric)
 {	
 	// set up config struct
 	host_conf->nrOfPoints = nrOfPoints;
+	host_conf->weightRGB = weightRGB;
+	host_conf->metric = metric;
 	
 	// allocate memory on gpu
 	CUDA_SAFE_CALL(cudaMalloc((void**)&(host_conf->indices), host_conf->nrOfPoints*sizeof(unsigned short)));
@@ -56,16 +58,8 @@ void initGPUMemory(int nrOfPoints)
 	CUDA_SAFE_CALL(cudaMalloc((void**)&(host_conf->sourceColors), host_conf->nrOfPoints*sizeof(PointColors)));
 	CUDA_SAFE_CALL(cudaMalloc((void**)&(host_conf->targetColors), host_conf->nrOfPoints*sizeof(PointColors)));
 	CUDA_SAFE_CALL(cudaMalloc((void**)&(host_conf->distances), host_conf->nrOfPoints*sizeof(float)));
-	
-	// copy the config struct to gpu
-	CUDA_SAFE_CALL(cudaMemcpyToSymbol(dev_conf, host_conf, sizeof(GPUConfig), 0));
-}
-
-extern "C"
-void updateGPUConfig(float weightRGB, int metric)
-{
-	host_conf->weightRGB = weightRGB;
-	host_conf->metric = metric;
+	CUDA_SAFE_CALL(cudaMalloc((void**)&dev_pointToRep, host_conf->nrOfPoints*sizeof(unsigned short)));
+	CUDA_SAFE_CALL(cudaMalloc((void**)&dev_reps, host_conf->nrOfPoints*sizeof(unsigned short)));
 	
 	// copy the config struct to gpu
 	CUDA_SAFE_CALL(cudaMemcpyToSymbol(dev_conf, host_conf, sizeof(GPUConfig), 0));
@@ -75,13 +69,13 @@ extern "C"
 void transferToGPU(PointCoords* targetCoords, PointColors* targetColors, PointCoords* sourceCoords, PointColors* sourceColors)
 {
 	// copy actual point cloud data to gpu
+	
 	CUDA_SAFE_CALL(cudaMemcpy(host_conf->targetCoords, targetCoords, host_conf->nrOfPoints*sizeof(PointCoords), cudaMemcpyHostToDevice));
 	CUDA_SAFE_CALL(cudaMemcpy(host_conf->targetColors, targetColors, host_conf->nrOfPoints*sizeof(PointColors), cudaMemcpyHostToDevice));
 	CUDA_SAFE_CALL(cudaMemcpy(host_conf->sourceColors, sourceColors, host_conf->nrOfPoints*sizeof(PointColors), cudaMemcpyHostToDevice));
 	CUDA_SAFE_CALL(cudaMemcpy(host_conf->sourceCoords, sourceCoords, host_conf->nrOfPoints*sizeof(PointCoords), cudaMemcpyHostToDevice));
 	
-	// copy the config struct to gpu
-	CUDA_SAFE_CALL(cudaMemcpyToSymbol(dev_conf, host_conf, sizeof(GPUConfig), 0));
+
 }
 
 extern "C"
@@ -120,6 +114,8 @@ void cleanupGPUCommon()
 	CUDA_SAFE_CALL(cudaFree(host_conf->targetCoords));
 	CUDA_SAFE_CALL(cudaFree(host_conf->sourceColors));
 	CUDA_SAFE_CALL(cudaFree(host_conf->targetColors));
+	CUDA_SAFE_CALL(cudaFree(dev_pointToRep));
+	CUDA_SAFE_CALL(cudaFree(dev_reps));
 }
 
 
@@ -201,16 +197,9 @@ void FindClosestPointsRBC(int nrOfReps, unsigned short* indices, float* distance
 extern "C"
 void PointsToReps(int nrOfReps, unsigned short* pointToRep, unsigned short* reps)
 {
-	unsigned short* dev_pointToRep;
-	unsigned short* dev_reps;
-	CUDA_SAFE_CALL(cudaMalloc((void**)&dev_pointToRep, host_conf->nrOfPoints*sizeof(unsigned short)));
-	CUDA_SAFE_CALL(cudaMalloc((void**)&dev_reps, host_conf->nrOfPoints*sizeof(unsigned short)));
 	CUDA_SAFE_CALL(cudaMemcpy(dev_reps, reps, nrOfReps*sizeof(unsigned short), cudaMemcpyHostToDevice));
-	
 	
 	kernelPointsToReps<<<DivUp(host_conf->nrOfPoints, CUDA_THREADS_PER_BLOCK), CUDA_THREADS_PER_BLOCK>>>(nrOfReps, dev_pointToRep, dev_reps);
 	
 	CUDA_SAFE_CALL(cudaMemcpy(pointToRep, dev_pointToRep, host_conf->nrOfPoints*sizeof(unsigned short), cudaMemcpyDeviceToHost));
-	CUDA_SAFE_CALL(cudaFree(dev_pointToRep));
-	CUDA_SAFE_CALL(cudaFree(dev_reps));
 }

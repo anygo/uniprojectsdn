@@ -2,6 +2,7 @@
 #define	ClosestPointFinder_H__
 
 #include "defs.h"
+#include <iostream>
 
 /**	@class		ClosestPointFinder
  *	@brief		Interface for all ClosestPointFinders
@@ -15,7 +16,7 @@ class ClosestPointFinder
 {
 public:
 	ClosestPointFinder(int nrPoints) : m_NrOfPoints(nrPoints), m_Indices(new unsigned short[nrPoints]), m_Distances(new float[nrPoints]) {}
-	virtual ~ClosestPointFinder() { delete[] m_Indices; delete[] m_Distances; }
+	virtual ~ClosestPointFinder() { std::cout << "~ClosestPointFinder()" << std::endl; delete[] m_Indices; delete[] m_Distances; }
 
 	virtual unsigned short* FindClosestPoints(PointCoords* sourceCoords, PointColors* sourceColors) = 0;
 
@@ -25,19 +26,6 @@ public:
 		m_TargetColors = targetColors;
 		m_SourceCoords = sourceCoords;
 		m_SourceColors = sourceColors;
-	}
-
-	virtual inline void Update(int points)
-	{
-		if(m_NrOfPoints != points)
-		{
-			delete[] m_Indices;
-			delete[] m_Distances;
-
-			m_NrOfPoints = points;
-			m_Indices = new unsigned short[m_NrOfPoints];
-			m_Distances = new float[m_NrOfPoints];
-		}
 	}
 
 	virtual inline void SetWeightRGB(float weight) { m_WeightRGB = weight; }

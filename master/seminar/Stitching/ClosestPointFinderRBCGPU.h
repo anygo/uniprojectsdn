@@ -31,7 +31,6 @@ public:
 	~ClosestPointFinderRBCGPU();
 
 	void SetTarget(PointCoords* targetCoords, PointColors* targetColors, PointCoords* sourceCoords, PointColors* sourceColors);
-	void Update(int nLandmarks);
 
 	unsigned short* FindClosestPoints(PointCoords* sourceCoords, PointColors* sourceColors);
 
@@ -42,6 +41,7 @@ protected:
 
 	int m_NrOfReps;
 	float m_NrOfRepsFactor;
+	bool m_Initialized;
 
 	std::vector<Representative> m_Representatives;
 	RepGPU* m_RepsGPU;

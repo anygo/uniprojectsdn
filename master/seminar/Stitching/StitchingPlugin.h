@@ -64,6 +64,8 @@ signals:
 	void UpdateProgressBar(int val);
 	void InitProgressBar(int from, int to);
 	void UpdateStats();
+	void RecordFrameAvailable();
+	void LiveStitchingFrameAvailable();
 
 protected slots:
 	void LoadStitch();
@@ -82,8 +84,9 @@ protected slots:
 	void UndoTransformForSelectedActors();
 	void HighlightActor(QListWidgetItem*);
 	void ComputeStats();
-	void ResetCPF(int selection); 
-	void UpdateCPF(int numLandmarks);
+	void ResetCPF(); 
+	void RecordFrame();
+	void LiveStitching();
 
 
 protected:
@@ -102,6 +105,7 @@ protected:
 
 	int m_FramesProcessed;
 	QMutex m_Mutex;
+	bool m_ResetRequired;
 
 	// our members
 	vtkSmartPointer<ritk::RImageActorPipeline>	m_DataActor3D;

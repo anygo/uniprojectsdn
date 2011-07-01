@@ -88,13 +88,13 @@ protected slots:
 	void ResetCPF(); 
 	void RecordFrame();
 	void LiveStitching();
+	void ClearBuffer();
 
 
 protected:
 	StitchingWidget *m_Widget;
 
 	// our functions
-	void ExtractValidPoints();
 	void Clean(vtkPolyData *toBeCleaned);
 	void LoadFrame();
 	void CleanFrame();
@@ -105,21 +105,19 @@ protected:
 
 	int m_FramesProcessed;
 	QMutex m_Mutex;
+	int m_BufferSize;
+	int m_BufferCounter;
 	bool m_ResetRequired;
 
 	// our members
-	vtkSmartPointer<ritk::RImageActorPipeline>	m_DataActor3D;
 	ritk::NewFrameEvent::RImageConstPointer		m_CurrentFrame;
 	vtkSmartPointer<vtkPolyData>				m_Data;
 	vtkSmartPointer<ExtendedICPTransform>		m_icp;
 	ClosestPointFinder*							m_cpf; 
-	float*										m_TextureCoords;
 	float4*										m_devWCs;
 	float4*										m_WCs;
 	unsigned char*								m_RangeTextureData;
 	cudaArray*									m_InputImgArr;
-		
-
 };
 
 

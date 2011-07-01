@@ -69,6 +69,7 @@ StitchingPlugin::StitchingPlugin()
 	connect(m_Widget->m_SpinBoxLandmarks,					SIGNAL(valueChanged(int)),						this, SLOT(ResetCPF()));
 	connect(m_Widget->m_DoubleSpinBoxRGBWeight,				SIGNAL(valueChanged(double)),					this, SLOT(ResetCPF()));
 	connect(m_Widget->m_ComboBoxMetric,						SIGNAL(currentIndexChanged(int)),				this, SLOT(ResetCPF()));
+	connect(m_Widget->m_SpinBoxBufferSize,					SIGNAL(valueChanged(int)),						this, SLOT(ClearBuffer()));
 	connect(this,											SIGNAL(RecordFrameAvailable()),					this, SLOT(RecordFrame()));
 	connect(this,											SIGNAL(LiveStitchingFrameAvailable()),			this, SLOT(LiveStitching()));
 
@@ -79,30 +80,11 @@ StitchingPlugin::StitchingPlugin()
 	// signal for time measurements
 	connect(this, SIGNAL(UpdateStats()), this, SLOT(ComputeStats()));
 
-	// add data actor
-	m_DataActor3D = vtkSmartPointer<ritk::RImageActorPipeline>::New();	
-	m_DataActor3D->SetVisualizationMode(ritk::RImageActorPipeline::RGB);
-
 	// initialize member objects
 	m_Data = vtkSmartPointer<vtkPolyData>::New();
 
 	m_RangeTextureData = new unsigned char[SizeX*SizeY];
 	m_WCs = new float4[SizeX*SizeY];
-	m_TextureCoords = new float[SizeX*SizeY*2 + SizeX*(SizeY-2)*2];
-		// Update coords
-		for ( long l = 0; l < SizeX*SizeY + SizeX*(SizeY-2); l++ )
-		{
-			if (l%2==0)
-			{
-				m_TextureCoords[l*2+0] = (l%(SizeX*2))/((SizeX*2)*1.f);
-				m_TextureCoords[l*2+1] = (l/(SizeX*2))/(SizeY*1.f) ;
-			}
-			else
-			{
-				m_TextureCoords[l*2+0] = (l%(SizeX*2)-1)/((SizeX*2)*1.f);
-				m_TextureCoords[l*2+1] = (l/(SizeX*2)+1)/(SizeY*1.f);
-			}
-		}
 
 	cudaChannelFormatDesc ChannelDesc = cudaCreateChannelDesc(32, 0, 0, 0, cudaChannelFormatKindFloat);
 	cutilSafeCall(cudaMallocArray(&m_InputImgArr, &ChannelDesc, SizeX, SizeY));
@@ -126,11 +108,14 @@ StitchingPlugin::StitchingPlugin()
 
 	// dirty hack
 	m_ResetRequired = true;
+
+	// for buffer
+	m_BufferCounter = 0;
+	m_BufferSize = m_Widget->m_SpinBoxBufferSize->value();
 }
 
 StitchingPlugin::~StitchingPlugin()
 {
-	delete[] m_TextureCoords;
 	delete[] m_RangeTextureData;
 	delete[] m_WCs;
 
@@ -186,7 +171,9 @@ StitchingPlugin::LiveStitching()
 {
 	try
 	{
+		m_Mutex.lock();
 		LoadStitch();
+		m_Mutex.unlock();
 	} catch (std::exception &e)
 	{
 		std::cout << "Exception: \"" << e.what() << "\""<< std::endl;
@@ -195,6 +182,22 @@ StitchingPlugin::LiveStitching()
 
 	m_Widget->m_CheckBoxShowSelectedActors->setText(QString("Show ") + QString::number(m_Widget->m_ListWidgetHistory->selectedItems().count()) + 
 		QString("/") + QString::number(m_Widget->m_ListWidgetHistory->count()) + " Actors");
+}
+void
+StitchingPlugin::ClearBuffer()
+{
+	if (!m_Mutex.tryLock())
+	{
+		std::cout << "Stop Stitching to clear the buffer" << std::endl;
+		return;
+	}
+		
+
+	m_Widget->m_ListWidgetHistory->selectAll();
+	DeleteSelectedActors();
+	m_BufferCounter = 0;
+	m_BufferSize = m_Widget->m_SpinBoxBufferSize->value();
+	m_Mutex.unlock();
 }
 void
 StitchingPlugin::ProcessEvent(ritk::Event::Pointer EventP)
@@ -303,8 +306,6 @@ StitchingPlugin::DeleteSelectedActors()
 		HistoryListItem* hli = static_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
 		if (hli->isSelected())
 		{
-			DBG << "deleting actor " << i << std::endl;
-
 			m_Widget->m_VisualizationWidget3D->RemoveActor(hli->m_actor);
 			toDelete.push_back(i);	
 
@@ -361,8 +362,6 @@ StitchingPlugin::MergeSelectedActors()
 			{
 				firstIndex = i;
 			}
-
-			DBG << "merge - adding actor " << i << std::endl;
 		}
 	}
 
@@ -420,8 +419,6 @@ StitchingPlugin::CleanSelectedActors()
 		HistoryListItem* hli = static_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
 		if (hli->isSelected())
 		{
-			DBG << "cleaning actor " << i << std::endl;
-
 			try
 			{
 				Clean(hli->m_actor->GetData());
@@ -461,7 +458,6 @@ StitchingPlugin::StitchSelectedActors()
 		HistoryListItem* hli = static_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
 		if (hli->isSelected())
 		{
-			DBG << "stitching actor " << i << std::endl;
 			if (m_Widget->m_CheckBoxShowSelectedActors->isChecked())
 			{
 				HighlightActor(hli);
@@ -515,8 +511,6 @@ StitchingPlugin::UndoTransformForSelectedActors()
 		HistoryListItem* hli = static_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
 		if (hli->isSelected())
 		{
-			DBG << "undoing transform for actor " << i << std::endl;
-
 			// invert the transform
 			hli->m_transform->Invert();
 
@@ -577,7 +571,6 @@ StitchingPlugin::SaveSelectedActors()
 		if (hli->isSelected())
 		{
 			QString partFileName = outputFile + QString::number(fileCount++) + ".vtk";
-			DBG << "saving actor " << i << " to " << partFileName.toStdString() << std::endl;
 			vtkSmartPointer<vtkPolyDataWriter> writer =
 				vtkSmartPointer<vtkPolyDataWriter>::New();
 			writer->SetFileName(partFileName.toStdString().c_str());
@@ -682,8 +675,12 @@ StitchingPlugin::LoadStitch()
 	if (listSize == 0)
 	{
 		LoadInitialize();
+		m_BufferCounter = 0;
 		return;
 	}
+
+	if (listSize < m_BufferSize)
+		m_BufferCounter %= m_BufferSize;
 
 	// load the new frame
 	QTime loadFrameTime;
@@ -699,14 +696,21 @@ StitchingPlugin::LoadStitch()
 	hli->m_transform = vtkSmartPointer<vtkMatrix4x4>::New();
 
 	// get the previous history entry
-	HistoryListItem* hli_last = static_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(listSize - 1));
+	HistoryListItem* hli_last = static_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(m_BufferCounter % m_BufferSize));
+
+	if (m_BufferCounter >= m_BufferSize-1)
+	{
+		HistoryListItem* toBeDeleted = static_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item((m_BufferCounter+1) % m_BufferSize));
+		m_Widget->m_VisualizationWidget3D->RemoveActor(toBeDeleted->m_actor);
+		delete toBeDeleted;
+	}
 
 	// stitch to just loaded frame to the previous frame (given by last history entry)
 	Stitch(m_Data, hli_last->m_actor->GetData(), hli_last->m_transform, hli->m_actor->GetData(), hli->m_transform);
 
 	OVERALL_TIME = timeOverall.elapsed();
 
-	m_Widget->m_ListWidgetHistory->insertItem(listSize, hli);
+	m_Widget->m_ListWidgetHistory->insertItem((m_BufferCounter+1) % m_BufferSize, hli);
 	hli->setSelected(true);
 
 	if (m_Widget->m_CheckBoxShowSelectedActors->isChecked())
@@ -717,13 +721,15 @@ StitchingPlugin::LoadStitch()
 	// stats...
 	emit UpdateStats();
 	QCoreApplication::processEvents();
+
+	++m_BufferCounter;
 }
 //----------------------------------------------------------------------------
 void
 StitchingPlugin::LoadFrame()
 {
-	QTime t;
-	t.start();
+	//QTime t;
+	//t.start();
 	// Copy the input data to the device
 	cutilSafeCall(cudaMemcpyToArray(m_InputImgArr, 0, 0, m_CurrentFrame->GetRangeImage()->GetBufferPointer(), SizeX*SizeY*sizeof(float), cudaMemcpyHostToDevice));
 
@@ -732,8 +738,8 @@ StitchingPlugin::LoadFrame()
 
 	cutilSafeCall(cudaMemcpy(m_WCs, m_devWCs, SizeX*SizeY*sizeof(float4), cudaMemcpyDeviceToHost));
 
-	std::cout << t.elapsed() << " ms (cuda)" << std::endl;
-	t.start();
+	//std::cout << t.elapsed() << " ms (cuda)" << std::endl;
+	//t.start();
 	vtkSmartPointer<vtkPoints> points =
 		vtkSmartPointer<vtkPoints>::New();
 
@@ -776,38 +782,7 @@ StitchingPlugin::LoadFrame()
 	m_Data->SetVerts(cells);
 	m_Data->Update();
 
-	std::cout << t.elapsed() << " ms" << std::endl;
-
-}
-//----------------------------------------------------------------------------
-void
-StitchingPlugin::ExtractValidPoints()
-{
-	//vtkSmartPointer<vtkPoints> points =
-	//	vtkSmartPointer<vtkPoints>::New();
-
-
-	//double p[3];
-	//vtkDataArray* scalarsPtr = m_Data->GetPointData()->GetScalars();
-
-	//it.GoToBegin();
-	//for (vtkIdType i = 0; i < m_Data->GetNumberOfPoints(); ++i, ++it)
-	//{	
-	//	if (rand() % 2 != 0)
-	//		continue;
-
-	//	m_Data->GetPoint(i, p);
-
-	//	if (p[0] == p[0]) // i.e. not QNAN
-	//	{
-	//		points->InsertNextPoint(p[0], p[1], p[2]);
-	//		float r = it.Value()[0];
-	//		float g = it.Value()[1];
-	//		float b = it.Value()[2];
-	//		colors->InsertNextTuple4(r, g, b, 255);
-	//	}
-	//}
-
+	//std::cout << t.elapsed() << " ms" << std::endl;
 
 }
 //----------------------------------------------------------------------------
@@ -897,10 +872,6 @@ StitchingPlugin::Stitch(vtkPolyData* toBeStitched, vtkPolyData* previousFrame,
 						vtkPolyData* outputStitchedPolyData,
 						vtkMatrix4x4* outputTransformationMatrix)
 {
-	/*size_t free, total;
-	cudaMemGetInfo(&free, &total);
-	std::cout << free/(1024*1024) << " / " << total/(1024*1024) << " MB" << std::endl;*/
-
 	if (m_ResetRequired)
 	{
 		switch (m_Widget->m_ComboBoxClosestPointFinder->currentIndex())
@@ -929,23 +900,12 @@ StitchingPlugin::Stitch(vtkPolyData* toBeStitched, vtkPolyData* previousFrame,
 		m_icp->GetLandmarkTransform()->SetModeToRigidBody();
 		m_icp->SetNumLandmarks(m_Widget->m_SpinBoxLandmarks->value());
 
+		m_BufferSize = m_Widget->m_SpinBoxBufferSize->value();
+
 		m_ResetRequired = false;
 	}
 
-
-	// get a subvolume of the original data
-	vtkSmartPointer<vtkPolyData> voi = 
-		vtkSmartPointer<vtkPolyData>::New();
-
-	voi->ShallowCopy(toBeStitched);
-	
-	if (voi->GetNumberOfPoints() < m_Widget->m_SpinBoxLandmarks->value())
-	{
-		std::cout << "Reduce the number of landmarks!!! Data might be inconsistent now..." << std::endl;
-		return;
-	}
-
-	m_icp->SetSource(voi);
+	m_icp->SetSource(toBeStitched);
 	m_icp->SetTarget(previousFrame);
 	m_icp->SetMaxMeanDist(static_cast<float>(m_Widget->m_DoubleSpinBoxMaxRMS->value()));
 	m_icp->SetMaxIter(m_Widget->m_SpinBoxMaxIterations->value());
@@ -955,7 +915,7 @@ StitchingPlugin::Stitch(vtkPolyData* toBeStitched, vtkPolyData* previousFrame,
 	m_icp->SetPreviousTransformMatrix(previousTransformationMatrix);
 
 	// new stuff... strange
-	double* bounds = voi->GetBounds();
+	double* bounds = toBeStitched->GetBounds();
 	double boundDiagonal = sqrt((bounds[1] - bounds[0])*(bounds[1] - bounds[0]) + (bounds[3] - bounds[2])*(bounds[3] - bounds[2]) + (bounds[5] - bounds[4])*(bounds[5] - bounds[4]));
 	m_icp->SetNormalizeRGBToDistanceValuesFactor(static_cast<float>(boundDiagonal / sqrt(3.0)));
 
@@ -972,10 +932,7 @@ StitchingPlugin::Stitch(vtkPolyData* toBeStitched, vtkPolyData* previousFrame,
 	m_icp->Update();
 
 	ICP_TIME = timeICP.elapsed();
-
-	// update icp runtime, etc
 	m_Widget->m_LabelICPMeanTargetDistance->setText(QString::number(m_icp->GetMeanTargetDistance(), 'f', 2));
-	
 
 	QTime timeTransform;
 	timeTransform.start();
@@ -990,7 +947,7 @@ StitchingPlugin::Stitch(vtkPolyData* toBeStitched, vtkPolyData* previousFrame,
 	icpTransformFilter->SetTransform(m_icp);
 	icpTransformFilter->Update();
 
-	outputStitchedPolyData->DeepCopy(icpTransformFilter->GetOutput());
+	outputStitchedPolyData->ShallowCopy(icpTransformFilter->GetOutput());
 
 	TRANSFORM_TIME = timeTransform.elapsed();
 
@@ -1003,5 +960,4 @@ StitchingPlugin::Stitch(vtkPolyData* toBeStitched, vtkPolyData* previousFrame,
 	// update debug information in GUI
 	m_Widget->m_LabelICPIterations->setText(QString::number(m_icp->GetNumIter()));
 	m_Widget->m_LabelICPError->setText(QString::number(m_icp->GetMeanDist()));
-
 }

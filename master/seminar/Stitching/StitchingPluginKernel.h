@@ -22,14 +22,13 @@ __constant__ unsigned short* dev_pointToRep;
 __constant__ unsigned short* dev_reps;
 __constant__ RepGPU dev_repsGPU[MAX_REPRESENTATIVES];
 
-
-// Texture that holds the input image
-//----------------------------------------------------------------------------
+// Texture that holds the input range in order to convert to world coordinates
 texture<float, 2, cudaReadModeElementType> InputImageTexture;
 
 
-
-
+///////////////////////////////////////////////////////////////////////////////
+// Common
+///////////////////////////////////////////////////////////////////////////////
 template<unsigned int BlockSizeX, unsigned int BlockSizeY>
 __global__ void
 CUDARangeToWorldKernel(unsigned int NX, unsigned int NY, float4* duplicate)
@@ -70,13 +69,6 @@ CUDARangeToWorldKernel(unsigned int NX, unsigned int NY, float4* duplicate)
 	duplicate[(int)(gv*NX + gu)] = WC;
 }
 
-
-
-
-
-///////////////////////////////////////////////////////////////////////////////
-// Common
-///////////////////////////////////////////////////////////////////////////////
 __global__
 void kernelTransformPointsAndComputeDistance()
 {
@@ -92,33 +84,15 @@ void kernelTransformPointsAndComputeDistance()
 	if (tid >= dev_conf->nrOfPoints)
 		return;
 
-
-
 	float xOld = dev_conf->sourceCoords[tid].x;
 	float yOld = dev_conf->sourceCoords[tid].y;
 	float zOld = dev_conf->sourceCoords[tid].z;
 
 	// compute homogeneous transformation
-	float x =
-		m[0] * xOld +
-		m[1] * yOld +
-		m[2] * zOld +
-		m[3];
-	float y =
-		m[4] * xOld +
-		m[5] * yOld +
-		m[6] * zOld +
-		m[7];
-	float z =
-		m[8] * xOld +
-		m[9] * yOld +
-		m[10] * zOld +
-		m[11];
-	float w =
-		m[12] * xOld +
-		m[13] * yOld +
-		m[14] * zOld +
-		m[15];
+	float x = m[0]  * xOld + m[1]  * yOld + m[2]  * zOld + m[3];
+	float y = m[4]  * xOld + m[5]  * yOld + m[6]  * zOld + m[7];
+	float z = m[8]  * xOld + m[9]  * yOld + m[10] * zOld + m[11];
+	float w = m[12] * xOld + m[13] * yOld + m[14] * zOld + m[15];
 
 	// divide by the last component
 	x /= w;
@@ -126,10 +100,10 @@ void kernelTransformPointsAndComputeDistance()
 	z /= w;
 
 	// compute distance to previous point
-	dev_conf->distances[tid] =
-		(xOld - x) * (xOld - x) +
-		(yOld - y) * (yOld - y) +
-		(zOld - z) * (zOld - z);
+	float xDiff = xOld - x;
+	float yDiff = yOld - y;
+	float zDiff = zOld - z;
+	dev_conf->distances[tid] = xDiff*xDiff + yDiff*yDiff + zDiff*zDiff;
 
 	// set new coordinates
 	dev_conf->sourceCoords[tid].x = x;

@@ -3,8 +3,9 @@
 
 
 
-
-
+///////////////////////////////////////////////////////////////////////////////
+// Common
+///////////////////////////////////////////////////////////////////////////////
 extern "C"
 void
 CUDARangeToWorld(float4* duplicate, const cudaArray *InputImageArray, int w, int h)
@@ -27,12 +28,6 @@ CUDARangeToWorld(float4* duplicate, const cudaArray *InputImageArray, int w, int
 	CUT_CHECK_ERROR("Kernel execution failed");
 }
 
-
-
-
-///////////////////////////////////////////////////////////////////////////////
-// Common
-///////////////////////////////////////////////////////////////////////////////
 extern "C"
 void TransformPointsDirectlyOnGPU(double transformationMatrix[4][4], PointCoords* writeTo, float* distances)
 {
@@ -57,7 +52,6 @@ void TransformPointsDirectlyOnGPU(double transformationMatrix[4][4], PointCoords
 	
 	CUDA_SAFE_CALL(cudaMemcpyToSymbol(dev_transformationMatrix, tmp, 16*sizeof(float), 0));
 	
-	// compute transformations
 	kernelTransformPointsAndComputeDistance<<<DivUp(host_conf->nrOfPoints, CUDA_THREADS_PER_BLOCK), CUDA_THREADS_PER_BLOCK>>>();
 	CUT_CHECK_ERROR("Kernel execution failed (while transforming points)");
 	

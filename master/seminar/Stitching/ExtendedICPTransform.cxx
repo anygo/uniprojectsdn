@@ -29,6 +29,8 @@ ExtendedICPTransform::ExtendedICPTransform() : vtkLinearTransform()
 	m_Source = vtkSmartPointer<vtkPolyData>::New();
 	m_Target = vtkSmartPointer<vtkPolyData>::New();
 	m_LandmarkTransform = vtkSmartPointer<vtkLandmarkTransform>::New();
+	m_Accumulate = vtkTransform::New();
+	m_Accumulate->PostMultiply();
 	m_SourceCoords = NULL;
 	m_SourceColors = NULL;
 	m_TargetCoords = NULL;
@@ -218,21 +220,18 @@ ExtendedICPTransform::InternalUpdate()
 	m_Closestp->Modified();
 
 	// configure ClosestPointFinder
-	QTime ts;
-	ts.start();
+	//QTime ts;
+	//ts.start();
 	m_ClosestPointFinder->SetTarget(m_TargetCoords, m_TargetColors, m_SourceCoords, m_SourceColors);
 	//std::cout << "SetTarget() " << ts.elapsed() << " ms" << std::endl;
 
-
-	vtkSmartPointer<vtkTransform> accumulate =
-		vtkTransform::New();
-	accumulate->PostMultiply();
+	m_Accumulate->Identity();
 
 	// apply previous transform
 	if (m_ApplyPreviousTransform)
 	{
 		TransformPointsDirectlyOnGPU(m_PreviousTransformationMatrix->Element, m_SourceCoords, NULL);
-		accumulate->Concatenate(m_PreviousTransformationMatrix);
+		m_Accumulate->Concatenate(m_PreviousTransformationMatrix);
 	}
 
 	double p1[3], p2[3];
@@ -326,7 +325,7 @@ ExtendedICPTransform::InternalUpdate()
 		m_LandmarkTransform->Update();
 
 		// concatenate transformation matrices
-		accumulate->Concatenate(m_LandmarkTransform->GetMatrix());
+		m_Accumulate->Concatenate(m_LandmarkTransform->GetMatrix());
 
 		++m_NumIter;
 		if (m_NumIter >= m_MaxIter) 
@@ -360,7 +359,6 @@ ExtendedICPTransform::InternalUpdate()
 		}
 
 		m_MeanDist = totaldist / (float)m_NumLandmarks;
-		DBG << "\rICP Iteration " << m_NumIter << ":\t mean distance = " << m_MeanDist << "\t\t";
 
 		if (m_MeanDist <= m_MaxMeanDist)
 		{
@@ -377,11 +375,10 @@ ExtendedICPTransform::InternalUpdate()
 			vtkPolyDataToPointCoords(a, m_SourceCoords);
 		}
 	} 
-	DBG << std::endl;
 
 	//std::cout << "avg findTimeElapsed: " << static_cast<double>(findTimeElapsed) / static_cast<double>(m_NumIter) << std::endl;
 
 	// now recover accumulated result
-	this->Matrix->DeepCopy(accumulate->GetMatrix());
+	this->Matrix->DeepCopy(m_Accumulate->GetMatrix());
 
 }

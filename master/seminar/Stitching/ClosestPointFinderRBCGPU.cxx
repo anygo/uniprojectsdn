@@ -115,8 +115,6 @@ ClosestPointFinderRBCGPU::initRBC()
 		m_Representatives[m_PointToRep[i]].points.push_back(i);
 	}
 
-	DBG << "Random Ball Cover initialized (" << m_NrOfReps << " Representatives)." << std::endl;
-	
 	unsigned short* offsetPtr = m_RepsIndices;
 
 	for (int i = 0; i < m_NrOfReps; ++i)
@@ -129,7 +127,6 @@ ClosestPointFinderRBCGPU::initRBC()
 		offsetPtr += m_RepsGPU[i].nrOfPoints;
 	}
 
-	DBG << "Copying data to gpu..." << std::endl;
 	initGPURBC(m_NrOfReps, m_RepsGPU, m_RepsIndices);
 
 }

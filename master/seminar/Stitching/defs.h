@@ -1,6 +1,8 @@
 #ifndef defs_H__
 #define	defs_H__
 
+#include <cutil_inline.h>
+
 #define MAX_REPRESENTATIVES 1024
 #define CUDA_THREADS_PER_BLOCK 128
 #define CUDA_BUFFER_SIZE ( CUDA_THREADS_PER_BLOCK )
@@ -14,6 +16,7 @@ static int LOAD_TIME;
 static int CLIP_TIME;
 static int ICP_TIME;
 static int TRANSFORM_TIME;
+
 
 // GPU stuff
 // Division. If division remainder is neq zero then the result is ceiled
@@ -65,15 +68,6 @@ enum ICP_METRIC
 	ABSOLUTE_DISTANCE,
 	SQUARED_DISTANCE
 };
-
-// debug macros
-//#define DEBUG
-
-#ifdef DEBUG
-#define DBG ( std::cout )
-#else
-#define DBG if (false) ( std::cout )
-#endif
 
 
 #endif // defs_H__

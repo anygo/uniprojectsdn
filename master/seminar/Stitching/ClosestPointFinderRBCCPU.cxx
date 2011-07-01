@@ -84,8 +84,6 @@ ClosestPointFinderRBCCPU::initRBC()
 		}
 		rep->points.push_back(i);
 	}
-
-	DBG << "Random Ball Cover initialized (" << nrOfReps << " Representatives)." << std::endl;
 }
 
 float

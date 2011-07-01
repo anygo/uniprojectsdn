@@ -115,6 +115,7 @@ protected:
 	float m_MeanTargetDistance;
 	float m_NormalizeRGBToDistanceValuesFactor;
 	vtkSmartPointer<vtkLandmarkTransform> m_LandmarkTransform;
+	vtkSmartPointer<vtkTransform> m_Accumulate;
 
 private:
 	ExtendedICPTransform(const ExtendedICPTransform&);  // Not implemented.

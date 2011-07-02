@@ -75,6 +75,8 @@ StitchingPlugin::StitchingPlugin()
 	connect(this,											SIGNAL(LiveStitchingFrameAvailable()),			this, SLOT(LiveStitching()));
 	connect(m_Widget->m_HorizontalSliderMinZ,				SIGNAL(valueChanged(int)),						this, SLOT(UpdateZRange()));
 	connect(m_Widget->m_HorizontalSliderMaxZ,				SIGNAL(valueChanged(int)),						this, SLOT(UpdateZRange()));
+	connect(m_Widget->m_DoubleSpinBoxHistogramDifferenceThreshold, SIGNAL(valueChanged(double)),			this, SLOT(SetThreshold(double)));
+
 
 	// progress bar signals
 	connect(this, SIGNAL(UpdateProgressBar(int)),		m_Widget->m_ProgressBar, SLOT(setValue(int)));
@@ -119,6 +121,11 @@ StitchingPlugin::StitchingPlugin()
 	// z clamp
 	m_MinZ = m_Widget->m_HorizontalSliderMinZ->value();
 	m_MaxZ = m_Widget->m_HorizontalSliderMaxZ->value();
+
+	// comparison of two consecutive frames
+	m_CurrentHist = NULL;
+	m_PreviousHist = NULL;
+	m_HistogramDifferenceThreshold = m_Widget->m_DoubleSpinBoxHistogramDifferenceThreshold->value();
 }
 
 StitchingPlugin::~StitchingPlugin()
@@ -179,7 +186,13 @@ StitchingPlugin::LiveStitching()
 	m_Mutex.lock();
 	try
 	{
-		LoadStitch();
+		if (DiffFrame())
+			LoadStitch();
+		else
+		{
+			m_Mutex.unlock();
+			return;
+		}
 	} catch (std::exception &e)
 	{
 		std::cout << "Exception: \"" << e.what() << "\""<< std::endl;
@@ -199,8 +212,7 @@ StitchingPlugin::ClearBuffer()
 	{
 		std::cout << "Stop Stitching to clear the buffer" << std::endl;
 		return;
-	}
-		
+	}	
 
 	m_Widget->m_ListWidgetHistory->selectAll();
 	DeleteSelectedActors();
@@ -336,8 +348,9 @@ StitchingPlugin::DeleteSelectedActors()
 		delete hli;
 	}
 
-	// update gui
+	// sync buffer
 	int size = m_Widget->m_ListWidgetHistory->count();
+	m_BufferCounter = size-1;
 }
 void
 StitchingPlugin::MergeSelectedActors()
@@ -730,26 +743,59 @@ StitchingPlugin::LoadStitch()
 	++m_BufferCounter;
 }
 //----------------------------------------------------------------------------
-float
+bool
 StitchingPlugin::DiffFrame()
 {
-	/*std::cout << "DiffFrame()" << std::endl;
-	typedef itk::ImageRegionConstIterator<RImageType::RangeImageType> IteratorTypeConst;
-	typedef itk::ImageRegionIterator<RImageType::RangeImageType> IteratorType;
-	IteratorTypeConst it1(m_CurrentFrame->GetRangeImage(), m_CurrentFrame->GetRangeImage()->GetRequestedRegion());
-	IteratorType it2(m_PreviousFrame->GetRangeImage(), m_PreviousFrame->GetRangeImage()->GetRequestedRegion());
+	QTime t;
+	t.start();
 
-	float diff = 0;
+	const int maxValue = 65536;
+	const int numBins = 64;
+	const int stepSize = 512;
 
-	it1.GoToBegin(); it2.GoToBegin();
-	while (!it2.IsAtEnd())
+	if (!m_CurrentHist)
 	{
-		diff += std::abs(it1.Value() - it2.Value());
+		m_CurrentHist = new float[numBins];
+		for (int i = 0; i < numBins; ++i)
+			m_CurrentHist[i] = 0;
+	}
+	if (!m_PreviousHist)
+	{
+		m_PreviousHist = new float[numBins];
+		for (int i = 0; i < numBins; ++i)
+			m_PreviousHist[i] = 0;
 	}
 
-	std::cout << "diff" << std::endl;
-	return diff;*/
-	return -1.f;
+	// reset histogram
+	for (int i = 0; i < numBins; ++i)
+		m_CurrentHist[i] = 0;
+
+	// update histogram
+	const ritk::RImageF2::RangeType* ptr = m_CurrentFrame->GetRangeImage()->GetBufferPointer();
+	for (int i = 0; i < SizeX*SizeY; ++i)
+	{
+		m_CurrentHist[(numBins*static_cast<int>(ptr[i]))/maxValue]++;
+	}
+
+	// normalize histogram
+	for (int i = 0; i < numBins; ++i)
+		m_CurrentHist[i] /= (SizeX*SizeY / stepSize);
+
+	float diff = 0;
+	for (int i = 0; i < numBins; i += stepSize)
+		diff += std::abs(m_CurrentHist[i] - m_PreviousHist[i]);
+	std::cout << "hist diff: " << diff << " in " << t.elapsed() << " ms" << std::endl;
+
+	if (diff > m_HistogramDifferenceThreshold)
+	{
+		// swap histograms for next frame
+		float* swp = m_PreviousHist;
+		m_PreviousHist = m_CurrentHist;
+		m_CurrentHist = swp;
+
+		return true;
+	} else
+		return false;
 }
 void
 StitchingPlugin::LoadFrame()

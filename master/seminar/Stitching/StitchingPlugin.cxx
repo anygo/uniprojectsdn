@@ -28,6 +28,7 @@
 #include <vtkRendererCollection.h>
 #include <vtkUnsignedCharArray.h>
 #include <itkImageRegionConstIterator.h>
+#include <itkImageRegionIterator.h>
 
 // our includes
 #include <ClosestPointFinderBruteForceCPU.h>
@@ -64,14 +65,16 @@ StitchingPlugin::StitchingPlugin()
 	connect(m_Widget->m_PushButtonHistoryClean,				SIGNAL(clicked()),								this, SLOT(CleanSelectedActors()));
 	connect(m_Widget->m_PushButtonHistoryStitchSelection,	SIGNAL(clicked()),								this, SLOT(StitchSelectedActors()));
 	connect(m_Widget->m_PushButtonHistoryUndoTransform,		SIGNAL(clicked()),								this, SLOT(UndoTransformForSelectedActors()));
-	connect(m_Widget->m_ListWidgetHistory,					SIGNAL(itemDoubleClicked(QListWidgetItem*)),	this, SLOT(HighlightActor(QListWidgetItem*)));
-	connect(m_Widget->m_ComboBoxClosestPointFinder,			SIGNAL(currentIndexChanged(int)),				this, SLOT(ResetCPF()));
-	connect(m_Widget->m_SpinBoxLandmarks,					SIGNAL(valueChanged(int)),						this, SLOT(ResetCPF()));
-	connect(m_Widget->m_DoubleSpinBoxRGBWeight,				SIGNAL(valueChanged(double)),					this, SLOT(ResetCPF()));
-	connect(m_Widget->m_ComboBoxMetric,						SIGNAL(currentIndexChanged(int)),				this, SLOT(ResetCPF()));
+	//connect(m_Widget->m_ListWidgetHistory,					SIGNAL(itemDoubleClicked(QListWidgetItem*)),	this, SLOT(HighlightActor(QListWidgetItem*)));
+	connect(m_Widget->m_ComboBoxClosestPointFinder,			SIGNAL(currentIndexChanged(int)),				this, SLOT(ResetICPandCPF()));
+	connect(m_Widget->m_SpinBoxLandmarks,					SIGNAL(valueChanged(int)),						this, SLOT(ResetICPandCPF()));
+	connect(m_Widget->m_DoubleSpinBoxRGBWeight,				SIGNAL(valueChanged(double)),					this, SLOT(ResetICPandCPF()));
+	connect(m_Widget->m_ComboBoxMetric,						SIGNAL(currentIndexChanged(int)),				this, SLOT(ResetICPandCPF()));
 	connect(m_Widget->m_SpinBoxBufferSize,					SIGNAL(valueChanged(int)),						this, SLOT(ClearBuffer()));
 	connect(this,											SIGNAL(RecordFrameAvailable()),					this, SLOT(RecordFrame()));
 	connect(this,											SIGNAL(LiveStitchingFrameAvailable()),			this, SLOT(LiveStitching()));
+	connect(m_Widget->m_HorizontalSliderMinZ,				SIGNAL(valueChanged(int)),						this, SLOT(UpdateZRange()));
+	connect(m_Widget->m_HorizontalSliderMaxZ,				SIGNAL(valueChanged(int)),						this, SLOT(UpdateZRange()));
 
 	// progress bar signals
 	connect(this, SIGNAL(UpdateProgressBar(int)),		m_Widget->m_ProgressBar, SLOT(setValue(int)));
@@ -106,12 +109,16 @@ StitchingPlugin::StitchingPlugin()
 	case 5: m_cpf = new ClosestPointFinderRBCCayton(m_Widget->m_SpinBoxLandmarks->value(), static_cast<float>(m_Widget->m_DoubleSpinBoxNrOfRepsFactor->value())); break;
 	}
 
-	// dirty hack
-	m_ResetRequired = true;
+	// dirty hack - we just initialized m_icp and m_cpf, but the plugin crashes if we don't do it again (Qt contexts?!)
+	m_ResetICPandCPFRequired = true;
 
-	// for buffer
+	// for the bounded buffer
 	m_BufferCounter = 0;
 	m_BufferSize = m_Widget->m_SpinBoxBufferSize->value();
+
+	// z clamp
+	m_MinZ = m_Widget->m_HorizontalSliderMinZ->value();
+	m_MaxZ = m_Widget->m_HorizontalSliderMaxZ->value();
 }
 
 StitchingPlugin::~StitchingPlugin()
@@ -169,19 +176,21 @@ StitchingPlugin::RecordFrame()
 void
 StitchingPlugin::LiveStitching()
 {
+	m_Mutex.lock();
 	try
 	{
-		m_Mutex.lock();
 		LoadStitch();
-		m_Mutex.unlock();
 	} catch (std::exception &e)
 	{
 		std::cout << "Exception: \"" << e.what() << "\""<< std::endl;
+		m_Mutex.unlock();
 		return;
 	}
 
 	m_Widget->m_CheckBoxShowSelectedActors->setText(QString("Show ") + QString::number(m_Widget->m_ListWidgetHistory->selectedItems().count()) + 
 		QString("/") + QString::number(m_Widget->m_ListWidgetHistory->count()) + " Actors");
+
+	m_Mutex.unlock();
 }
 void
 StitchingPlugin::ClearBuffer()
@@ -198,6 +207,12 @@ StitchingPlugin::ClearBuffer()
 	m_BufferCounter = 0;
 	m_BufferSize = m_Widget->m_SpinBoxBufferSize->value();
 	m_Mutex.unlock();
+}
+void
+StitchingPlugin::UpdateZRange()
+{
+	m_MinZ = m_Widget->m_HorizontalSliderMinZ->value();
+	m_MaxZ = m_Widget->m_HorizontalSliderMaxZ->value();
 }
 void
 StitchingPlugin::ProcessEvent(ritk::Event::Pointer EventP)
@@ -458,16 +473,10 @@ StitchingPlugin::StitchSelectedActors()
 		HistoryListItem* hli = static_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
 		if (hli->isSelected())
 		{
-			if (m_Widget->m_CheckBoxShowSelectedActors->isChecked())
-			{
-				HighlightActor(hli);
-			}
-			//emit UpdateGUI();
-			QCoreApplication::processEvents();
-
 			HistoryListItem* hli_prev = static_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i - 1));
 
 			t.start();
+
 			try
 			{
 				QTime timeOverall;
@@ -482,10 +491,6 @@ StitchingPlugin::StitchSelectedActors()
 			}
 			overallTime += t.elapsed();
 
-			if (m_Widget->m_CheckBoxShowSelectedActors->isChecked())
-			{
-				HighlightActor(hli);
-			}
 			emit UpdateStats();
 			emit UpdateProgressBar(++counterProgressBar);
 			emit UpdateGUI();
@@ -725,11 +730,30 @@ StitchingPlugin::LoadStitch()
 	++m_BufferCounter;
 }
 //----------------------------------------------------------------------------
+float
+StitchingPlugin::DiffFrame()
+{
+	/*std::cout << "DiffFrame()" << std::endl;
+	typedef itk::ImageRegionConstIterator<RImageType::RangeImageType> IteratorTypeConst;
+	typedef itk::ImageRegionIterator<RImageType::RangeImageType> IteratorType;
+	IteratorTypeConst it1(m_CurrentFrame->GetRangeImage(), m_CurrentFrame->GetRangeImage()->GetRequestedRegion());
+	IteratorType it2(m_PreviousFrame->GetRangeImage(), m_PreviousFrame->GetRangeImage()->GetRequestedRegion());
+
+	float diff = 0;
+
+	it1.GoToBegin(); it2.GoToBegin();
+	while (!it2.IsAtEnd())
+	{
+		diff += std::abs(it1.Value() - it2.Value());
+	}
+
+	std::cout << "diff" << std::endl;
+	return diff;*/
+	return -1.f;
+}
 void
 StitchingPlugin::LoadFrame()
 {
-	//QTime t;
-	//t.start();
 	// Copy the input data to the device
 	cutilSafeCall(cudaMemcpyToArray(m_InputImgArr, 0, 0, m_CurrentFrame->GetRangeImage()->GetBufferPointer(), SizeX*SizeY*sizeof(float), cudaMemcpyHostToDevice));
 
@@ -738,8 +762,6 @@ StitchingPlugin::LoadFrame()
 
 	cutilSafeCall(cudaMemcpy(m_WCs, m_devWCs, SizeX*SizeY*sizeof(float4), cudaMemcpyDeviceToHost));
 
-	//std::cout << t.elapsed() << " ms (cuda)" << std::endl;
-	//t.start();
 	vtkSmartPointer<vtkPoints> points =
 		vtkSmartPointer<vtkPoints>::New();
 
@@ -756,10 +778,12 @@ StitchingPlugin::LoadFrame()
 	float4 p;
 	it.GoToBegin();
 
-	for(int i = 0; i < SizeX*SizeY; i += 2, ++it, ++it)
+	for (int i = 0; i < SizeX*SizeY; i += 2, ++it, ++it)
 	{
-
 		p = m_WCs[i];
+
+		if (!(p.z >= m_MinZ && p.z < m_MaxZ))
+			continue;
 
 		if (p.x == p.x) // i.e. not QNAN
 		{
@@ -781,9 +805,6 @@ StitchingPlugin::LoadFrame()
 	m_Data->GetPointData()->SetScalars(colors);
 	m_Data->SetVerts(cells);
 	m_Data->Update();
-
-	//std::cout << t.elapsed() << " ms" << std::endl;
-
 }
 //----------------------------------------------------------------------------
 void
@@ -861,9 +882,9 @@ StitchingPlugin::InitializeHistory()
 
 //----------------------------------------------------------------------------
 void
-StitchingPlugin::ResetCPF() 
+StitchingPlugin::ResetICPandCPF() 
 {
-	m_ResetRequired = true;
+	m_ResetICPandCPFRequired = true;
 }
 //----------------------------------------------------------------------------
 void
@@ -872,7 +893,7 @@ StitchingPlugin::Stitch(vtkPolyData* toBeStitched, vtkPolyData* previousFrame,
 						vtkPolyData* outputStitchedPolyData,
 						vtkMatrix4x4* outputTransformationMatrix)
 {
-	if (m_ResetRequired)
+	if (m_ResetICPandCPFRequired)
 	{
 		switch (m_Widget->m_ComboBoxClosestPointFinder->currentIndex())
 		{
@@ -902,7 +923,7 @@ StitchingPlugin::Stitch(vtkPolyData* toBeStitched, vtkPolyData* previousFrame,
 
 		m_BufferSize = m_Widget->m_SpinBoxBufferSize->value();
 
-		m_ResetRequired = false;
+		m_ResetICPandCPFRequired = false;
 	}
 
 	m_icp->SetSource(toBeStitched);

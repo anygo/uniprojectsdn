@@ -85,10 +85,11 @@ protected slots:
 	void UndoTransformForSelectedActors();
 	void HighlightActor(QListWidgetItem*);
 	void ComputeStats();
-	void ResetCPF(); 
+	void ResetICPandCPF(); 
 	void RecordFrame();
 	void LiveStitching();
 	void ClearBuffer();
+	void UpdateZRange();
 
 
 protected:
@@ -97,18 +98,14 @@ protected:
 	// our functions
 	void Clean(vtkPolyData *toBeCleaned);
 	void LoadFrame();
+	float DiffFrame();
 	void CleanFrame();
 	void Stitch(vtkPolyData* toBeStitched, vtkPolyData* previousFrame,
 						vtkMatrix4x4* previousTransformationMatrix,
 						vtkPolyData* outputStitchedPolyData,
 						vtkMatrix4x4* outputTransformationMatrix);
 
-	int m_FramesProcessed;
-	QMutex m_Mutex;
-	int m_BufferSize;
-	int m_BufferCounter;
-	bool m_ResetRequired;
-
+	
 	// our members
 	ritk::NewFrameEvent::RImageConstPointer		m_CurrentFrame;
 	vtkSmartPointer<vtkPolyData>				m_Data;
@@ -118,6 +115,14 @@ protected:
 	float4*										m_WCs;
 	unsigned char*								m_RangeTextureData;
 	cudaArray*									m_InputImgArr;
+
+	int m_FramesProcessed;
+	QMutex m_Mutex;
+	int m_BufferSize;
+	int m_BufferCounter;
+	bool m_ResetICPandCPFRequired;
+	float m_MinZ;
+	float m_MaxZ;
 };
 
 

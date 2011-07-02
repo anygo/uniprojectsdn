@@ -163,33 +163,6 @@ float kernelComputeDistanceSourceTarget(PointCoords* coords, PointColors* colors
 		return (1 - dev_conf->weightRGB) * spaceDist + dev_conf->weightRGB * colorDist;
 }
 
-/*__device__
-float kernelComputeDistanceTargetTarget(PointCoords* coords, PointColors* colors, int idx2)
-{
-		float x_dist = coords->x - dev_conf->targetCoords[idx2].x; 
-		float y_dist = coords->y - dev_conf->targetCoords[idx2].y;
-		float z_dist = coords->z - dev_conf->targetCoords[idx2].z;
-		float spaceDist;
-
-		//switch (dev_conf->metric)
-		//{
-		//case ABSOLUTE_DISTANCE: spaceDist = abs(x_dist) + abs(y_dist) + abs(z_dist); break;
-		//case LOG_ABSOLUTE_DISTANCE: spaceDist = log(abs(x_dist) + abs(y_dist) + abs(z_dist) + 1.f); break;
-		//case SQUARED_DISTANCE: 
-			spaceDist = (x_dist * x_dist) + (y_dist * y_dist) + (z_dist * z_dist); //break;
-		//}
-
-
-		// always use euclidean distance for colors...
-		float r_dist = colors->r - dev_conf->targetColors[idx2].r; 
-		float g_dist = colors->g - dev_conf->targetColors[idx2].g;
-		float b_dist = colors->b - dev_conf->targetColors[idx2].b;
-		float colorDist = (r_dist * r_dist) + (g_dist * g_dist) + (b_dist * b_dist);
-	
-		return (1 - dev_conf->weightRGB) * spaceDist + dev_conf->weightRGB * colorDist;
-}
-*/
-
 ///////////////////////////////////////////////////////////////////////////////
 // Brute Force
 ///////////////////////////////////////////////////////////////////////////////
@@ -316,7 +289,6 @@ void kernelPointsToReps(int nrOfReps, unsigned short* pointToRep, unsigned short
 		}
 
 		float dist = kernelComputeDistanceSourceTarget(&coords, &colors, &(repCoordsBuffer[i % CUDA_BUFFER_SIZE]), &(repColorsBuffer[i % CUDA_BUFFER_SIZE]));
-		//float dist = kernelComputeDistanceSourceTarget(&coords, &colors, &repCoordsBuffer, &repColorsBuffer);
 
 		if (dist < minDist)
 		{

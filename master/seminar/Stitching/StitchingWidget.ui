@@ -380,9 +380,9 @@
                 </widget>
                </item>
                <item>
-                <widget class="QCheckBox" name="m_CheckBoxVOIClipping">
+                <widget class="QCheckBox" name="m_CheckBoxComputeHistogramDifference">
                  <property name="text">
-                  <string>VOI Clipping</string>
+                  <string>Compute Histogram Difference</string>
                  </property>
                  <property name="checked">
                   <bool>true</bool>
@@ -1215,7 +1215,7 @@
    </hints>
   </connection>
   <connection>
-   <sender>m_CheckBoxVOIClipping</sender>
+   <sender>m_CheckBoxComputeHistogramDifference</sender>
    <signal>clicked(bool)</signal>
    <receiver>m_DoubleSpinBoxClipPercentage</receiver>
    <slot>setEnabled(bool)</slot>

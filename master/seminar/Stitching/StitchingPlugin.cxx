@@ -186,13 +186,21 @@ StitchingPlugin::LiveStitching()
 	m_Mutex.lock();
 	try
 	{
-		if (DiffFrame())
-			LoadStitch();
-		else
+		if (m_Widget->m_CheckBoxComputeHistogramDifference->isChecked())
 		{
-			m_Mutex.unlock();
-			return;
+			if (FrameDifferenceAboveThreshold())
+			{
+				LoadStitch();
+			} else
+			{
+				m_Mutex.unlock();
+				return;
+			}
+		} else
+		{
+			LoadStitch();
 		}
+		
 	} catch (std::exception &e)
 	{
 		std::cout << "Exception: \"" << e.what() << "\""<< std::endl;
@@ -744,7 +752,7 @@ StitchingPlugin::LoadStitch()
 }
 //----------------------------------------------------------------------------
 bool
-StitchingPlugin::DiffFrame()
+StitchingPlugin::FrameDifferenceAboveThreshold()
 {
 	QTime t;
 	t.start();

@@ -99,7 +99,7 @@ protected:
 	// our functions
 	void Clean(vtkPolyData *toBeCleaned);
 	void LoadFrame();
-	bool DiffFrame();
+	bool FrameDifferenceAboveThreshold();
 	void CleanFrame();
 	void Stitch(vtkPolyData* toBeStitched, vtkPolyData* previousFrame,
 						vtkMatrix4x4* previousTransformationMatrix,

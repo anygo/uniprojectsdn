@@ -90,6 +90,7 @@ protected slots:
 	void LiveStitching();
 	void ClearBuffer();
 	void UpdateZRange();
+	void SetThreshold(double thresh) { m_HistogramDifferenceThreshold = thresh; }
 
 
 protected:
@@ -98,7 +99,7 @@ protected:
 	// our functions
 	void Clean(vtkPolyData *toBeCleaned);
 	void LoadFrame();
-	float DiffFrame();
+	bool DiffFrame();
 	void CleanFrame();
 	void Stitch(vtkPolyData* toBeStitched, vtkPolyData* previousFrame,
 						vtkMatrix4x4* previousTransformationMatrix,
@@ -108,6 +109,8 @@ protected:
 	
 	// our members
 	ritk::NewFrameEvent::RImageConstPointer		m_CurrentFrame;
+	float*										m_CurrentHist;
+	float*										m_PreviousHist;
 	vtkSmartPointer<vtkPolyData>				m_Data;
 	vtkSmartPointer<ExtendedICPTransform>		m_icp;
 	ClosestPointFinder*							m_cpf; 
@@ -123,6 +126,7 @@ protected:
 	bool m_ResetICPandCPFRequired;
 	float m_MinZ;
 	float m_MaxZ;
+	float m_HistogramDifferenceThreshold;
 };
 
 

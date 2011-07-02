@@ -22,8 +22,8 @@ typedef RImageType::ConstPointer		RImageConstPointer;
  *
  *	@details
  *	Class that extends QListWidgetItem and holds additional data, in particular
- *	the actual point data inside a RImageActorPipeline and a pointer to the
- *	transformation matrix that was applied to modify the data (during stitching)
+ *	the actual point data inside a RImageActorPipeline and the transformation 
+ *	matrix that was applied to modify the data (during stitching)
  */
 class HistoryListItem : public QListWidgetItem
 {

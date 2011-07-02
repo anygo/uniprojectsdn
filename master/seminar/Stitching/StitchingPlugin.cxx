@@ -805,6 +805,11 @@ StitchingPlugin::LoadFrame()
 	m_Data->GetPointData()->SetScalars(colors);
 	m_Data->SetVerts(cells);
 	m_Data->Update();
+
+	if (m_Data->GetNumberOfPoints() < m_Widget->m_SpinBoxLandmarks->value())
+	{
+		throw std::exception("not enough points for stitching!");
+	}
 }
 //----------------------------------------------------------------------------
 void

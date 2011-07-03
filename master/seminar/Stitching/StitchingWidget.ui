@@ -51,6 +51,16 @@
            </property>
           </widget>
          </item>
+         <item row="1" column="0">
+          <widget class="QPushButton" name="m_PushButtonComputeStatistics">
+           <property name="toolTip">
+            <string>stitches the actors to the previous actors</string>
+           </property>
+           <property name="text">
+            <string>Compute Statistics</string>
+           </property>
+          </widget>
+         </item>
         </layout>
        </widget>
       </item>
@@ -339,29 +349,6 @@
                  </property>
                 </widget>
                </item>
-               <item row="6" column="1">
-                <widget class="QDoubleSpinBox" name="m_DoubleSpinBoxHistogramDifferenceThreshold">
-                 <property name="decimals">
-                  <number>6</number>
-                 </property>
-                 <property name="maximum">
-                  <double>1.000000000000000</double>
-                 </property>
-                 <property name="singleStep">
-                  <double>0.010000000000000</double>
-                 </property>
-                 <property name="value">
-                  <double>0.300000000000000</double>
-                 </property>
-                </widget>
-               </item>
-               <item row="6" column="0">
-                <widget class="QLabel" name="label_20">
-                 <property name="text">
-                  <string>HistDiffThresh</string>
-                 </property>
-                </widget>
-               </item>
               </layout>
              </item>
              <item>
@@ -385,7 +372,7 @@
                   <string>Compute Histogram Difference</string>
                  </property>
                  <property name="checked">
-                  <bool>true</bool>
+                  <bool>false</bool>
                  </property>
                 </widget>
                </item>
@@ -453,84 +440,20 @@
                 </widget>
                </item>
                <item row="1" column="0">
-                <widget class="QLabel" name="label_6">
-                 <property name="text">
-                  <string>Mean Distance Threshold</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="1" column="1">
-                <widget class="QDoubleSpinBox" name="m_DoubleSpinBoxMaxRMS">
-                 <property name="frame">
-                  <bool>true</bool>
-                 </property>
-                 <property name="accelerated">
-                  <bool>false</bool>
-                 </property>
-                 <property name="keyboardTracking">
-                  <bool>true</bool>
-                 </property>
-                 <property name="decimals">
-                  <number>6</number>
-                 </property>
-                 <property name="minimum">
-                  <double>0.000001000000000</double>
-                 </property>
-                 <property name="maximum">
-                  <double>1.000000000000000</double>
-                 </property>
-                 <property name="singleStep">
-                  <double>0.000010000000000</double>
-                 </property>
-                 <property name="value">
-                  <double>0.000010000000000</double>
-                 </property>
-                </widget>
-               </item>
-               <item row="2" column="0">
-                <widget class="QLabel" name="label">
-                 <property name="toolTip">
-                  <string>Set to 0 if you do not want to clean the Pointcloud at all</string>
-                 </property>
-                 <property name="text">
-                  <string>Tolerance (Clean)</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="2" column="1">
-                <widget class="QDoubleSpinBox" name="m_DoubleSpinBoxCleanTolerance">
-                 <property name="decimals">
-                  <number>6</number>
-                 </property>
-                 <property name="minimum">
-                  <double>0.000000000000000</double>
-                 </property>
-                 <property name="maximum">
-                  <double>99999.000000000000000</double>
-                 </property>
-                 <property name="singleStep">
-                  <double>0.001000000000000</double>
-                 </property>
-                 <property name="value">
-                  <double>0.002000000000000</double>
-                 </property>
-                </widget>
-               </item>
-               <item row="3" column="0">
                 <widget class="QLabel" name="label_7">
                  <property name="text">
                   <string>Clip Percentage</string>
                  </property>
                 </widget>
                </item>
-               <item row="4" column="0">
+               <item row="2" column="0">
                 <widget class="QLabel" name="label_11">
                  <property name="text">
                   <string>RGB Weight</string>
                  </property>
                 </widget>
                </item>
-               <item row="4" column="1">
+               <item row="2" column="1">
                 <widget class="QDoubleSpinBox" name="m_DoubleSpinBoxRGBWeight">
                  <property name="decimals">
                   <number>6</number>
@@ -549,7 +472,7 @@
                  </property>
                 </widget>
                </item>
-               <item row="6" column="0">
+               <item row="4" column="0">
                 <widget class="QLabel" name="label_18">
                  <property name="toolTip">
                   <string>only for RBC</string>
@@ -559,7 +482,7 @@
                  </property>
                 </widget>
                </item>
-               <item row="6" column="1">
+               <item row="4" column="1">
                 <widget class="QDoubleSpinBox" name="m_DoubleSpinBoxNrOfRepsFactor">
                  <property name="decimals">
                   <number>6</number>
@@ -578,14 +501,14 @@
                  </property>
                 </widget>
                </item>
-               <item row="7" column="0">
+               <item row="5" column="0">
                 <widget class="QLabel" name="label_17">
                  <property name="text">
                   <string>Assumed Rate of Outliers</string>
                  </property>
                 </widget>
                </item>
-               <item row="7" column="1">
+               <item row="5" column="1">
                 <widget class="QDoubleSpinBox" name="m_DoubleSpinBoxOutlierRate">
                  <property name="enabled">
                   <bool>false</bool>
@@ -604,7 +527,7 @@
                  </property>
                 </widget>
                </item>
-               <item row="3" column="1">
+               <item row="1" column="1">
                 <widget class="QDoubleSpinBox" name="m_DoubleSpinBoxClipPercentage">
                  <property name="decimals">
                   <number>6</number>
@@ -623,16 +546,52 @@
                  </property>
                 </widget>
                </item>
+               <item row="3" column="0">
+                <widget class="QLabel" name="label_20">
+                 <property name="text">
+                  <string>HistDiffThresh</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="3" column="1">
+                <widget class="QDoubleSpinBox" name="m_DoubleSpinBoxHistDiffThresh">
+                 <property name="decimals">
+                  <number>6</number>
+                 </property>
+                 <property name="maximum">
+                  <double>1.000000000000000</double>
+                 </property>
+                 <property name="singleStep">
+                  <double>0.010000000000000</double>
+                 </property>
+                 <property name="value">
+                  <double>0.300000000000000</double>
+                 </property>
+                </widget>
+               </item>
+               <item row="6" column="1">
+                <spacer name="verticalSpacer_4">
+                 <property name="orientation">
+                  <enum>Qt::Vertical</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>20</width>
+                   <height>40</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
               </layout>
              </item>
             </layout>
            </widget>
            <widget class="QWidget" name="tab_2">
             <attribute name="title">
-             <string>Visualization</string>
+             <string>Misc</string>
             </attribute>
             <layout class="QGridLayout" name="gridLayout_3">
-             <item row="2" column="1">
+             <item row="4" column="1">
               <spacer name="verticalSpacer_2">
                <property name="orientation">
                 <enum>Qt::Vertical</enum>
@@ -747,6 +706,70 @@
                </property>
               </widget>
              </item>
+             <item row="2" column="1">
+              <widget class="QDoubleSpinBox" name="m_DoubleSpinBoxCleanTolerance">
+               <property name="decimals">
+                <number>6</number>
+               </property>
+               <property name="minimum">
+                <double>0.000000000000000</double>
+               </property>
+               <property name="maximum">
+                <double>99999.000000000000000</double>
+               </property>
+               <property name="singleStep">
+                <double>0.001000000000000</double>
+               </property>
+               <property name="value">
+                <double>0.002000000000000</double>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="1">
+              <widget class="QDoubleSpinBox" name="m_DoubleSpinBoxMaxRMS">
+               <property name="frame">
+                <bool>true</bool>
+               </property>
+               <property name="accelerated">
+                <bool>false</bool>
+               </property>
+               <property name="keyboardTracking">
+                <bool>true</bool>
+               </property>
+               <property name="decimals">
+                <number>6</number>
+               </property>
+               <property name="minimum">
+                <double>0.000001000000000</double>
+               </property>
+               <property name="maximum">
+                <double>1.000000000000000</double>
+               </property>
+               <property name="singleStep">
+                <double>0.000010000000000</double>
+               </property>
+               <property name="value">
+                <double>0.000010000000000</double>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="0">
+              <widget class="QLabel" name="label_6">
+               <property name="text">
+                <string>Mean Distance Threshold</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="0">
+              <widget class="QLabel" name="label">
+               <property name="toolTip">
+                <string>Set to 0 if you do not want to clean the Pointcloud at all</string>
+               </property>
+               <property name="text">
+                <string>Tolerance (Clean)</string>
+               </property>
+              </widget>
+             </item>
             </layout>
            </widget>
           </widget>
@@ -839,7 +862,7 @@
                 </property>
                </spacer>
               </item>
-              <item row="11" column="0">
+              <item row="12" column="0">
                <widget class="QPushButton" name="m_PushButtonSaveVTKData">
                 <property name="enabled">
                  <bool>true</bool>
@@ -852,73 +875,7 @@
                 </property>
                </widget>
               </item>
-              <item row="10" column="0">
-               <widget class="QPushButton" name="m_PushButtonDelaunay2D">
-                <property name="enabled">
-                 <bool>true</bool>
-                </property>
-                <property name="toolTip">
-                 <string>some kind of triangulation</string>
-                </property>
-                <property name="text">
-                 <string>Delaunay2D</string>
-                </property>
-               </widget>
-              </item>
-              <item row="9" column="0">
-               <widget class="QPushButton" name="m_PushButtonHistoryUndoTransform">
-                <property name="toolTip">
-                 <string>inverts the transforms that were applied to these actors</string>
-                </property>
-                <property name="text">
-                 <string>Undo</string>
-                </property>
-               </widget>
-              </item>
-              <item row="6" column="0">
-               <widget class="QPushButton" name="m_PushButtonHistoryMerge">
-                <property name="toolTip">
-                 <string>merges the selected actors</string>
-                </property>
-                <property name="text">
-                 <string>Merge</string>
-                </property>
-               </widget>
-              </item>
-              <item row="11" column="1">
-               <widget class="QPushButton" name="m_PushButtonHistoryDelete">
-                <property name="toolTip">
-                 <string>deletes the selected actors</string>
-                </property>
-                <property name="text">
-                 <string>Delete</string>
-                </property>
-               </widget>
-              </item>
-              <item row="10" column="1">
-               <widget class="QPushButton" name="m_PushButtonHistoryShowAll">
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="text">
-                 <string>Select All</string>
-                </property>
-               </widget>
-              </item>
-              <item row="9" column="1">
-               <widget class="QPushButton" name="m_PushButtonHistoryStitchSelection">
-                <property name="toolTip">
-                 <string>stitches the actors to the previous actors</string>
-                </property>
-                <property name="text">
-                 <string>Stitch</string>
-                </property>
-               </widget>
-              </item>
-              <item row="6" column="1">
+              <item row="12" column="1">
                <widget class="QPushButton" name="m_PushButtonHistoryClean">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
@@ -931,6 +888,72 @@
                 </property>
                 <property name="text">
                  <string>Clean</string>
+                </property>
+               </widget>
+              </item>
+              <item row="10" column="1">
+               <widget class="QPushButton" name="m_PushButtonDelaunay2D">
+                <property name="enabled">
+                 <bool>true</bool>
+                </property>
+                <property name="toolTip">
+                 <string>some kind of triangulation</string>
+                </property>
+                <property name="text">
+                 <string>Delaunay2D</string>
+                </property>
+               </widget>
+              </item>
+              <item row="10" column="0">
+               <widget class="QPushButton" name="m_PushButtonHistoryMerge">
+                <property name="toolTip">
+                 <string>merges the selected actors</string>
+                </property>
+                <property name="text">
+                 <string>Merge</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="0">
+               <widget class="QPushButton" name="m_PushButtonHistoryUndoTransform">
+                <property name="toolTip">
+                 <string>inverts the transforms that were applied to these actors</string>
+                </property>
+                <property name="text">
+                 <string>Undo</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="1">
+               <widget class="QPushButton" name="m_PushButtonHistoryDelete">
+                <property name="toolTip">
+                 <string>deletes the selected actors</string>
+                </property>
+                <property name="text">
+                 <string>Delete</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <widget class="QPushButton" name="m_PushButtonHistoryShowAll">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="text">
+                 <string>Select All</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="0">
+               <widget class="QPushButton" name="m_PushButtonHistoryStitchSelection">
+                <property name="toolTip">
+                 <string>stitches the actors to the previous actors</string>
+                </property>
+                <property name="text">
+                 <string>Stitch</string>
                 </property>
                </widget>
               </item>
@@ -1190,7 +1213,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>933</x>
-     <y>430</y>
+     <y>459</y>
     </hint>
     <hint type="destinationlabel">
      <x>784</x>
@@ -1206,27 +1229,11 @@
    <hints>
     <hint type="sourcelabel">
      <x>936</x>
-     <y>259</y>
+     <y>328</y>
     </hint>
     <hint type="destinationlabel">
-     <x>722</x>
-     <y>147</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>m_CheckBoxComputeHistogramDifference</sender>
-   <signal>clicked(bool)</signal>
-   <receiver>m_DoubleSpinBoxClipPercentage</receiver>
-   <slot>setEnabled(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
      <x>936</x>
-     <y>242</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>722</x>
-     <y>142</y>
+     <y>323</y>
     </hint>
    </hints>
   </connection>

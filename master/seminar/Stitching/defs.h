@@ -1,14 +1,19 @@
 #ifndef defs_H__
 #define	defs_H__
 
-#include <cutil_inline.h>
 
 #define MAX_REPRESENTATIVES 1024
 #define CUDA_THREADS_PER_BLOCK 128
 #define CUDA_BUFFER_SIZE ( CUDA_THREADS_PER_BLOCK )
 
-#define SizeX 640
-#define SizeY 480
+// we assume that these sizes won't change
+#define FRAME_SIZE_X 640
+#define FRAME_SIZE_Y 480
+
+// global values for histogram difference computation
+#define MAX_RANGE_VAL 65536
+#define NUM_BINS_HIST 128
+#define STEP_SIZE_HIST 16 // not every pixel is used to compute the histogram
 
 // GLOBAL TIME STATS
 static int OVERALL_TIME;

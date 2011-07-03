@@ -179,7 +179,7 @@ ExtendedICPTransform::vtkPolyDataToPointCoordsAndColors(double percentage)
 		double* tuple = scalarsPtr->GetTuple(static_cast<vtkIdType>(j));
 		float r_g_b = tuple[0] + tuple[1] + tuple[2];
 
-		float factor = m_NormalizeRGBToDistanceValuesFactor / std::max(r_g_b, FLT_EPSILON);
+		float factor = m_NormalizeRGBToDistanceValuesFactor / std::max(r_g_b, 1.f);
 
 		curColors = &m_SourceColors[i];
 
@@ -201,7 +201,7 @@ ExtendedICPTransform::vtkPolyDataToPointCoordsAndColors(double percentage)
 		double* tuple = scalarsPtr->GetTuple(static_cast<vtkIdType>(j));
 		float r_g_b = tuple[0] + tuple[1] + tuple[2];
 
-		float factor = m_NormalizeRGBToDistanceValuesFactor / std::max(r_g_b, FLT_EPSILON);
+		float factor = m_NormalizeRGBToDistanceValuesFactor / std::max(r_g_b, 1.f);
 
 		curColors = &m_TargetColors[i];
 

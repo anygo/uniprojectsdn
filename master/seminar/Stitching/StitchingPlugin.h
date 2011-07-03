@@ -91,6 +91,7 @@ protected slots:
 	void ClearBuffer();
 	void UpdateZRange();
 	void SetThreshold(double thresh) { m_HistogramDifferenceThreshold = thresh; }
+	void ComputeStatistics();
 
 
 protected:

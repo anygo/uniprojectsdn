@@ -75,7 +75,8 @@ StitchingPlugin::StitchingPlugin()
 	connect(this,											SIGNAL(LiveStitchingFrameAvailable()),			this, SLOT(LiveStitching()));
 	connect(m_Widget->m_HorizontalSliderMinZ,				SIGNAL(valueChanged(int)),						this, SLOT(UpdateZRange()));
 	connect(m_Widget->m_HorizontalSliderMaxZ,				SIGNAL(valueChanged(int)),						this, SLOT(UpdateZRange()));
-	connect(m_Widget->m_DoubleSpinBoxHistogramDifferenceThreshold, SIGNAL(valueChanged(double)),			this, SLOT(SetThreshold(double)));
+	connect(m_Widget->m_DoubleSpinBoxHistDiffThresh,		SIGNAL(valueChanged(double)),					this, SLOT(SetThreshold(double)));
+	connect(m_Widget->m_PushButtonComputeStatistics,		SIGNAL(clicked()),								this, SLOT(ComputeStatistics()));
 
 
 	// progress bar signals
@@ -88,12 +89,12 @@ StitchingPlugin::StitchingPlugin()
 	// initialize member objects
 	m_Data = vtkSmartPointer<vtkPolyData>::New();
 
-	m_RangeTextureData = new unsigned char[SizeX*SizeY];
-	m_WCs = new float4[SizeX*SizeY];
+	m_RangeTextureData = new unsigned char[FRAME_SIZE_X*FRAME_SIZE_Y];
+	m_WCs = new float4[FRAME_SIZE_X*FRAME_SIZE_Y];
 
 	cudaChannelFormatDesc ChannelDesc = cudaCreateChannelDesc(32, 0, 0, 0, cudaChannelFormatKindFloat);
-	cutilSafeCall(cudaMallocArray(&m_InputImgArr, &ChannelDesc, SizeX, SizeY));
-	cutilSafeCall(cudaMalloc((void**)&(m_devWCs), SizeX*SizeY*sizeof(float4)));
+	cutilSafeCall(cudaMallocArray(&m_InputImgArr, &ChannelDesc, FRAME_SIZE_X, FRAME_SIZE_Y));
+	cutilSafeCall(cudaMalloc((void**)&(m_devWCs), FRAME_SIZE_X*FRAME_SIZE_Y*sizeof(float4)));
 
 	m_FramesProcessed = 0;
 
@@ -125,7 +126,7 @@ StitchingPlugin::StitchingPlugin()
 	// comparison of two consecutive frames
 	m_CurrentHist = NULL;
 	m_PreviousHist = NULL;
-	m_HistogramDifferenceThreshold = m_Widget->m_DoubleSpinBoxHistogramDifferenceThreshold->value();
+	m_HistogramDifferenceThreshold = m_Widget->m_DoubleSpinBoxHistDiffThresh->value();
 }
 
 StitchingPlugin::~StitchingPlugin()
@@ -154,6 +155,104 @@ StitchingPlugin::GetPluginGUI()
 	return m_Widget;
 }
 //----------------------------------------------------------------------------
+void
+StitchingPlugin::ComputeStatistics()
+{
+	std::cout << "computing statistics... please wait." << std::endl;
+	QTime t;
+	t.start();
+
+	const int numIter = 15;
+	const int numPoints = 1000;
+
+	if (m_Widget->m_ListWidgetHistory->selectedItems().size() != 1)
+	{
+		std::cout << "only one selection allowed!" << std::endl;
+		return;
+	}
+
+	PointCoords coords[numIter][numPoints];
+	PointCoords mean[numPoints];
+	float distToMean[numIter][numPoints];
+	float distMean[numPoints];
+
+	HistoryListItem* hli = static_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->selectedItems()[0]);
+	UndoTransformForSelectedActors();
+
+	int stepSize = hli->m_actor->GetData()->GetNumberOfPoints() / numPoints;
+
+	vtkPolyData* ptr = hli->m_actor->GetData();
+
+	// collect data
+	for (int i = 0; i < numIter; ++i)
+	{
+		StitchSelectedActors();
+		for (int k = 0, j = 0; k < numPoints; ++k, j += stepSize)
+		{
+			coords[i][k].x = ptr->GetPoint(j)[0];
+			coords[i][k].y = ptr->GetPoint(j)[1];
+			coords[i][k].z = ptr->GetPoint(j)[2];
+		}
+		UndoTransformForSelectedActors();
+	}
+
+	// initialize mean
+	for (int i = 0; i < numPoints; ++i)
+		mean[i].x = mean[i].y = mean[i].z = 0.f;
+
+	// compute mean
+	for (int i = 0; i < numIter; ++i)
+	{
+		for (int j = 0; j < numPoints; ++j)
+		{
+			mean[j].x += coords[i][j].x;
+			mean[j].y += coords[i][j].y;
+			mean[j].z += coords[i][j].z;
+		}
+	}
+
+	// normalize mean
+	for (int i = 0; i < numPoints; ++i)
+	{
+		mean[i].x /= numIter;
+		mean[i].y /= numIter;
+		mean[i].z /= numIter;
+	}
+
+	// compute distances (euclidean) between points and mean
+	for (int i = 0; i < numIter; ++i)
+	{
+		for (int j = 0; j < numPoints; ++j)
+		{
+			distToMean[i][j] = std::sqrt(
+				(mean[j].x - coords[i][j].x) * (mean[j].x - coords[i][j].x) +
+				(mean[j].y - coords[i][j].y) * (mean[j].y - coords[i][j].y) +
+				(mean[j].z - coords[i][j].z) * (mean[j].z - coords[i][j].z)
+				);
+		}
+	}
+
+	// compute mean of distances
+	for (int i = 0; i < numIter; ++i)
+	{
+		distMean[i] = 0.f;
+		for (int j = 0; j < numPoints; ++j)
+		{
+			distMean[i] += distToMean[i][j];
+		}
+		distMean[i] /= numIter;
+	}
+
+	float overallDistMean = 0.f;
+
+	for (int i = 0; i < numPoints; ++i)
+		overallDistMean += distMean[i];
+	overallDistMean /= numPoints;
+
+	std::cout << "mean of mean distances: " << overallDistMean << std::endl;
+
+	std::cout << t.elapsed() << " ms" << std::endl;
+}
 void
 StitchingPlugin::RecordFrame()
 {
@@ -757,41 +856,38 @@ StitchingPlugin::FrameDifferenceAboveThreshold()
 	QTime t;
 	t.start();
 
-	const int maxValue = 65536;
-	const int numBins = 64;
-	const int stepSize = 512;
-
 	if (!m_CurrentHist)
 	{
-		m_CurrentHist = new float[numBins];
-		for (int i = 0; i < numBins; ++i)
+		m_CurrentHist = new float[NUM_BINS_HIST];
+		for (int i = 0; i < NUM_BINS_HIST; ++i)
 			m_CurrentHist[i] = 0;
 	}
 	if (!m_PreviousHist)
 	{
-		m_PreviousHist = new float[numBins];
-		for (int i = 0; i < numBins; ++i)
+		m_PreviousHist = new float[NUM_BINS_HIST];
+		for (int i = 0; i < NUM_BINS_HIST; ++i)
 			m_PreviousHist[i] = 0;
 	}
 
 	// reset histogram
-	for (int i = 0; i < numBins; ++i)
+	for (int i = 0; i < NUM_BINS_HIST; ++i)
 		m_CurrentHist[i] = 0;
 
 	// update histogram
 	const ritk::RImageF2::RangeType* ptr = m_CurrentFrame->GetRangeImage()->GetBufferPointer();
-	for (int i = 0; i < SizeX*SizeY; ++i)
+	for (int i = 0; i < FRAME_SIZE_X*FRAME_SIZE_Y; i += STEP_SIZE_HIST)
 	{
-		m_CurrentHist[(numBins*static_cast<int>(ptr[i]))/maxValue]++;
+		m_CurrentHist[(NUM_BINS_HIST*static_cast<int>(ptr[i]))/MAX_RANGE_VAL]++;
 	}
 
 	// normalize histogram
-	for (int i = 0; i < numBins; ++i)
-		m_CurrentHist[i] /= (SizeX*SizeY / stepSize);
+	for (int i = 0; i < NUM_BINS_HIST; ++i)
+		m_CurrentHist[i] /= (FRAME_SIZE_X*FRAME_SIZE_Y / STEP_SIZE_HIST);
 
 	float diff = 0;
-	for (int i = 0; i < numBins; i += stepSize)
+	for (int i = 0; i < NUM_BINS_HIST; i += STEP_SIZE_HIST)
 		diff += std::abs(m_CurrentHist[i] - m_PreviousHist[i]);
+
 	std::cout << "hist diff: " << diff << " in " << t.elapsed() << " ms" << std::endl;
 
 	if (diff > m_HistogramDifferenceThreshold)
@@ -809,12 +905,12 @@ void
 StitchingPlugin::LoadFrame()
 {
 	// Copy the input data to the device
-	cutilSafeCall(cudaMemcpyToArray(m_InputImgArr, 0, 0, m_CurrentFrame->GetRangeImage()->GetBufferPointer(), SizeX*SizeY*sizeof(float), cudaMemcpyHostToDevice));
+	cutilSafeCall(cudaMemcpyToArray(m_InputImgArr, 0, 0, m_CurrentFrame->GetRangeImage()->GetBufferPointer(), FRAME_SIZE_X*FRAME_SIZE_Y*sizeof(float), cudaMemcpyHostToDevice));
 
 	// Compute the world coordinates
-	CUDARangeToWorld(m_devWCs, m_InputImgArr, SizeX, SizeY);
+	CUDARangeToWorld(m_devWCs, m_InputImgArr, FRAME_SIZE_X, FRAME_SIZE_Y);
 
-	cutilSafeCall(cudaMemcpy(m_WCs, m_devWCs, SizeX*SizeY*sizeof(float4), cudaMemcpyDeviceToHost));
+	cutilSafeCall(cudaMemcpy(m_WCs, m_devWCs, FRAME_SIZE_X*FRAME_SIZE_Y*sizeof(float4), cudaMemcpyDeviceToHost));
 
 	vtkSmartPointer<vtkPoints> points =
 		vtkSmartPointer<vtkPoints>::New();
@@ -832,7 +928,7 @@ StitchingPlugin::LoadFrame()
 	float4 p;
 	it.GoToBegin();
 
-	for (int i = 0; i < SizeX*SizeY; i += 2, ++it, ++it)
+	for (int i = 0; i < FRAME_SIZE_X*FRAME_SIZE_Y; i += 2, ++it, ++it)
 	{
 		p = m_WCs[i];
 

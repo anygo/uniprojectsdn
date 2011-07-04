@@ -928,7 +928,7 @@ StitchingPlugin::LoadFrame()
 	float4 p;
 	it.GoToBegin();
 
-	for (int i = 0; i < FRAME_SIZE_X*FRAME_SIZE_Y; i += 2, ++it, ++it)
+	for (int i = 0; i < FRAME_SIZE_X*FRAME_SIZE_Y; ++i, ++it)
 	{
 		p = m_WCs[i];
 

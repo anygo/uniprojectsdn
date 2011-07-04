@@ -34,15 +34,16 @@ extern "C"
 void FindClosestPointsRBC(int nrOfReps, unsigned short* indices, float* distances);
 
 
-ClosestPointFinderRBCGPU::ClosestPointFinderRBCGPU(int NrOfPoints, float nrOfRepsFactor) : ClosestPointFinder(NrOfPoints), m_NrOfRepsFactor(nrOfRepsFactor) 
+ClosestPointFinderRBCGPU::ClosestPointFinderRBCGPU(int NrOfPoints, int metric, int weightRGB, float nrOfRepsFactor) 
+	: ClosestPointFinder(NrOfPoints, metric, weightRGB), m_NrOfRepsFactor(nrOfRepsFactor) 
 {
 	m_NrOfReps = std::min( MAX_REPRESENTATIVES, static_cast<int>(m_NrOfRepsFactor * sqrt(static_cast<float>(m_NrOfPoints))) );
 
 	// initialize GPU RBC struct and other data structures
-	m_Reps = new unsigned short[m_NrOfReps];
+	m_Reps = new unsigned int[m_NrOfReps];
 	m_RepsGPU = new RepGPU[m_NrOfReps];	
-	m_PointToRep = new unsigned short[m_NrOfPoints];
-	m_RepsIndices = new unsigned short[m_NrOfPoints];
+	m_PointToRep = new unsigned int[m_NrOfPoints];
+	m_RepsIndices = new unsigned int[m_NrOfPoints];
 
 	m_Initialized = false;
 }
@@ -59,25 +60,26 @@ ClosestPointFinderRBCGPU::~ClosestPointFinderRBCGPU()
 	cleanupGPUCommon();
 }
 
-void ClosestPointFinderRBCGPU::SetTarget(PointCoords* targetCoords, PointColors* targetColors, PointCoords* sourceCoords, PointColors* sourceColors) 
+void ClosestPointFinderRBCGPU::Initialize(float4* targetCoords, float4* targetColors, float4* sourceCoords, float4* sourceColors)  
 {
+
+	ClosestPointFinder::Initialize(targetCoords, targetColors, sourceCoords, sourceColors); 
+
 	if (!m_Initialized)
 	{
 		initGPUMemory(m_NrOfPoints, m_WeightRGB, m_Metric);
 		m_Initialized = true;
 	}
-	ClosestPointFinder::SetTarget(targetCoords, targetColors, sourceCoords, sourceColors);
-	transferToGPU(m_TargetCoords, m_TargetColors, m_SourceCoords, m_SourceColors); // <- we actually dont need our own data struct pointer...
+
+	transferToGPU(m_TargetCoords, m_TargetColors, m_SourceCoords, m_SourceColors);
 	initRBC();
 }
 
-unsigned short*
-ClosestPointFinderRBCGPU::FindClosestPoints(PointCoords* sourceCoords, PointColors* sourceColors)
+void
+ClosestPointFinderRBCGPU::FindClosestPoints(int* indices, float* distances)
 {
-	FindClosestPointsRBC(m_NrOfReps, m_Indices, m_Distances);
-
-	// return the indices which will then be used in the icp algorithm
-	return m_Indices;
+	// returns the indices which will then be used in the icp algorithm
+	FindClosestPointsRBC(m_NrOfReps, indices, distances);	
 }
 //----------------------------------------------------------------------------
 void
@@ -115,7 +117,7 @@ ClosestPointFinderRBCGPU::initRBC()
 		m_Representatives[m_PointToRep[i]].points.push_back(i);
 	}
 
-	unsigned short* offsetPtr = m_RepsIndices;
+	unsigned int* offsetPtr = m_RepsIndices;
 
 	for (int i = 0; i < m_NrOfReps; ++i)
 	{

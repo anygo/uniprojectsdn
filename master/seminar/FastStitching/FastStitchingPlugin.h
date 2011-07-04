@@ -91,6 +91,8 @@ protected:
 	void LoadFrame();
 	bool FrameDifferenceAboveThreshold();
 	void CleanFrame();
+	void Reset();
+	void ExtractLandmarks();
 	void Stitch(vtkPolyData* toBeStitched, vtkPolyData* previousFrame,
 						vtkMatrix4x4* previousTransformationMatrix,
 						vtkPolyData* outputStitchedPolyData,
@@ -105,9 +107,20 @@ protected:
 	vtkSmartPointer<ExtendedICPTransform>		m_icp;
 	ClosestPointFinder*							m_cpf; 
 	float4*										m_devWCs;
+	float4*										m_devPrevWCs;
 	float4*										m_WCs;
+	
+
 	unsigned char*								m_RangeTextureData;
 	cudaArray*									m_InputImgArr;
+	unsigned int*								m_ClippedLMIndices;
+	unsigned int*								m_LMIndices;
+
+	unsigned int*								m_devSourceIndices;
+	unsigned int*								m_devTargetIndices;
+
+	float4*										m_devSourceLandmarks;
+	float4*										m_devTargetLandmarks;
 
 	int m_FramesProcessed;
 	QMutex m_Mutex;

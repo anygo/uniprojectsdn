@@ -21,20 +21,19 @@ class ClosestPointFinderRBCGPU : public ClosestPointFinder
 
 	typedef struct Representative
 	{
-		unsigned short index;
-		std::list<unsigned short> points;
+		unsigned int index;
+		std::list<unsigned int> points;
 	} Representative;
 
 public:
-	ClosestPointFinderRBCGPU(int NrOfPoints, float nrOfRepsFactor);
+	ClosestPointFinderRBCGPU(int NrOfPoints, int metric, int weightRGB, float nrOfRepsFactor);
 
 	~ClosestPointFinderRBCGPU();
 
-	void SetTarget(PointCoords* targetCoords, PointColors* targetColors, PointCoords* sourceCoords, PointColors* sourceColors);
+	void Initialize(float4* targetCoords, float4* targetColors, float4* sourceCoords, float4* sourceColors);
 
-	unsigned short* FindClosestPoints(PointCoords* sourceCoords, PointColors* sourceColors);
+	void FindClosestPoints(int* indices, float* distances);
 
-	inline bool usesGPU() { return true; }
 
 protected:
 	void initRBC();
@@ -45,9 +44,9 @@ protected:
 
 	std::vector<Representative> m_Representatives;
 	RepGPU* m_RepsGPU;
-	unsigned short* m_Reps;
-	unsigned short* m_PointToRep;
-	unsigned short* m_RepsIndices;
+	unsigned int* m_Reps;
+	unsigned int* m_PointToRep;
+	unsigned int* m_RepsIndices;
 	
 };
 

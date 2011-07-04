@@ -53,16 +53,10 @@ public:
 		m_TargetCoords = new PointCoords[m_NumLandmarks];
 		m_TargetColors = new PointColors[m_NumLandmarks];
 
+		m_ClosestP = new PointCoords[m_NumLandmarks];
+
 		// for gpu based distance computation
 		m_Distances = new float[m_NumLandmarks];
-		
-		m_Points1 = vtkSmartPointer<vtkPoints>::New();
-		m_Points1->SetNumberOfPoints(m_NumLandmarks);
-		m_Points2 = vtkSmartPointer<vtkPoints>::New();
-		m_Points2->SetNumberOfPoints(m_NumLandmarks);
-		m_Closestp = vtkSmartPointer<vtkPoints>::New();
-		m_Closestp->SetNumberOfPoints(m_NumLandmarks);
-
 	}
 	inline int GetNumLandmarks() { return m_MaxIter; }
 	inline void SetMaxMeanDist(float dist) { m_MaxMeanDist = dist; }
@@ -85,6 +79,8 @@ protected:
 	unsigned long int GetMTime();
 	void vtkPolyDataToPointCoords(vtkSmartPointer<vtkPoints> poly, PointCoords* coords);
 
+	vtkMatrix4x4* EstimateTransformationMatrix(PointCoords* source, PointCoords* target);
+
 	vtkSmartPointer<vtkPolyData> m_Source;
 	vtkSmartPointer<vtkPolyData> m_Target;
 
@@ -92,10 +88,7 @@ protected:
 	PointCoords* m_TargetCoords;
 	PointColors* m_SourceColors;
 	PointColors* m_TargetColors;
-
-	vtkSmartPointer<vtkPoints> m_Points1;
-	vtkSmartPointer<vtkPoints> m_Points2;
-	vtkSmartPointer<vtkPoints> m_Closestp;
+	PointCoords* m_ClosestP;
 
 	ClosestPointFinder* m_ClosestPointFinder;
 	float* m_Distances;

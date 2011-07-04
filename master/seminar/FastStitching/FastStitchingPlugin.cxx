@@ -195,7 +195,6 @@ FastStitchingPlugin::ProcessEvent(ritk::Event::Pointer EventP)
 			// run autostitching for each frame if checkbox is checked
 			if (m_Widget->m_RadioButtonLiveFastStitching->isChecked() && m_FramesProcessed % m_Widget->m_SpinBoxFrameStep->value() == 0)
 			{
-				std::cout << "emit LiveFastStitchingFrameAvailable()" << std::endl;
 				emit LiveFastStitchingFrameAvailable();
 			}
 
@@ -407,14 +406,12 @@ FastStitchingPlugin::ComputeStats()
 void
 FastStitchingPlugin::LoadInitialize()
 {
-	std::cout << "LoadInitialize()" << std::endl;
 	LoadFrame();
 	InitializeHistory();
 }
 void
 FastStitchingPlugin::LoadStitch()
 {
-	std::cout << "LoadStitch()" << std::endl;
 	QTime timeOverall;
 	timeOverall.start();
 
@@ -477,7 +474,6 @@ FastStitchingPlugin::LoadStitch()
 void
 FastStitchingPlugin::LoadFrame()
 {
-	std::cout << "LoadFrame()" << std::endl;
 	// Copy the input data to the device
 	cutilSafeCall(cudaMemcpyToArray(m_InputImgArr, 0, 0, m_CurrentFrame->GetRangeImage()->GetBufferPointer(), FRAME_SIZE_X*FRAME_SIZE_Y*sizeof(float), cudaMemcpyHostToDevice));
 

@@ -52,7 +52,7 @@ typedef struct GPUConfig
 	PointColors* targetColors;
 	PointCoords* sourceCoords;
 	PointColors* sourceColors;
-	unsigned short* indices;
+	unsigned int* indices;
 	float* distances;
 } GPUConfig;
 
@@ -61,8 +61,8 @@ typedef struct RepGPU
 {
 	PointCoords coords;
 	PointColors colors;
-	unsigned short nrOfPoints;
-	unsigned short* dev_points;
+	unsigned int nrOfPoints;
+	unsigned int* dev_points;
 } RepGPU;
 
 

@@ -18,97 +18,68 @@
  *	@details
  *	Class that encapsulates the ICP Algorithm, adapted from VTK
  */
-class ExtendedICPTransform : public vtkLinearTransform
+class ExtendedICPTransform
 {
 public:
-	static ExtendedICPTransform *New();
-	vtkTypeMacro(ExtendedICPTransform, vtkLinearTransform);
-	void PrintSelf(ostream& os, vtkIndent indent);
 
-	void SetSource(vtkPolyData *source);
-	void SetTarget(vtkPolyData *target);
+	ExtendedICPTransform();
+	~ExtendedICPTransform();
 
-	void vtkPolyDataToPointCoordsAndColors(double clipPercentage);
-
-	// virtual methods that have to be defined
-	vtkAbstractTransform *MakeTransform();
-	void Inverse();
+	void SetSource(float4* devSource);
+	void SetTarget(float4* devTarget);
 
 	// set and get methods
-	inline void SetMaxIter(int iter) { m_MaxIter = iter; }
-	inline int GetMaxIter() { return m_MaxIter; }
 	inline void SetNumLandmarks(int landmarks) { 
 
 		m_NumLandmarks = landmarks;
 
-		if(m_SourceCoords) delete[] m_SourceCoords;
-		if(m_SourceColors) delete[] m_SourceColors;
-		if(m_TargetCoords) delete[] m_TargetCoords;
-		if(m_TargetColors) delete[] m_TargetColors;
+		if(m_Source) delete[] m_Source;
+		if(m_Target) delete[] m_Target;
 		if(m_Distances) delete[] m_Distances;
+		if(m_ClosestP) delete[] m_ClosestP;
 
 		// allocate some points used for icp
-		m_SourceCoords = new PointCoords[m_NumLandmarks];
-		m_SourceColors = new PointColors[m_NumLandmarks];
-		m_TargetCoords = new PointCoords[m_NumLandmarks];
-		m_TargetColors = new PointColors[m_NumLandmarks];
-
-		m_ClosestP = new PointCoords[m_NumLandmarks];
-
-		// for gpu based distance computation
+		m_Source = new float4[m_NumLandmarks];
+		m_Target = new float4[m_NumLandmarks];
+		m_ClosestP = new float4[m_NumLandmarks];
 		m_Distances = new float[m_NumLandmarks];
 	}
-	inline int GetNumLandmarks() { return m_MaxIter; }
-	inline void SetMaxMeanDist(float dist) { m_MaxMeanDist = dist; }
-	inline int GetMaxMeanDist() { return m_MaxMeanDist; }
+
+	vtkMatrix4x4* StartICP();
+
 	inline void SetClosestPointFinder(ClosestPointFinder* cpf) { m_ClosestPointFinder = cpf; }
 	inline void SetNormalizeRGBToDistanceValuesFactor(float factor) { m_NormalizeRGBToDistanceValuesFactor = factor; }
-	inline void SetPreviousTransformMatrix(vtkMatrix4x4* m) { m_PreviousTransformationMatrix = m; }
-	inline void SetApplyPreviousTransform(bool apply) { m_ApplyPreviousTransform = apply; }
 
 	inline int GetNumIter() { return m_NumIter; }
 	inline float GetMeanDist() { return m_MeanDist; }
 	inline float GetMeanTargetDistance() { return m_MeanTargetDistance; }
-	inline vtkLandmarkTransform* GetLandmarkTransform() { return m_LandmarkTransform; }
 
 protected:
-	ExtendedICPTransform();
-	~ExtendedICPTransform();
-
-	void InternalUpdate();
-	unsigned long int GetMTime();
-	void vtkPolyDataToPointCoords(vtkSmartPointer<vtkPoints> poly, PointCoords* coords);
 
 	vtkMatrix4x4* EstimateTransformationMatrix(PointCoords* source, PointCoords* target);
 
-	vtkSmartPointer<vtkPolyData> m_Source;
-	vtkSmartPointer<vtkPolyData> m_Target;
+	float4* m_devSource;
+	float4* m_devTarget;
 
-	PointCoords* m_SourceCoords;
-	PointCoords* m_TargetCoords;
-	PointColors* m_SourceColors;
-	PointColors* m_TargetColors;
-	PointCoords* m_ClosestP;
+	float4* m_Source;
+	float4* m_Target;
+	float4* m_ClosestP;
+
+	float* m_Distances;
 
 	ClosestPointFinder* m_ClosestPointFinder;
-	float* m_Distances;
 
 	int m_MaxIter;
 	int m_NumLandmarks;
 	float m_MaxMeanDist;
-	vtkSmartPointer<vtkMatrix4x4> m_PreviousTransformationMatrix;
-	bool m_ApplyPreviousTransform;
 
 	int m_NumIter;
 	float m_MeanDist;
 	float m_MeanTargetDistance;
 	float m_NormalizeRGBToDistanceValuesFactor;
-	vtkSmartPointer<vtkLandmarkTransform> m_LandmarkTransform;
+
 	vtkSmartPointer<vtkTransform> m_Accumulate;
 
-private:
-	ExtendedICPTransform(const ExtendedICPTransform&);  // Not implemented.
-	void operator=(const ExtendedICPTransform&);  // Not implemented.
 };
 
 #endif // ExtendedICPTransform_H__

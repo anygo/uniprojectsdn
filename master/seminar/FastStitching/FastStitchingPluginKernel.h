@@ -70,7 +70,7 @@ CUDARangeToWorldKernel(unsigned int NX, unsigned int NY, float4* duplicate)
 }
 
 __global__
-void kernelTransformPointsAndComputeDistance()
+void kernelTransformPointsAndComputeDistance(float4* points, float* distances)
 {
 	int tid = blockIdx.x*blockDim.x + threadIdx.x;
 
@@ -84,31 +84,30 @@ void kernelTransformPointsAndComputeDistance()
 	if (tid >= dev_conf->nrOfPoints)
 		return;
 
-	float xOld = dev_conf->sourceCoords[tid].x;
-	float yOld = dev_conf->sourceCoords[tid].y;
-	float zOld = dev_conf->sourceCoords[tid].z;
+	float4 p = points[tid];
 
 	// compute homogeneous transformation
-	float x = m[0]  * xOld + m[1]  * yOld + m[2]  * zOld + m[3];
-	float y = m[4]  * xOld + m[5]  * yOld + m[6]  * zOld + m[7];
-	float z = m[8]  * xOld + m[9]  * yOld + m[10] * zOld + m[11];
-	float w = m[12] * xOld + m[13] * yOld + m[14] * zOld + m[15];
+	float x = m[0]  * p.x + m[1]  * p.y + m[2]  * p.z + m[3];
+	float y = m[4]  * p.x + m[5]  * p.y + m[6]  * p.z + m[7];
+	float z = m[8]  * p.x + m[9]  * p.y + m[10] * p.z + m[11];
+	float w = m[12] * p.x + m[13] * p.y + m[14] * p.z + m[15];
 
 	// divide by the last component
 	x /= w;
 	y /= w;
 	z /= w;
 
-	// compute distance to previous point
-	float xDiff = xOld - x;
-	float yDiff = yOld - y;
-	float zDiff = zOld - z;
-	dev_conf->distances[tid] = xDiff*xDiff + yDiff*yDiff + zDiff*zDiff;
-
 	// set new coordinates
-	dev_conf->sourceCoords[tid].x = x;
-	dev_conf->sourceCoords[tid].y = y;
-	dev_conf->sourceCoords[tid].z = z;
+	points[tid] = make_float4(x, y, z, 1.f);
+
+	if (!distances)
+		return;
+	
+	// compute distance to previous point
+	float xDiff = p.x - x;
+	float yDiff = p.y - y;
+	float zDiff = p.z - z;
+	distances[tid] = xDiff*xDiff + yDiff*yDiff + zDiff*zDiff;
 }
 
 __device__

@@ -29,7 +29,7 @@ CUDARangeToWorld(float4* duplicate, const cudaArray *InputImageArray, int w, int
 }
 
 extern "C"
-void TransformPointsDirectlyOnGPU(double transformationMatrix[4][4], PointCoords* writeTo, float* distances)
+void CUDATransformPoints(double transformationMatrix[4][4], float4* toBeTransformed, int numPoints, float* distances)
 {
 	// allocate memory for transformation matrix (will be stored linearly) and copy it
 	float tmp[16];
@@ -52,7 +52,7 @@ void TransformPointsDirectlyOnGPU(double transformationMatrix[4][4], PointCoords
 	
 	CUDA_SAFE_CALL(cudaMemcpyToSymbol(dev_transformationMatrix, tmp, 16*sizeof(float), 0));
 	
-	kernelTransformPointsAndComputeDistance<<<DivUp(host_conf->nrOfPoints, CUDA_THREADS_PER_BLOCK), CUDA_THREADS_PER_BLOCK>>>();
+	kernelTransformPointsAndComputeDistance<<<DivUp(numPoints, CUDA_THREADS_PER_BLOCK), CUDA_THREADS_PER_BLOCK>>>(toBeTransformed, host_conf->distances);
 	CUT_CHECK_ERROR("Kernel execution failed (while transforming points)");
 	
 	// copy distance array to host
@@ -60,9 +60,6 @@ void TransformPointsDirectlyOnGPU(double transformationMatrix[4][4], PointCoords
 	{
 		CUDA_SAFE_CALL(cudaMemcpy(distances, host_conf->distances, host_conf->nrOfPoints*sizeof(float), cudaMemcpyDeviceToHost));
 	}
-	
-	// copy transformed points to host
-	CUDA_SAFE_CALL(cudaMemcpy(writeTo, host_conf->sourceCoords, host_conf->nrOfPoints*sizeof(PointCoords), cudaMemcpyDeviceToHost));
 }
 
 extern "C"

@@ -71,27 +71,16 @@ signals:
 protected slots:
 	void LoadStitch();
 	void LoadInitialize();
-	void Delaunay2DSelectedActors();
-	void SaveSelectedActors();
 	void InitializeHistory();
-	void ChangePointSize();
-	void ChangeBackgroundColor1();
-	void ChangeBackgroundColor2();
 	void ShowHideActors();
 	void DeleteSelectedActors();
-	void MergeSelectedActors();
-	void CleanSelectedActors();
 	void StitchSelectedActors();
 	void UndoTransformForSelectedActors();
-	void HighlightActor(QListWidgetItem*);
 	void ComputeStats();
 	void ResetICPandCPF(); 
-	void RecordFrame();
 	void LiveFastStitching();
 	void ClearBuffer();
-	void UpdateZRange();
 	void SetThreshold(double thresh) { m_HistogramDifferenceThreshold = thresh; }
-	void ComputeStatistics();
 
 
 protected:
@@ -125,8 +114,6 @@ protected:
 	int m_BufferSize;
 	int m_BufferCounter;
 	bool m_ResetICPandCPFRequired;
-	float m_MinZ;
-	float m_MaxZ;
 	float m_HistogramDifferenceThreshold;
 };
 

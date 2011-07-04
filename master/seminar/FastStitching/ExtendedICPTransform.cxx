@@ -243,10 +243,6 @@ ExtendedICPTransform::InternalUpdate()
 
 	// go
 	vtkSmartPointer<vtkPoints> a2;
-	if (m_RemoveOutliers && m_OutlierRate > 0.0)
-	{
-		a2 = vtkSmartPointer<vtkPoints>::New();
-	}
 
 	vtkSmartPointer<vtkPoints> temp;
 	vtkSmartPointer<vtkPoints> a = m_Points1;
@@ -264,60 +260,12 @@ ExtendedICPTransform::InternalUpdate()
 		indices = m_ClosestPointFinder->FindClosestPoints(m_SourceCoords, m_SourceColors);
 		findTimeElapsed += findTime.elapsed();
 
-		if (m_RemoveOutliers && m_OutlierRate > 0.0)
+		for(int i = 0; i < m_NumLandmarks; ++i)
 		{
-			std::vector<float> sortedDistances(m_NumLandmarks);
-			float* dists = m_ClosestPointFinder->GetDistances();
-			m_MeanTargetDistance = 0;
-			for(int i = 0; i < m_NumLandmarks; ++i)
-			{
-				sortedDistances[i] = dists[i];
-				m_MeanTargetDistance += (dists[i]);
-			}
-			m_MeanTargetDistance /= static_cast<float>(m_NumLandmarks);
-
-			std::sort(sortedDistances.begin(), sortedDistances.end());
-
-			int thresholdIdx = floor((1.0 - m_OutlierRate) * static_cast<float>(m_NumLandmarks - 1));
-			float threshold = sortedDistances[thresholdIdx];
-
-			int number = thresholdIdx + 1;
-
-			// perfect match?
-			if (threshold < FLT_EPSILON)
-			{
-				threshold = FLT_MAX;
-				number = m_NumLandmarks;
-			}
-
-			// calling Modified() is necessary otherwise object properties won't change
-			m_Closestp->SetNumberOfPoints(number);
-			a2->SetNumberOfPoints(number);
-			m_Closestp->Modified();
-			a2->Modified();
-
-			int count = 0;
-			for(int i = 0; i < m_NumLandmarks; ++i)
-			{
-				if(dists[i] <= threshold) 
-				{
-					int index = indices[i];
-					m_Closestp->SetPoint(count, m_TargetCoords[index].x, m_TargetCoords[index].y, m_TargetCoords[index].z);
-					a2->SetPoint(count, m_SourceCoords[i].x, m_SourceCoords[i].y, m_SourceCoords[i].z);
-					++count;
-				}
-			}
-			m_LandmarkTransform->SetSourceLandmarks(a2);
-
-		} else
-		{
-			for(int i = 0; i < m_NumLandmarks; ++i)
-			{
-				int index = indices[i];
-				m_Closestp->SetPoint(i, m_TargetCoords[index].x, m_TargetCoords[index].y, m_TargetCoords[index].z);
-			}
-			m_LandmarkTransform->SetSourceLandmarks(a);
+			int index = indices[i];
+			m_Closestp->SetPoint(i, m_TargetCoords[index].x, m_TargetCoords[index].y, m_TargetCoords[index].z);
 		}
+		m_LandmarkTransform->SetSourceLandmarks(a);
 
 		// build the landmark transform
 		m_LandmarkTransform->SetTargetLandmarks(m_Closestp);

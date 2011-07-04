@@ -51,16 +51,6 @@
            </property>
           </widget>
          </item>
-         <item row="1" column="0">
-          <widget class="QPushButton" name="m_PushButtonComputeStatistics">
-           <property name="toolTip">
-            <string>stitches the actors to the previous actors</string>
-           </property>
-           <property name="text">
-            <string>Compute Statistics</string>
-           </property>
-          </widget>
-         </item>
         </layout>
        </widget>
       </item>
@@ -116,13 +106,6 @@
                 </property>
                 <property name="checked">
                  <bool>true</bool>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QRadioButton" name="m_RadioButtonRecord">
-                <property name="text">
-                 <string>Record</string>
                 </property>
                </widget>
               </item>
@@ -289,46 +272,6 @@
                  </property>
                 </widget>
                </item>
-               <item row="4" column="0">
-                <widget class="QLabel" name="label_15">
-                 <property name="text">
-                  <string>MinZ</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="5" column="0">
-                <widget class="QLabel" name="label_16">
-                 <property name="text">
-                  <string>MaxZ</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="4" column="1">
-                <widget class="QSlider" name="m_HorizontalSliderMinZ">
-                 <property name="maximum">
-                  <number>10000</number>
-                 </property>
-                 <property name="value">
-                  <number>0</number>
-                 </property>
-                 <property name="orientation">
-                  <enum>Qt::Horizontal</enum>
-                 </property>
-                </widget>
-               </item>
-               <item row="5" column="1">
-                <widget class="QSlider" name="m_HorizontalSliderMaxZ">
-                 <property name="maximum">
-                  <number>10000</number>
-                 </property>
-                 <property name="value">
-                  <number>10000</number>
-                 </property>
-                 <property name="orientation">
-                  <enum>Qt::Horizontal</enum>
-                 </property>
-                </widget>
-               </item>
               </layout>
              </item>
              <item>
@@ -346,43 +289,20 @@
                  </property>
                 </widget>
                </item>
-               <item>
-                <widget class="QCheckBox" name="m_CheckBoxComputeHistogramDifference">
-                 <property name="text">
-                  <string>Compute Histogram Difference</string>
-                 </property>
-                 <property name="checked">
-                  <bool>false</bool>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QCheckBox" name="m_CheckBoxRemoveOutliers">
-                 <property name="enabled">
-                  <bool>true</bool>
-                 </property>
-                 <property name="text">
-                  <string>Remove / Ignore Outliers</string>
-                 </property>
-                 <property name="checked">
-                  <bool>false</bool>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <spacer name="verticalSpacer_3">
-                 <property name="orientation">
-                  <enum>Qt::Vertical</enum>
-                 </property>
-                 <property name="sizeHint" stdset="0">
-                  <size>
-                   <width>20</width>
-                   <height>40</height>
-                  </size>
-                 </property>
-                </spacer>
-               </item>
               </layout>
+             </item>
+             <item>
+              <spacer name="verticalSpacer_3">
+               <property name="orientation">
+                <enum>Qt::Vertical</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>20</width>
+                 <height>40</height>
+                </size>
+               </property>
+              </spacer>
              </item>
             </layout>
            </widget>
@@ -481,32 +401,6 @@
                  </property>
                 </widget>
                </item>
-               <item row="5" column="0">
-                <widget class="QLabel" name="label_17">
-                 <property name="text">
-                  <string>Assumed Rate of Outliers</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="5" column="1">
-                <widget class="QDoubleSpinBox" name="m_DoubleSpinBoxOutlierRate">
-                 <property name="enabled">
-                  <bool>false</bool>
-                 </property>
-                 <property name="decimals">
-                  <number>6</number>
-                 </property>
-                 <property name="maximum">
-                  <double>0.990000000000000</double>
-                 </property>
-                 <property name="singleStep">
-                  <double>0.050000000000000</double>
-                 </property>
-                 <property name="value">
-                  <double>0.100000000000000</double>
-                 </property>
-                </widget>
-               </item>
                <item row="1" column="1">
                 <widget class="QDoubleSpinBox" name="m_DoubleSpinBoxClipPercentage">
                  <property name="decimals">
@@ -549,7 +443,7 @@
                  </property>
                 </widget>
                </item>
-               <item row="6" column="1">
+               <item row="5" column="1">
                 <spacer name="verticalSpacer_4">
                  <property name="orientation">
                   <enum>Qt::Vertical</enum>
@@ -571,7 +465,7 @@
              <string>Misc</string>
             </attribute>
             <layout class="QGridLayout" name="gridLayout_3">
-             <item row="4" column="1">
+             <item row="3" column="1">
               <spacer name="verticalSpacer_2">
                <property name="orientation">
                 <enum>Qt::Vertical</enum>
@@ -687,25 +581,6 @@
               </widget>
              </item>
              <item row="2" column="1">
-              <widget class="QDoubleSpinBox" name="m_DoubleSpinBoxCleanTolerance">
-               <property name="decimals">
-                <number>6</number>
-               </property>
-               <property name="minimum">
-                <double>0.000000000000000</double>
-               </property>
-               <property name="maximum">
-                <double>99999.000000000000000</double>
-               </property>
-               <property name="singleStep">
-                <double>0.001000000000000</double>
-               </property>
-               <property name="value">
-                <double>0.002000000000000</double>
-               </property>
-              </widget>
-             </item>
-             <item row="3" column="1">
               <widget class="QDoubleSpinBox" name="m_DoubleSpinBoxMaxRMS">
                <property name="frame">
                 <bool>true</bool>
@@ -733,20 +608,10 @@
                </property>
               </widget>
              </item>
-             <item row="3" column="0">
+             <item row="2" column="0">
               <widget class="QLabel" name="label_6">
                <property name="text">
                 <string>Mean Distance Threshold</string>
-               </property>
-              </widget>
-             </item>
-             <item row="2" column="0">
-              <widget class="QLabel" name="label">
-               <property name="toolTip">
-                <string>Set to 0 if you do not want to clean the Pointcloud at all</string>
-               </property>
-               <property name="text">
-                <string>Tolerance (Clean)</string>
                </property>
               </widget>
              </item>
@@ -842,69 +707,7 @@
                 </property>
                </spacer>
               </item>
-              <item row="12" column="0">
-               <widget class="QPushButton" name="m_PushButtonSaveVTKData">
-                <property name="enabled">
-                 <bool>true</bool>
-                </property>
-                <property name="toolTip">
-                 <string>saves all selected actors in vtk files</string>
-                </property>
-                <property name="text">
-                 <string>Save</string>
-                </property>
-               </widget>
-              </item>
               <item row="12" column="1">
-               <widget class="QPushButton" name="m_PushButtonHistoryClean">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="toolTip">
-                 <string>cleans the pointclouds (removes irrelevant points)</string>
-                </property>
-                <property name="text">
-                 <string>Clean</string>
-                </property>
-               </widget>
-              </item>
-              <item row="10" column="1">
-               <widget class="QPushButton" name="m_PushButtonDelaunay2D">
-                <property name="enabled">
-                 <bool>true</bool>
-                </property>
-                <property name="toolTip">
-                 <string>some kind of triangulation</string>
-                </property>
-                <property name="text">
-                 <string>Delaunay2D</string>
-                </property>
-               </widget>
-              </item>
-              <item row="10" column="0">
-               <widget class="QPushButton" name="m_PushButtonHistoryMerge">
-                <property name="toolTip">
-                 <string>merges the selected actors</string>
-                </property>
-                <property name="text">
-                 <string>Merge</string>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="0">
-               <widget class="QPushButton" name="m_PushButtonHistoryUndoTransform">
-                <property name="toolTip">
-                 <string>inverts the transforms that were applied to these actors</string>
-                </property>
-                <property name="text">
-                 <string>Undo</string>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="1">
                <widget class="QPushButton" name="m_PushButtonHistoryDelete">
                 <property name="toolTip">
                  <string>deletes the selected actors</string>
@@ -914,7 +717,7 @@
                 </property>
                </widget>
               </item>
-              <item row="1" column="1">
+              <item row="2" column="1">
                <widget class="QPushButton" name="m_PushButtonHistoryShowAll">
                 <property name="minimumSize">
                  <size>
@@ -927,7 +730,17 @@
                 </property>
                </widget>
               </item>
-              <item row="1" column="0">
+              <item row="12" column="0">
+               <widget class="QPushButton" name="m_PushButtonHistoryUndoTransform">
+                <property name="toolTip">
+                 <string>inverts the transforms that were applied to these actors</string>
+                </property>
+                <property name="text">
+                 <string>Undo</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="0">
                <widget class="QPushButton" name="m_PushButtonHistoryStitchSelection">
                 <property name="toolTip">
                  <string>stitches the actors to the previous actors</string>
@@ -1198,22 +1011,6 @@
     <hint type="destinationlabel">
      <x>784</x>
      <y>454</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>m_CheckBoxRemoveOutliers</sender>
-   <signal>clicked(bool)</signal>
-   <receiver>m_DoubleSpinBoxOutlierRate</receiver>
-   <slot>setEnabled(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>936</x>
-     <y>328</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>936</x>
-     <y>323</y>
     </hint>
    </hints>
   </connection>

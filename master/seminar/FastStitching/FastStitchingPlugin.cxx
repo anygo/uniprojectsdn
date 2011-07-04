@@ -50,30 +50,21 @@ FastStitchingPlugin::FastStitchingPlugin()
 
 	// our signals and slots
 	connect(m_Widget->m_PushButtonStitchFrame,				SIGNAL(clicked()),								this, SLOT(LoadStitch()));
-	connect(m_Widget->m_PushButtonDelaunay2D,				SIGNAL(clicked()),								this, SLOT(Delaunay2DSelectedActors()));
-	connect(m_Widget->m_PushButtonSaveVTKData,				SIGNAL(clicked()),								this, SLOT(SaveSelectedActors()));
 	connect(m_Widget->m_HorizontalSliderPointSize,			SIGNAL(valueChanged(int)),						this, SLOT(ChangePointSize()));
 	connect(m_Widget->m_ToolButtonChooseBackgroundColor1,	SIGNAL(clicked()),								this, SLOT(ChangeBackgroundColor1()));
 	connect(m_Widget->m_ToolButtonChooseBackgroundColor2,	SIGNAL(clicked()),								this, SLOT(ChangeBackgroundColor2()));
 	connect(m_Widget->m_ListWidgetHistory,					SIGNAL(itemSelectionChanged()),					this, SLOT(ShowHideActors()));
 	connect(m_Widget->m_CheckBoxShowSelectedActors,			SIGNAL(stateChanged(int)),						this, SLOT(ShowHideActors()));
-	connect(m_Widget->m_PushButtonHistoryDelete,			SIGNAL(clicked()),								this, SLOT(DeleteSelectedActors()));
-	connect(m_Widget->m_PushButtonHistoryMerge,				SIGNAL(clicked()),								this, SLOT(MergeSelectedActors()));
-	connect(m_Widget->m_PushButtonHistoryClean,				SIGNAL(clicked()),								this, SLOT(CleanSelectedActors()));
 	connect(m_Widget->m_PushButtonHistoryStitchSelection,	SIGNAL(clicked()),								this, SLOT(StitchSelectedActors()));
 	connect(m_Widget->m_PushButtonHistoryUndoTransform,		SIGNAL(clicked()),								this, SLOT(UndoTransformForSelectedActors()));
-	//connect(m_Widget->m_ListWidgetHistory,					SIGNAL(itemDoubleClicked(QListWidgetItem*)),	this, SLOT(HighlightActor(QListWidgetItem*)));
 	connect(m_Widget->m_ComboBoxClosestPointFinder,			SIGNAL(currentIndexChanged(int)),				this, SLOT(ResetICPandCPF()));
 	connect(m_Widget->m_SpinBoxLandmarks,					SIGNAL(valueChanged(int)),						this, SLOT(ResetICPandCPF()));
 	connect(m_Widget->m_DoubleSpinBoxRGBWeight,				SIGNAL(valueChanged(double)),					this, SLOT(ResetICPandCPF()));
 	connect(m_Widget->m_ComboBoxMetric,						SIGNAL(currentIndexChanged(int)),				this, SLOT(ResetICPandCPF()));
 	connect(m_Widget->m_SpinBoxBufferSize,					SIGNAL(valueChanged(int)),						this, SLOT(ClearBuffer()));
 	connect(this,											SIGNAL(RecordFrameAvailable()),					this, SLOT(RecordFrame()));
-	connect(this,											SIGNAL(LiveFastStitchingFrameAvailable()),			this, SLOT(LiveFastStitching()));
-	connect(m_Widget->m_HorizontalSliderMinZ,				SIGNAL(valueChanged(int)),						this, SLOT(UpdateZRange()));
-	connect(m_Widget->m_HorizontalSliderMaxZ,				SIGNAL(valueChanged(int)),						this, SLOT(UpdateZRange()));
+	connect(this,											SIGNAL(LiveFastStitchingFrameAvailable()),		this, SLOT(LiveFastStitching()));
 	connect(m_Widget->m_DoubleSpinBoxHistDiffThresh,		SIGNAL(valueChanged(double)),					this, SLOT(SetThreshold(double)));
-	connect(m_Widget->m_PushButtonComputeStatistics,		SIGNAL(clicked()),								this, SLOT(ComputeStatistics()));
 
 
 	// progress bar signals
@@ -112,10 +103,6 @@ FastStitchingPlugin::FastStitchingPlugin()
 	m_BufferCounter = 0;
 	m_BufferSize = m_Widget->m_SpinBoxBufferSize->value();
 
-	// z clamp
-	m_MinZ = m_Widget->m_HorizontalSliderMinZ->value();
-	m_MaxZ = m_Widget->m_HorizontalSliderMaxZ->value();
-
 	// comparison of two consecutive frames
 	m_CurrentHist = NULL;
 	m_PreviousHist = NULL;
@@ -149,150 +136,12 @@ FastStitchingPlugin::GetPluginGUI()
 }
 //----------------------------------------------------------------------------
 void
-FastStitchingPlugin::ComputeStatistics()
-{
-	std::cout << "computing statistics... please wait." << std::endl;
-	QTime t;
-	t.start();
-
-	const int numIter = 15;
-	const int numPoints = 1000;
-
-	if (m_Widget->m_ListWidgetHistory->selectedItems().size() != 1)
-	{
-		std::cout << "only one selection allowed!" << std::endl;
-		return;
-	}
-
-	PointCoords coords[numIter][numPoints];
-	PointCoords mean[numPoints];
-	float distToMean[numIter][numPoints];
-	float distMean[numPoints];
-
-	HistoryListItem* hli = static_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->selectedItems()[0]);
-	UndoTransformForSelectedActors();
-
-	int stepSize = hli->m_actor->GetData()->GetNumberOfPoints() / numPoints;
-
-	vtkPolyData* ptr = hli->m_actor->GetData();
-
-	// collect data
-	for (int i = 0; i < numIter; ++i)
-	{
-		StitchSelectedActors();
-		for (int k = 0, j = 0; k < numPoints; ++k, j += stepSize)
-		{
-			coords[i][k].x = ptr->GetPoint(j)[0];
-			coords[i][k].y = ptr->GetPoint(j)[1];
-			coords[i][k].z = ptr->GetPoint(j)[2];
-		}
-		UndoTransformForSelectedActors();
-	}
-
-	// initialize mean
-	for (int i = 0; i < numPoints; ++i)
-		mean[i].x = mean[i].y = mean[i].z = 0.f;
-
-	// compute mean
-	for (int i = 0; i < numIter; ++i)
-	{
-		for (int j = 0; j < numPoints; ++j)
-		{
-			mean[j].x += coords[i][j].x;
-			mean[j].y += coords[i][j].y;
-			mean[j].z += coords[i][j].z;
-		}
-	}
-
-	// normalize mean
-	for (int i = 0; i < numPoints; ++i)
-	{
-		mean[i].x /= numIter;
-		mean[i].y /= numIter;
-		mean[i].z /= numIter;
-	}
-
-	// compute distances (euclidean) between points and mean
-	for (int i = 0; i < numIter; ++i)
-	{
-		for (int j = 0; j < numPoints; ++j)
-		{
-			distToMean[i][j] = std::sqrt(
-				(mean[j].x - coords[i][j].x) * (mean[j].x - coords[i][j].x) +
-				(mean[j].y - coords[i][j].y) * (mean[j].y - coords[i][j].y) +
-				(mean[j].z - coords[i][j].z) * (mean[j].z - coords[i][j].z)
-				);
-		}
-	}
-
-	// compute mean of distances
-	for (int i = 0; i < numIter; ++i)
-	{
-		distMean[i] = 0.f;
-		for (int j = 0; j < numPoints; ++j)
-		{
-			distMean[i] += distToMean[i][j];
-		}
-		distMean[i] /= numIter;
-	}
-
-	float overallDistMean = 0.f;
-
-	for (int i = 0; i < numPoints; ++i)
-		overallDistMean += distMean[i];
-	overallDistMean /= numPoints;
-
-	std::cout << "mean of mean distances: " << overallDistMean << std::endl;
-
-	std::cout << t.elapsed() << " ms" << std::endl;
-}
-void
-FastStitchingPlugin::RecordFrame()
-{
-	try
-	{
-		LoadFrame();
-	} catch (std::exception &e)
-	{
-		std::cout << "Exception: \"" << e.what() << "\""<< std::endl;
-		return;
-	}
-
-	// add next actor
-	int listSize = m_Widget->m_ListWidgetHistory->count();
-	HistoryListItem* hli = new HistoryListItem();
-	hli->setText(QDateTime::currentDateTime().time().toString("hh:mm:ss:zzz"));
-	hli->m_actor = vtkSmartPointer<ritk::RImageActorPipeline>::New();
-	hli->m_actor->SetData(m_Data, true);
-	hli->m_transform = vtkSmartPointer<vtkMatrix4x4>::New();
-	hli->m_transform->Identity();
-	m_Widget->m_ListWidgetHistory->insertItem(listSize, hli);
-	hli->setSelected(true);
-
-	m_Widget->m_CheckBoxShowSelectedActors->setText(QString("Show ") + QString::number(m_Widget->m_ListWidgetHistory->selectedItems().count()) + 
-		QString("/") + QString::number(m_Widget->m_ListWidgetHistory->count()) + " Actors");
-}
-void
 FastStitchingPlugin::LiveFastStitching()
 {
 	m_Mutex.lock();
 	try
 	{
-		if (m_Widget->m_CheckBoxComputeHistogramDifference->isChecked())
-		{
-			if (FrameDifferenceAboveThreshold())
-			{
-				LoadStitch();
-			} else
-			{
-				m_Mutex.unlock();
-				return;
-			}
-		} else
-		{
-			LoadStitch();
-		}
-		
+		LoadStitch();
 	} catch (std::exception &e)
 	{
 		std::cout << "Exception: \"" << e.what() << "\""<< std::endl;
@@ -320,12 +169,7 @@ FastStitchingPlugin::ClearBuffer()
 	m_BufferSize = m_Widget->m_SpinBoxBufferSize->value();
 	m_Mutex.unlock();
 }
-void
-FastStitchingPlugin::UpdateZRange()
-{
-	m_MinZ = m_Widget->m_HorizontalSliderMinZ->value();
-	m_MaxZ = m_Widget->m_HorizontalSliderMaxZ->value();
-}
+
 void
 FastStitchingPlugin::ProcessEvent(ritk::Event::Pointer EventP)
 {
@@ -349,12 +193,9 @@ FastStitchingPlugin::ProcessEvent(ritk::Event::Pointer EventP)
 
 
 			// run autostitching for each frame if checkbox is checked
-			if (m_Widget->m_RadioButtonRecord->isChecked() && m_FramesProcessed % m_Widget->m_SpinBoxFrameStep->value() == 0)
+			if (m_Widget->m_RadioButtonLiveFastStitching->isChecked() && m_FramesProcessed % m_Widget->m_SpinBoxFrameStep->value() == 0)
 			{
-				emit RecordFrameAvailable();
-			}
-			else if (m_Widget->m_RadioButtonLiveFastStitching->isChecked() && m_FramesProcessed % m_Widget->m_SpinBoxFrameStep->value() == 0)
-			{
+				std::cout << "emit LiveFastStitchingFrameAvailable()" << std::endl;
 				emit LiveFastStitchingFrameAvailable();
 			}
 
@@ -398,25 +239,6 @@ FastStitchingPlugin::ShowHideActors()
 		QString("/") + QString::number(m_Widget->m_ListWidgetHistory->count()) + " Actors");
 }
 void
-FastStitchingPlugin::HighlightActor(QListWidgetItem* item)
-{
-	HistoryListItem* hli = static_cast<HistoryListItem*>(item);
-
-	// toggle colormode
-	int mode = hli->m_actor->GetMapper()->GetColorMode();
-
-	if (mode == 0)
-	{
-		hli->m_actor->GetMapper()->ColorByArrayComponent(0, 3);
-		hli->m_actor->GetMapper()->SetColorModeToMapScalars();
-		hli->setTextColor(QColor(0, 50, 255, 255));
-	} else
-	{
-		hli->m_actor->GetMapper()->SetColorModeToDefault();
-		hli->setTextColor(QColor(0, 0, 0, 255));
-	}
-}
-void
 FastStitchingPlugin::DeleteSelectedActors()
 {
 	int numSelected = m_Widget->m_ListWidgetHistory->selectedItems().count();
@@ -451,122 +273,6 @@ FastStitchingPlugin::DeleteSelectedActors()
 	// sync buffer
 	int size = m_Widget->m_ListWidgetHistory->count();
 	m_BufferCounter = size-1;
-}
-void
-FastStitchingPlugin::MergeSelectedActors()
-{
-	if (m_Widget->m_ListWidgetHistory->selectedItems().size() <= 1)
-	{
-		std::cout << "nothing to be merged..." << std::endl;
-		return;
-	}
-
-	// append the whole history
-	vtkSmartPointer<vtkAppendPolyData> appendFilter =
-		vtkSmartPointer<vtkAppendPolyData>::New();
-
-	// create the merged history entry
-	HistoryListItem* hli = new HistoryListItem;
-	hli->setText(QDateTime::currentDateTime().time().toString("hh:mm:ss:zzz") + " (merged)");
-	hli->m_transform = vtkSmartPointer<vtkMatrix4x4>::New();
-	hli->m_actor = vtkSmartPointer<ritk::RImageActorPipeline>::New();
-	hli->setToolTip(QString("merged"));
-
-	// at this index, the merged points will be taken afterwards
-	int firstIndex = -1;
-
-	// add the data of each actor to the appendFilter and store the last transformation
-	for (int i = 0; i < m_Widget->m_ListWidgetHistory->count(); ++i)
-	{
-		HistoryListItem* hli2 = static_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
-
-		if (hli2->isSelected())
-		{
-			appendFilter->AddInput(hli2->m_actor->GetData());
-
-			hli->m_transform->DeepCopy(hli2->m_transform);
-
-			if (firstIndex == -1)
-			{
-				firstIndex = i;
-			}
-		}
-	}
-
-	// nothing selected...
-	if (firstIndex == -1)
-	{
-		delete hli;
-		return;
-	}
-
-	try
-	{
-		appendFilter->Update();
-		hli->m_actor->SetData(appendFilter->GetOutput(), true);
-	} catch (std::exception &e)
-	{
-		QMessageBox msgBox(QMessageBox::Critical, QString("Error"), 
-			QString("Try 'Clean' or selecting a smaller number of actors to merge!\n\"") + QString(e.what()) + QString("\""), 
-			QMessageBox::Ok);
-		msgBox.exec();
-
-		return;
-	}
-
-	// get rid of useless cells
-	vtkSmartPointer<vtkCellArray> cells =
-		vtkSmartPointer<vtkCellArray>::New();
-	for (vtkIdType i = 0; i < hli->m_actor->GetData()->GetNumberOfPoints(); i++)
-	{
-		cells->InsertNextCell(1, &i);
-	}
-	hli->m_actor->GetData()->SetVerts(cells);
-	hli->m_actor->GetData()->Update();
-
-	// and add the new merged history entry at a reasonable position
-	m_Widget->m_ListWidgetHistory->insertItem(firstIndex, hli);
-
-	// clean the selected history entries
-	DeleteSelectedActors();
-
-	// set the new element as selected
-	hli->setSelected(true);
-}
-void
-FastStitchingPlugin::CleanSelectedActors()
-{
-	int numSelected = m_Widget->m_ListWidgetHistory->selectedItems().count();
-	int counterProgressBar = 1;
-	emit InitProgressBar(0, numSelected);
-	emit UpdateProgressBar(counterProgressBar);
-
-	int numPoints = 0;
-	for (int i = 0; i < m_Widget->m_ListWidgetHistory->count(); ++i)
-	{
-		HistoryListItem* hli = static_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
-		if (hli->isSelected())
-		{
-			try
-			{
-				Clean(hli->m_actor->GetData());
-			} catch (std::exception &e)
-			{
-				std::cout << "Exception: \"" << e.what() << "\""<< std::endl;
-				continue;
-			}
-
-			numPoints += hli->m_actor->GetData()->GetNumberOfPoints();
-
-			emit UpdateProgressBar(++counterProgressBar);
-			QCoreApplication::processEvents();
-		}
-	}
-
-	// show number of points for selected history entries
-	m_Widget->m_LabelNumberOfPoints->setText(QString::number(numPoints));
-
-	emit UpdateGUI();
 }
 void
 FastStitchingPlugin::StitchSelectedActors()
@@ -662,83 +368,6 @@ FastStitchingPlugin::UndoTransformForSelectedActors()
 
 	emit UpdateGUI();
 }
-void
-FastStitchingPlugin::SaveSelectedActors()
-{
-	// get output file
-	QString outputFile = QFileDialog::getSaveFileName(m_Widget, QString("Save ") + 
-		QString::number(m_Widget->m_ListWidgetHistory->selectedItems().size()) + 
-		" selected actors in seperate VTK files", "D:/RITK/bin/release/Data/", "VTK files (*.vtk)");	
-	if (outputFile.isEmpty())
-		return;
-
-	// get rid of ".vtk"
-	outputFile.remove(outputFile.size() - 4, 4);
-
-
-	int numSelected = m_Widget->m_ListWidgetHistory->selectedItems().count();
-	int counterProgressBar = 1;
-	emit InitProgressBar(0, numSelected);
-	emit UpdateProgressBar(counterProgressBar);
-
-
-	int fileCount = 0;
-	for (int i = 0; i < m_Widget->m_ListWidgetHistory->count(); ++i)
-	{
-		HistoryListItem* hli = static_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
-		if (hli->isSelected())
-		{
-			QString partFileName = outputFile + QString::number(fileCount++) + ".vtk";
-			vtkSmartPointer<vtkPolyDataWriter> writer =
-				vtkSmartPointer<vtkPolyDataWriter>::New();
-			writer->SetFileName(partFileName.toStdString().c_str());
-			writer->SetInput(hli->m_actor->GetData());
-			writer->SetFileTypeToASCII();
-			writer->Update();
-
-			emit UpdateProgressBar(++counterProgressBar);
-			QCoreApplication::processEvents();
-		} 
-	}			
-}
-void
-FastStitchingPlugin::Delaunay2DSelectedActors()
-{
-	int numSelected = m_Widget->m_ListWidgetHistory->selectedItems().count();
-	int counterProgressBar = 1;
-	emit InitProgressBar(0, numSelected);
-	emit UpdateProgressBar(counterProgressBar);
-
-	// triangulation for each selected history entry - may take some time...
-	for (int i = 0; i < m_Widget->m_ListWidgetHistory->count(); ++i)
-	{
-		HistoryListItem* hli = static_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
-		if (hli->isSelected())
-		{
-			vtkSmartPointer<vtkTransform> t = 
-				vtkSmartPointer<vtkTransform>::New();
-			vtkSmartPointer<vtkDelaunay2D> Delaunay2D = 
-				vtkSmartPointer<vtkDelaunay2D>::New();
-			Delaunay2D->SetInput(hli->m_actor->GetData());
-			Delaunay2D->SetTransform(t);
-
-			try
-			{
-				Delaunay2D->Update();
-				hli->m_actor->SetData(Delaunay2D->GetOutput(), true);
-			} catch (std::exception &e)
-			{
-				std::cout << "Exception: \"" << e.what() << "\""<< std::endl;
-				continue;
-			}
-
-			emit UpdateProgressBar(++counterProgressBar);
-			QCoreApplication::processEvents();
-		} 
-	}
-
-	emit UpdateGUI();
-}
 //----------------------------------------------------------------------------
 void
 FastStitchingPlugin::ComputeStats()
@@ -778,12 +407,14 @@ FastStitchingPlugin::ComputeStats()
 void
 FastStitchingPlugin::LoadInitialize()
 {
+	std::cout << "LoadInitialize()" << std::endl;
 	LoadFrame();
 	InitializeHistory();
 }
 void
 FastStitchingPlugin::LoadStitch()
 {
+	std::cout << "LoadStitch()" << std::endl;
 	QTime timeOverall;
 	timeOverall.start();
 
@@ -843,60 +474,10 @@ FastStitchingPlugin::LoadStitch()
 	++m_BufferCounter;
 }
 //----------------------------------------------------------------------------
-bool
-FastStitchingPlugin::FrameDifferenceAboveThreshold()
-{
-	QTime t;
-	t.start();
-
-	if (!m_CurrentHist)
-	{
-		m_CurrentHist = new float[NUM_BINS_HIST];
-		for (int i = 0; i < NUM_BINS_HIST; ++i)
-			m_CurrentHist[i] = 0;
-	}
-	if (!m_PreviousHist)
-	{
-		m_PreviousHist = new float[NUM_BINS_HIST];
-		for (int i = 0; i < NUM_BINS_HIST; ++i)
-			m_PreviousHist[i] = 0;
-	}
-
-	// reset histogram
-	for (int i = 0; i < NUM_BINS_HIST; ++i)
-		m_CurrentHist[i] = 0;
-
-	// update histogram
-	const ritk::RImageF2::RangeType* ptr = m_CurrentFrame->GetRangeImage()->GetBufferPointer();
-	for (int i = 0; i < FRAME_SIZE_X*FRAME_SIZE_Y; i += STEP_SIZE_HIST)
-	{
-		m_CurrentHist[(NUM_BINS_HIST*static_cast<int>(ptr[i]))/MAX_RANGE_VAL]++;
-	}
-
-	// normalize histogram
-	for (int i = 0; i < NUM_BINS_HIST; ++i)
-		m_CurrentHist[i] /= (FRAME_SIZE_X*FRAME_SIZE_Y / STEP_SIZE_HIST);
-
-	float diff = 0;
-	for (int i = 0; i < NUM_BINS_HIST; i += STEP_SIZE_HIST)
-		diff += std::abs(m_CurrentHist[i] - m_PreviousHist[i]);
-
-	std::cout << "hist diff: " << diff << " in " << t.elapsed() << " ms" << std::endl;
-
-	if (diff > m_HistogramDifferenceThreshold)
-	{
-		// swap histograms for next frame
-		float* swp = m_PreviousHist;
-		m_PreviousHist = m_CurrentHist;
-		m_CurrentHist = swp;
-
-		return true;
-	} else
-		return false;
-}
 void
 FastStitchingPlugin::LoadFrame()
 {
+	std::cout << "LoadFrame()" << std::endl;
 	// Copy the input data to the device
 	cutilSafeCall(cudaMemcpyToArray(m_InputImgArr, 0, 0, m_CurrentFrame->GetRangeImage()->GetBufferPointer(), FRAME_SIZE_X*FRAME_SIZE_Y*sizeof(float), cudaMemcpyHostToDevice));
 
@@ -925,9 +506,6 @@ FastStitchingPlugin::LoadFrame()
 	{
 		p = m_WCs[i];
 
-		if (!(p.z >= m_MinZ && p.z < m_MaxZ))
-			continue;
-
 		if (p.x == p.x) // i.e. not QNAN
 		{
 			points->InsertNextPoint(p.x, p.y, p.z);
@@ -953,60 +531,6 @@ FastStitchingPlugin::LoadFrame()
 	{
 		throw std::exception("not enough points for stitching!");
 	}
-}
-//----------------------------------------------------------------------------
-void
-FastStitchingPlugin::ChangePointSize()
-{
-	for (int i = 0; i < m_Widget->m_ListWidgetHistory->count(); ++i)
-	{
-		HistoryListItem* hli = static_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
-		if (hli->isSelected())
-		{
-			hli->m_actor->GetProperty()->SetPointSize(m_Widget->m_HorizontalSliderPointSize->value());
-		}
-	}
-
-	emit UpdateGUI();
-}
-void
-FastStitchingPlugin::ChangeBackgroundColor1()
-{
-	QColor color = QColorDialog::getColor();
-
-	m_Widget->m_VisualizationWidget3D->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->
-		SetBackground(color.red()/255., color.green()/255., color.blue()/255.);
-}
-void
-FastStitchingPlugin::ChangeBackgroundColor2()
-{
-	QColor color = QColorDialog::getColor();
-
-	m_Widget->m_VisualizationWidget3D->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->
-		SetBackground2(color.red()/255., color.green()/255., color.blue()/255.);
-}
-//----------------------------------------------------------------------------
-void
-FastStitchingPlugin::CleanFrame()
-{
-	Clean(m_Data);
-}
-void
-FastStitchingPlugin::Clean(vtkPolyData *toBeCleaned)
-{
-	// stop if tolerance is 0 (almost nothing will be cleaned, but it still takes
-	// some milliseconds... not good...
-	if (m_Widget->m_DoubleSpinBoxCleanTolerance->value() < DBL_EPSILON)
-		return;
-
-	vtkSmartPointer<vtkCleanPolyData> cleanPolyData =
-		vtkSmartPointer<vtkCleanPolyData>::New();
-	cleanPolyData->SetTolerance(m_Widget->m_DoubleSpinBoxCleanTolerance->value());
-	cleanPolyData->PointMergingOn();
-	cleanPolyData->SetInput(toBeCleaned);
-	cleanPolyData->Update();
-
-	toBeCleaned->DeepCopy(cleanPolyData->GetOutput());
 }
 //----------------------------------------------------------------------------
 void
@@ -1074,8 +598,6 @@ FastStitchingPlugin::Stitch(vtkPolyData* toBeStitched, vtkPolyData* previousFram
 	m_icp->SetTarget(previousFrame);
 	m_icp->SetMaxMeanDist(static_cast<float>(m_Widget->m_DoubleSpinBoxMaxRMS->value()));
 	m_icp->SetMaxIter(m_Widget->m_SpinBoxMaxIterations->value());
-	m_icp->SetRemoveOutliers(m_Widget->m_CheckBoxRemoveOutliers->isChecked());
-	m_icp->SetOutlierRate(static_cast<float>(m_Widget->m_DoubleSpinBoxOutlierRate->value()));
 	m_icp->SetApplyPreviousTransform(m_Widget->m_CheckBoxUsePreviousTransformation->isChecked());
 	m_icp->SetPreviousTransformMatrix(previousTransformationMatrix);
 

@@ -38,6 +38,7 @@ public:
 		if(m_Distances) delete[] m_Distances;
 		if(m_Indices) delete[] m_Indices;
 		if(m_ClosestP) delete[] m_ClosestP;
+		if(m_devDistances) cudaFree(m_devDistances);
 
 		// allocate some points used for icp
 		m_Source = new float4[m_NumLandmarks];
@@ -45,6 +46,7 @@ public:
 		m_ClosestP = new float4[m_NumLandmarks];
 		m_Distances = new float[m_NumLandmarks];
 		m_Indices = new unsigned int[m_NumLandmarks];
+		cutilSafeCall(cudaMalloc((void**)&(m_devDistances), m_NumLandmarks*sizeof(float)));
 	}
 
 	vtkMatrix4x4* StartICP();
@@ -70,6 +72,8 @@ protected:
 	float4* m_Target;
 	float4* m_ClosestP;
 
+	float* m_devDistances;
+
 	float* m_Distances;
 	unsigned int* m_Indices;
 
@@ -85,7 +89,6 @@ protected:
 	float m_NormalizeRGBToDistanceValuesFactor;
 
 	vtkSmartPointer<vtkTransform> m_Accumulate;
-
 };
 
 #endif // ExtendedICPTransform_H__

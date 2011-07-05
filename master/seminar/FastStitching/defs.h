@@ -29,34 +29,6 @@ static int TRANSFORM_TIME;
 //----------------------------------------------------------------------------
 #define DivUp(a,b) ((a % b != 0) ? (a/b + 1) : (a/b))
 
-// structure that holds the spatial information of a single point
-typedef struct PointCoords
-{
-	float x, y, z;
-}
-PointCoords;
-
-// structure that holds the color information of a single point
-typedef struct PointColors
-{
-	float r, g, b;
-}
-PointColors;
-
-// gpu config (avoid too many parameters in gpu-code)
-typedef struct GPUConfig
-{
-	float weightRGB;
-	int metric;
-	int nrOfPoints;
-	PointCoords* targetCoords;
-	PointColors* targetColors;
-	PointCoords* sourceCoords;
-	PointColors* sourceColors;
-	unsigned int* indices;
-	float* distances;
-} GPUConfig;
-
 // rbc specific structure
 typedef struct RepGPU
 {

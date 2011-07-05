@@ -31,6 +31,7 @@ CUDARangeToWorld(float4* duplicate, const cudaArray *InputImageArray, int w, int
 extern "C"
 void CUDATransformPoints(double transformationMatrix[4][4], float4* toBeTransformed, int numPoints, float* distances)
 {
+	//printf("CUDATransformPoints\n");
 	// allocate memory for transformation matrix (will be stored linearly) and copy it
 	float tmp[16];
 	tmp[0] = (float)transformationMatrix[0][0];
@@ -52,20 +53,15 @@ void CUDATransformPoints(double transformationMatrix[4][4], float4* toBeTransfor
 	
 	CUDA_SAFE_CALL(cudaMemcpyToSymbol(dev_transformationMatrix, tmp, 16*sizeof(float), 0));
 	
-	kernelTransformPointsAndComputeDistance<<<DivUp(numPoints, CUDA_THREADS_PER_BLOCK), CUDA_THREADS_PER_BLOCK>>>(toBeTransformed, host_conf->distances);
+	kernelTransformPointsAndComputeDistance<<<DivUp(numPoints, CUDA_THREADS_PER_BLOCK), CUDA_THREADS_PER_BLOCK>>>(toBeTransformed, distances, numPoints);
 	CUT_CHECK_ERROR("Kernel execution failed (while transforming points)");
-	
-	// copy distance array to host
-	if (distances)
-	{
-		CUDA_SAFE_CALL(cudaMemcpy(distances, host_conf->distances, host_conf->nrOfPoints*sizeof(float), cudaMemcpyDeviceToHost));
-	}
 }
 
 extern "C"
 void
 CUDAExtractLandmarks(int numLandmarks, float4* devWCsIn, unsigned int* devIndicesIn, float4* devLandmarksOut)
 {
+	//printf("CUDAExtractLandmarks\n");
 	kernelExtractLandmarks<<<DivUp(numLandmarks, CUDA_THREADS_PER_BLOCK), CUDA_THREADS_PER_BLOCK>>>(devWCsIn, devIndicesIn, devLandmarksOut);
 }
 

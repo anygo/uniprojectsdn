@@ -25,6 +25,8 @@ void FindClosestPointsRBC(int nrOfReps, unsigned short* indices, float* distance
 ClosestPointFinderRBCGPU::ClosestPointFinderRBCGPU(int NrOfPoints, int metric, float weightRGB, float nrOfRepsFactor) 
 	: ClosestPointFinder(NrOfPoints, metric, weightRGB), m_NrOfRepsFactor(nrOfRepsFactor) 
 {
+	//std::cout << "ClosestPointFinderRBCGPU" << std::endl;
+
 	m_NrOfReps = std::min( MAX_REPRESENTATIVES, static_cast<int>(m_NrOfRepsFactor * sqrt(static_cast<float>(m_NrOfPoints))) );
 
 	// initialize GPU RBC struct and other data structures
@@ -44,6 +46,7 @@ ClosestPointFinderRBCGPU::ClosestPointFinderRBCGPU(int NrOfPoints, int metric, f
 
 ClosestPointFinderRBCGPU::~ClosestPointFinderRBCGPU()
 { 
+	//std::cout << "~ClosestPointFinderRBCGPU" << std::endl;
 	delete[] m_RepsGPU;
 	delete[] m_PointToRep;
 	delete[] m_RepIndices;
@@ -56,9 +59,11 @@ ClosestPointFinderRBCGPU::~ClosestPointFinderRBCGPU()
 	cutilSafeCall(cudaFree(m_devReps));
 }
 
-void ClosestPointFinderRBCGPU::Initialize(float4* targetCoords, float4* targetColors, float4* sourceCoords, float4* sourceColors)  
+void
+ClosestPointFinderRBCGPU::Initialize(float4* targetCoords, float4* targetColors, float4* sourceCoords, float4* sourceColors)  
 {
-	
+	//std::cout << "Initialize" << std::endl;
+
 	ClosestPointFinder::Initialize(targetCoords, targetColors, sourceCoords, sourceColors); 
 	InitializeRBC();
 }
@@ -66,6 +71,7 @@ void ClosestPointFinderRBCGPU::Initialize(float4* targetCoords, float4* targetCo
 void
 ClosestPointFinderRBCGPU::FindClosestPoints(unsigned int* indices, float* distances)
 {
+	//std::cout << "FindClosestPoints" << std::endl;
 
 	// returns the indices which will then be used in the icp algorithm
 	CUDAFindClosestPointsRBC(m_NrOfPoints, m_NrOfReps, m_devIndices, m_devDistances, m_devTargetCoords, m_devTargetColors, m_devSourceCoords, m_devSourceColors);
@@ -78,6 +84,8 @@ ClosestPointFinderRBCGPU::FindClosestPoints(unsigned int* indices, float* distan
 void
 ClosestPointFinderRBCGPU::InitializeRBC()
 {
+	//std::cout << "InitializeRBC" << std::endl;
+
 	// Clear vector content
 	m_Representatives.clear();
 

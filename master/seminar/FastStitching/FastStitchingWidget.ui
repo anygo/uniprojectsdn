@@ -213,11 +213,6 @@
                    <string>RandomBallCover GPU</string>
                   </property>
                  </item>
-                 <item>
-                  <property name="text">
-                   <string>BruteForce GPU</string>
-                  </property>
-                 </item>
                 </widget>
                </item>
                <item row="2" column="0">
@@ -249,50 +244,10 @@
                  </item>
                 </widget>
                </item>
-               <item row="3" column="1">
-                <widget class="QSpinBox" name="m_SpinBoxBufferSize">
-                 <property name="minimum">
-                  <number>2</number>
-                 </property>
-                 <property name="maximum">
-                  <number>65536</number>
-                 </property>
-                 <property name="singleStep">
-                  <number>5</number>
-                 </property>
-                 <property name="value">
-                  <number>50</number>
-                 </property>
-                </widget>
-               </item>
-               <item row="3" column="0">
-                <widget class="QLabel" name="label_13">
-                 <property name="text">
-                  <string>BufferSize</string>
-                 </property>
-                </widget>
-               </item>
               </layout>
              </item>
              <item>
-              <layout class="QVBoxLayout" name="verticalLayout_3">
-               <property name="spacing">
-                <number>0</number>
-               </property>
-               <item>
-                <widget class="QCheckBox" name="m_CheckBoxUsePreviousTransformation">
-                 <property name="text">
-                  <string>Initialize ICP with previous Transform</string>
-                 </property>
-                 <property name="checked">
-                  <bool>true</bool>
-                 </property>
-                </widget>
-               </item>
-              </layout>
-             </item>
-             <item>
-              <spacer name="verticalSpacer_3">
+              <spacer name="verticalSpacer">
                <property name="orientation">
                 <enum>Qt::Vertical</enum>
                </property>
@@ -372,7 +327,7 @@
                  </property>
                 </widget>
                </item>
-               <item row="4" column="0">
+               <item row="3" column="0">
                 <widget class="QLabel" name="label_18">
                  <property name="toolTip">
                   <string>only for RBC</string>
@@ -382,7 +337,7 @@
                  </property>
                 </widget>
                </item>
-               <item row="4" column="1">
+               <item row="3" column="1">
                 <widget class="QDoubleSpinBox" name="m_DoubleSpinBoxNrOfRepsFactor">
                  <property name="decimals">
                   <number>6</number>
@@ -420,29 +375,6 @@
                  </property>
                 </widget>
                </item>
-               <item row="3" column="0">
-                <widget class="QLabel" name="label_20">
-                 <property name="text">
-                  <string>HistDiffThresh</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="3" column="1">
-                <widget class="QDoubleSpinBox" name="m_DoubleSpinBoxHistDiffThresh">
-                 <property name="decimals">
-                  <number>6</number>
-                 </property>
-                 <property name="maximum">
-                  <double>1.000000000000000</double>
-                 </property>
-                 <property name="singleStep">
-                  <double>0.010000000000000</double>
-                 </property>
-                 <property name="value">
-                  <double>0.300000000000000</double>
-                 </property>
-                </widget>
-               </item>
                <item row="5" column="1">
                 <spacer name="verticalSpacer_4">
                  <property name="orientation">
@@ -456,6 +388,41 @@
                  </property>
                 </spacer>
                </item>
+               <item row="4" column="1">
+                <widget class="QDoubleSpinBox" name="m_DoubleSpinBoxMaxRMS">
+                 <property name="frame">
+                  <bool>true</bool>
+                 </property>
+                 <property name="accelerated">
+                  <bool>false</bool>
+                 </property>
+                 <property name="keyboardTracking">
+                  <bool>true</bool>
+                 </property>
+                 <property name="decimals">
+                  <number>6</number>
+                 </property>
+                 <property name="minimum">
+                  <double>0.000000000000000</double>
+                 </property>
+                 <property name="maximum">
+                  <double>1000.000000000000000</double>
+                 </property>
+                 <property name="singleStep">
+                  <double>0.000010000000000</double>
+                 </property>
+                 <property name="value">
+                  <double>0.000010000000000</double>
+                 </property>
+                </widget>
+               </item>
+               <item row="4" column="0">
+                <widget class="QLabel" name="label_6">
+                 <property name="text">
+                  <string>Mean Distance Threshold</string>
+                 </property>
+                </widget>
+               </item>
               </layout>
              </item>
             </layout>
@@ -465,7 +432,7 @@
              <string>Misc</string>
             </attribute>
             <layout class="QGridLayout" name="gridLayout_3">
-             <item row="3" column="1">
+             <item row="2" column="1">
               <spacer name="verticalSpacer_2">
                <property name="orientation">
                 <enum>Qt::Vertical</enum>
@@ -580,218 +547,22 @@
                </property>
               </widget>
              </item>
-             <item row="2" column="1">
-              <widget class="QDoubleSpinBox" name="m_DoubleSpinBoxMaxRMS">
-               <property name="frame">
-                <bool>true</bool>
-               </property>
-               <property name="accelerated">
-                <bool>false</bool>
-               </property>
-               <property name="keyboardTracking">
-                <bool>true</bool>
-               </property>
-               <property name="decimals">
-                <number>6</number>
-               </property>
-               <property name="minimum">
-                <double>0.000000000000000</double>
-               </property>
-               <property name="maximum">
-                <double>1000.000000000000000</double>
-               </property>
-               <property name="singleStep">
-                <double>0.000010000000000</double>
-               </property>
-               <property name="value">
-                <double>0.000010000000000</double>
-               </property>
-              </widget>
-             </item>
-             <item row="2" column="0">
-              <widget class="QLabel" name="label_6">
-               <property name="text">
-                <string>Mean Distance Threshold</string>
-               </property>
-              </widget>
-             </item>
             </layout>
            </widget>
           </widget>
          </item>
          <item>
-          <widget class="QGroupBox" name="groupBox_3">
-           <property name="title">
-            <string>History</string>
+          <spacer name="verticalSpacer_3">
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
            </property>
-           <layout class="QGridLayout" name="gridLayout_8">
-            <property name="verticalSpacing">
-             <number>2</number>
-            </property>
-            <item row="0" column="0">
-             <widget class="QListWidget" name="m_ListWidgetHistory">
-              <property name="minimumSize">
-               <size>
-                <width>144</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="mouseTracking">
-               <bool>true</bool>
-              </property>
-              <property name="dragEnabled">
-               <bool>false</bool>
-              </property>
-              <property name="dragDropOverwriteMode">
-               <bool>false</bool>
-              </property>
-              <property name="dragDropMode">
-               <enum>QAbstractItemView::NoDragDrop</enum>
-              </property>
-              <property name="selectionMode">
-               <enum>QAbstractItemView::ExtendedSelection</enum>
-              </property>
-              <property name="viewMode">
-               <enum>QListView::ListMode</enum>
-              </property>
-              <property name="selectionRectVisible">
-               <bool>false</bool>
-              </property>
-             </widget>
-            </item>
-            <item row="0" column="2">
-             <widget class="QFrame" name="frame_4">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="frameShape">
-               <enum>QFrame::NoFrame</enum>
-              </property>
-              <property name="frameShadow">
-               <enum>QFrame::Plain</enum>
-              </property>
-              <layout class="QVBoxLayout" name="verticalLayout">
-               <property name="spacing">
-                <number>0</number>
-               </property>
-               <property name="margin">
-                <number>0</number>
-               </property>
-              </layout>
-             </widget>
-            </item>
-            <item row="0" column="1">
-             <layout class="QGridLayout" name="gridLayout_7">
-              <property name="sizeConstraint">
-               <enum>QLayout::SetMinimumSize</enum>
-              </property>
-              <property name="spacing">
-               <number>0</number>
-              </property>
-              <item row="0" column="1">
-               <spacer name="verticalSpacer">
-                <property name="orientation">
-                 <enum>Qt::Vertical</enum>
-                </property>
-                <property name="sizeType">
-                 <enum>QSizePolicy::Expanding</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>1</width>
-                  <height>40</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-              <item row="12" column="1">
-               <widget class="QPushButton" name="m_PushButtonHistoryDelete">
-                <property name="toolTip">
-                 <string>deletes the selected actors</string>
-                </property>
-                <property name="text">
-                 <string>Delete</string>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="1">
-               <widget class="QPushButton" name="m_PushButtonHistoryShowAll">
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="text">
-                 <string>Select All</string>
-                </property>
-               </widget>
-              </item>
-              <item row="12" column="0">
-               <widget class="QPushButton" name="m_PushButtonHistoryUndoTransform">
-                <property name="toolTip">
-                 <string>inverts the transforms that were applied to these actors</string>
-                </property>
-                <property name="text">
-                 <string>Undo</string>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="0">
-               <widget class="QPushButton" name="m_PushButtonHistoryStitchSelection">
-                <property name="toolTip">
-                 <string>stitches the actors to the previous actors</string>
-                </property>
-                <property name="text">
-                 <string>Stitch</string>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </item>
-            <item row="1" column="1">
-             <widget class="QProgressBar" name="m_ProgressBar">
-              <property name="maximum">
-               <number>100</number>
-              </property>
-              <property name="value">
-               <number>0</number>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-              </property>
-              <property name="textVisible">
-               <bool>true</bool>
-              </property>
-              <property name="invertedAppearance">
-               <bool>false</bool>
-              </property>
-              <property name="textDirection">
-               <enum>QProgressBar::TopToBottom</enum>
-              </property>
-              <property name="format">
-               <string>%p%</string>
-              </property>
-             </widget>
-            </item>
-            <item row="1" column="0">
-             <widget class="QCheckBox" name="m_CheckBoxShowSelectedActors">
-              <property name="text">
-               <string>Show 0/0 Actors</string>
-              </property>
-              <property name="checkable">
-               <bool>true</bool>
-              </property>
-              <property name="checked">
-               <bool>true</bool>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </widget>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>20</width>
+             <height>40</height>
+            </size>
+           </property>
+          </spacer>
          </item>
          <item>
           <widget class="QGroupBox" name="groupBox_7">
@@ -905,31 +676,14 @@
             <property name="verticalSpacing">
              <number>0</number>
             </property>
-            <item row="1" column="0">
+            <item row="0" column="0">
              <widget class="QLabel" name="label_4">
               <property name="text">
                <string>ICP Iterations</string>
               </property>
              </widget>
             </item>
-            <item row="0" column="0">
-             <widget class="QLabel" name="label_8">
-              <property name="text">
-               <string>#Points selected in History</string>
-              </property>
-             </widget>
-            </item>
-            <item row="0" column="1">
-             <widget class="QLabel" name="m_LabelNumberOfPoints">
-              <property name="frameShadow">
-               <enum>QFrame::Plain</enum>
-              </property>
-              <property name="text">
-               <string>0</string>
-              </property>
-             </widget>
-            </item>
-            <item row="2" column="1">
+            <item row="1" column="1">
              <widget class="QLabel" name="m_LabelICPError">
               <property name="frameShadow">
                <enum>QFrame::Plain</enum>
@@ -939,32 +693,15 @@
               </property>
              </widget>
             </item>
-            <item row="2" column="0">
+            <item row="1" column="0">
              <widget class="QLabel" name="label_5">
               <property name="text">
                <string>ICP Error</string>
               </property>
              </widget>
             </item>
-            <item row="1" column="1">
+            <item row="0" column="1">
              <widget class="QLabel" name="m_LabelICPIterations">
-              <property name="frameShadow">
-               <enum>QFrame::Plain</enum>
-              </property>
-              <property name="text">
-               <string>0</string>
-              </property>
-             </widget>
-            </item>
-            <item row="3" column="0">
-             <widget class="QLabel" name="label_19">
-              <property name="text">
-               <string>Mean Target Distance</string>
-              </property>
-             </widget>
-            </item>
-            <item row="3" column="1">
-             <widget class="QLabel" name="m_LabelICPMeanTargetDistance">
               <property name="frameShadow">
                <enum>QFrame::Plain</enum>
               </property>
@@ -998,22 +735,6 @@
  </tabstops>
  <resources/>
  <connections>
-  <connection>
-   <sender>m_PushButtonHistoryShowAll</sender>
-   <signal>clicked()</signal>
-   <receiver>m_ListWidgetHistory</receiver>
-   <slot>selectAll()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>933</x>
-     <y>459</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>784</x>
-     <y>454</y>
-    </hint>
-   </hints>
-  </connection>
   <connection>
    <sender>m_RadioButtonOff</sender>
    <signal>toggled(bool)</signal>

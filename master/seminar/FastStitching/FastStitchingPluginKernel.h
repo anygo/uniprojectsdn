@@ -15,8 +15,6 @@
 __constant__ float devWeightRGB;
 
 __constant__ float dev_transformationMatrix[16];
-__constant__ GPUConfig dev_conf[1];
-GPUConfig host_conf[1];
 
 // RBC
 __constant__ unsigned short* dev_representatives;
@@ -72,7 +70,7 @@ CUDARangeToWorldKernel(unsigned int NX, unsigned int NY, float4* duplicate)
 }
 
 __global__
-void kernelTransformPointsAndComputeDistance(float4* points, float* distances)
+void kernelTransformPointsAndComputeDistance(float4* points, float* distances, int numPoints)
 {
 	int tid = blockIdx.x*blockDim.x + threadIdx.x;
 
@@ -83,7 +81,7 @@ void kernelTransformPointsAndComputeDistance(float4* points, float* distances)
 
 	__syncthreads();
 
-	if (tid >= dev_conf->nrOfPoints)
+	if (tid >= numPoints)
 		return;
 
 	float4 p = points[tid];
@@ -111,13 +109,18 @@ void kernelTransformPointsAndComputeDistance(float4* points, float* distances)
 	float zDiff = p.z - z;
 	distances[tid] = xDiff*xDiff + yDiff*yDiff + zDiff*zDiff;
 }
+
 __global__
 void kernelExtractLandmarks(float4* devWCsIn, unsigned int* devIndicesIn, float4* devLandmarksOut)
 {
 	// get source[tid] for this thread
 	int tid = blockIdx.x*blockDim.x + threadIdx.x;
 	
-	devLandmarksOut[tid] = devWCsIn[devIndicesIn[tid]];
+	int idx = devIndicesIn[tid];
+	while (devWCsIn[idx].x != devWCsIn[idx].x)
+		idx = (idx + 16) % (FRAME_SIZE_X * FRAME_SIZE_Y);
+
+	devLandmarksOut[tid] = devWCsIn[idx];
 }
 
 __device__

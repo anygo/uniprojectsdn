@@ -16,22 +16,6 @@ typedef RImageType::Pointer				RImagePointer;
 typedef RImageType::ConstPointer		RImageConstPointer;
 
 
-/**	@class		HistoryListItem
- *	@brief		Extended QListWidgetItem for the history
- *	@author		Felix Lugauer and Dominik Neumann
- *
- *	@details
- *	Class that extends QListWidgetItem and holds additional data, in particular
- *	the actual point data inside a RImageActorPipeline and the transformation 
- *	matrix that was applied to modify the data (during stitching)
- */
-class HistoryListItem : public QListWidgetItem
-{
-public:
-	vtkSmartPointer<ritk::RImageActorPipeline>	m_actor;
-	vtkSmartPointer<vtkMatrix4x4>				m_transform;
-};
-
 /**	@class		FastStitchingPlugin
  *	@brief		RITK Plugin for (real time) stitching of 3D point clouds
  *	@author		Felix Lugauer and Dominik Neumann
@@ -62,23 +46,14 @@ public:
 
 signals:
 	void UpdateGUI();
-	void UpdateProgressBar(int val);
-	void InitProgressBar(int from, int to);
 	void UpdateStats();
 	void RecordFrameAvailable();
 	void LiveFastStitchingFrameAvailable();
 
 protected slots:
 	void LoadStitch();
-	void LoadInitialize();
-	void InitializeHistory();
-	void ShowHideActors();
-	void DeleteSelectedActors();
-
-	void ComputeStats();
 	void ResetICPandCPF(); 
 	void LiveFastStitching();
-	void ClearBuffer();
 	void SetThreshold(double thresh) { m_HistogramDifferenceThreshold = thresh; }
 
 
@@ -86,13 +61,12 @@ protected:
 	FastStitchingWidget *m_Widget;
 
 	// our functions
-	void Clean(vtkPolyData *toBeCleaned);
 	void LoadFrame();
 	bool FrameDifferenceAboveThreshold();
-	void CleanFrame();
 	void Reset();
 	void ExtractLandmarks();
 	void Stitch();
+	void VisualizeFrame();
 
 	
 	// our members
@@ -119,8 +93,6 @@ protected:
 
 	int m_FramesProcessed;
 	QMutex m_Mutex;
-	int m_BufferSize;
-	int m_BufferCounter;
 	bool m_ResetICPandCPFRequired;
 	float m_HistogramDifferenceThreshold;
 

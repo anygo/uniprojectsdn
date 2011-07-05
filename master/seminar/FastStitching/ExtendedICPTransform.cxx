@@ -20,6 +20,8 @@ void CUDATransformPoints(double transformationMatrix[4][4], float4* toBeTransfor
 
 ExtendedICPTransform::ExtendedICPTransform()
 {
+	//std::cout << "ExtendedICPTransform" << std::endl;
+
 	m_Accumulate = vtkTransform::New();
 	m_Accumulate->PostMultiply();
 	m_Source = NULL;
@@ -27,32 +29,39 @@ ExtendedICPTransform::ExtendedICPTransform()
 	m_ClosestP = NULL;
 	m_Distances = NULL;
 	m_Indices = NULL;
+	m_devDistances = NULL;
 }
 
 ExtendedICPTransform::~ExtendedICPTransform()
 {
+	//std::cout << "~ExtendedICPTransform" << std::endl;
 	if(m_Source) delete[] m_Source;
 	if(m_Target) delete[] m_Target;
 	if(m_ClosestP) delete[] m_ClosestP;
 	if(m_Distances)	delete[] m_Distances;
-	if(m_Indices)	delete[] m_Indices;
+	if(m_Indices) delete[] m_Indices;
+	if(m_devDistances) cudaFree(m_devDistances);
 }
 //----------------------------------------------------------------------------
 void
 ExtendedICPTransform::SetSource(float4 *source)
 {
+	//std::cout << "SetSource" << std::endl;
 	m_devSource = source;
 }
 //----------------------------------------------------------------------------
 void
 ExtendedICPTransform::SetTarget(float4 *target)
 {
+	//std::cout << "SetTarget" << std::endl;
 	m_devTarget = target;
 }
 //----------------------------------------------------------------------------
 vtkMatrix4x4*
 ExtendedICPTransform::StartICP() 
 {
+	//std::cout << "StartICP" << std::endl;
+
 	// configure ClosestPointFinder
 	m_ClosestPointFinder->Initialize( m_devTarget, NULL, m_devSource, NULL);
 
@@ -94,7 +103,9 @@ ExtendedICPTransform::StartICP()
 		totaldist = 0.f;
 
 		// transform on gpu
-		CUDATransformPoints(mat->Element, m_devSource, m_NumLandmarks, m_Distances);
+		CUDATransformPoints(mat->Element, m_devSource, m_NumLandmarks, m_devDistances);
+
+		cutilSafeCall(cudaMemcpy(m_Distances, m_devDistances, m_NumLandmarks*sizeof(float), cudaMemcpyDeviceToHost));
 
 		for(int i = 0; i < m_NumLandmarks; i++)
 		{
@@ -114,6 +125,7 @@ ExtendedICPTransform::StartICP()
 vtkMatrix4x4*
 ExtendedICPTransform::EstimateTransformationMatrix(float4* source, float4* target)
 {
+	//std::cout << "EstimateTransformationMatrix" << std::endl;
 	int i;
 
 	vtkSmartPointer<vtkMatrix4x4> mat = vtkSmartPointer<vtkMatrix4x4>::New();

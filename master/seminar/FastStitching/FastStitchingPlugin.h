@@ -74,8 +74,7 @@ protected slots:
 	void InitializeHistory();
 	void ShowHideActors();
 	void DeleteSelectedActors();
-	void StitchSelectedActors();
-	void UndoTransformForSelectedActors();
+
 	void ComputeStats();
 	void ResetICPandCPF(); 
 	void LiveFastStitching();
@@ -93,18 +92,14 @@ protected:
 	void CleanFrame();
 	void Reset();
 	void ExtractLandmarks();
-	void Stitch(vtkPolyData* toBeStitched, vtkPolyData* previousFrame,
-						vtkMatrix4x4* previousTransformationMatrix,
-						vtkPolyData* outputStitchedPolyData,
-						vtkMatrix4x4* outputTransformationMatrix);
+	void Stitch();
 
 	
 	// our members
 	ritk::NewFrameEvent::RImageConstPointer		m_CurrentFrame;
 	float*										m_CurrentHist;
 	float*										m_PreviousHist;
-	vtkSmartPointer<vtkPolyData>				m_Data;
-	vtkSmartPointer<ExtendedICPTransform>		m_icp;
+	ExtendedICPTransform*						m_icp;
 	ClosestPointFinder*							m_cpf; 
 	float4*										m_devWCs;
 	float4*										m_devPrevWCs;
@@ -128,6 +123,8 @@ protected:
 	int m_BufferCounter;
 	bool m_ResetICPandCPFRequired;
 	float m_HistogramDifferenceThreshold;
+
+	vtkSmartPointer<vtkMatrix4x4>				m_PreviousTransform;
 };
 
 

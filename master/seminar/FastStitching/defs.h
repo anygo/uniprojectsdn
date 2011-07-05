@@ -1,6 +1,7 @@
 #ifndef defs_H__
 #define	defs_H__
 
+#include "cutil_inline.h"
 
 #define MAX_REPRESENTATIVES 1024
 #define CUDA_THREADS_PER_BLOCK 128
@@ -59,8 +60,7 @@ typedef struct GPUConfig
 // rbc specific structure
 typedef struct RepGPU
 {
-	PointCoords coords;
-	PointColors colors;
+	unsigned int index;
 	unsigned int nrOfPoints;
 	unsigned int* dev_points;
 } RepGPU;

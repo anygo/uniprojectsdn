@@ -26,17 +26,18 @@ class ClosestPointFinderRBCGPU : public ClosestPointFinder
 	} Representative;
 
 public:
-	ClosestPointFinderRBCGPU(int NrOfPoints, int metric, int weightRGB, float nrOfRepsFactor);
+	ClosestPointFinderRBCGPU(int NrOfPoints, int metric, float weightRGB, float nrOfRepsFactor);
 
 	~ClosestPointFinderRBCGPU();
 
 	void Initialize(float4* targetCoords, float4* targetColors, float4* sourceCoords, float4* sourceColors);
 
-	void FindClosestPoints(int* indices, float* distances);
+	void FindClosestPoints(unsigned int* indices, float* distances);
 
 
 protected:
-	void initRBC();
+
+	void InitializeRBC();
 
 	int m_NrOfReps;
 	float m_NrOfRepsFactor;
@@ -44,10 +45,18 @@ protected:
 
 	std::vector<Representative> m_Representatives;
 	RepGPU* m_RepsGPU;
-	unsigned int* m_Reps;
+	unsigned int* m_RepIndices;
 	unsigned int* m_PointToRep;
-	unsigned int* m_RepsIndices;
 	
+	// GPU pointer
+	float* m_devDistances;
+	unsigned int* m_devIndices;
+
+	// RBC GPU pointer
+	unsigned int* m_devRepIndices;
+	unsigned int* m_devPointToRep;
+	unsigned int* m_devReps;
+
 };
 
 

@@ -31,7 +31,6 @@
 #include <itkImageRegionIterator.h>
 
 // our includes
-#include <ClosestPointFinderBruteForceGPU.h>
 #include <ClosestPointFinderRBCGPU.h>
 #include <defs.h>
 
@@ -41,7 +40,7 @@ CUDARangeToWorld(float4* duplicate, const cudaArray *InputImageArray, int w, int
 
 extern "C"
 void
-CUDAExtractLandmarks(float4* devWCsIn, unsigned int* devIndicesIn, float4* devLandmarksOut);
+CUDAExtractLandmarks(int numLandmarks, float4* devWCsIn, unsigned int* devIndicesIn, float4* devLandmarksOut);
 
 extern "C"
 void CUDATransformPoints(double transformationMatrix[4][4], float4* toBeTransformed, int numPoints, float* distances);
@@ -78,8 +77,6 @@ FastStitchingPlugin::FastStitchingPlugin()
 	connect(this, SIGNAL(UpdateStats()), this, SLOT(ComputeStats()));
 
 	// initialize member objects
-	m_Data = vtkSmartPointer<vtkPolyData>::New();
-
 	m_RangeTextureData = new unsigned char[FRAME_SIZE_X*FRAME_SIZE_Y];
 	m_WCs = new float4[FRAME_SIZE_X*FRAME_SIZE_Y];
 
@@ -92,13 +89,21 @@ FastStitchingPlugin::FastStitchingPlugin()
 	m_FramesProcessed = 0;
 
 	// iterative closest point (ICP) transformation
-	m_icp = vtkSmartPointer<ExtendedICPTransform>::New();
+	m_icp = new ExtendedICPTransform;
+
+	int metric;
+	switch (m_Widget->m_ComboBoxMetric->currentIndex())
+	{
+	case 0: metric = LOG_ABSOLUTE_DISTANCE; break;
+	case 1: metric = ABSOLUTE_DISTANCE; break;
+	case 2: metric = SQUARED_DISTANCE; break;
+	}
 
 	// initialize ClosestPointFinder
 	switch (m_Widget->m_ComboBoxClosestPointFinder->currentIndex())
 	{
-	case 0: m_cpf = new ClosestPointFinderRBCGPU(m_Widget->m_SpinBoxLandmarks->value(), static_cast<float>(m_Widget->m_DoubleSpinBoxNrOfRepsFactor->value())); break;
-	case 1: m_cpf = new ClosestPointFinderBruteForceGPU(m_Widget->m_SpinBoxLandmarks->value()); break;
+	case 0: m_cpf = new ClosestPointFinderRBCGPU(m_Widget->m_SpinBoxLandmarks->value(), metric, m_Widget->m_DoubleSpinBoxRGBWeight->value(), static_cast<float>(m_Widget->m_DoubleSpinBoxNrOfRepsFactor->value())); break;
+	//case 1: m_cpf = new ClosestPointFinderBruteForceGPU(m_Widget->m_SpinBoxLandmarks->value()); break;
 	}
 
 	// dirty hack - we just initialized m_icp and m_cpf, but the plugin crashes if we don't do it again (Qt contexts?!)
@@ -292,100 +297,6 @@ FastStitchingPlugin::DeleteSelectedActors()
 	int size = m_Widget->m_ListWidgetHistory->count();
 	m_BufferCounter = size-1;
 }
-void
-FastStitchingPlugin::StitchSelectedActors()
-{
-	int numSelected = m_Widget->m_ListWidgetHistory->selectedItems().count();
-	int counterProgressBar = 1;
-	emit InitProgressBar(0, numSelected);
-	emit UpdateProgressBar(counterProgressBar);
-
-	QTime t;
-	int overallTime = 0;
-
-	// stitch all selected actors to previous actor in list
-	// ignore the first one, because it can not be stitched to anything
-	for (int i = 1; i < m_Widget->m_ListWidgetHistory->count(); ++i)
-	{
-		HistoryListItem* hli = static_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
-		if (hli->isSelected())
-		{
-			HistoryListItem* hli_prev = static_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i - 1));
-
-			t.start();
-
-			try
-			{
-				QTime timeOverall;
-				timeOverall.start();
-				Stitch(hli->m_actor->GetData(), hli_prev->m_actor->GetData(), hli_prev->m_transform, hli->m_actor->GetData(), hli->m_transform);
-				OVERALL_TIME = timeOverall.elapsed();
-				LOAD_TIME = 0; // because frames are already loaded
-			} catch (std::exception &e)
-			{
-				std::cout << "Exception: \"" << e.what() << "\"" << std::endl;
-				continue;
-			}
-			overallTime += t.elapsed();
-
-			emit UpdateStats();
-			emit UpdateProgressBar(++counterProgressBar);
-			emit UpdateGUI();
-			QCoreApplication::processEvents();
-		}
-	}
-
-	std::cout << overallTime << " ms for FastStitching " << m_Widget->m_ListWidgetHistory->selectedItems().count() << " frames (time to update GUI excluded)" << std::endl;
-
-	emit UpdateGUI();
-}
-void
-FastStitchingPlugin::UndoTransformForSelectedActors()
-{
-	int numSelected = m_Widget->m_ListWidgetHistory->selectedItems().count();
-	int counterProgressBar = 1;
-	emit InitProgressBar(0, numSelected);
-	emit UpdateProgressBar(counterProgressBar);
-
-	// take the inverse of the transform s.t. we get the original data back (approximately)
-	for (int i = 0; i < m_Widget->m_ListWidgetHistory->count(); ++i)
-	{
-		HistoryListItem* hli = static_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
-		if (hli->isSelected())
-		{
-			// invert the transform
-			hli->m_transform->Invert();
-
-			// set up transform
-			vtkSmartPointer<vtkTransform> inverseTransform =
-				vtkSmartPointer<vtkTransform>::New();
-
-			inverseTransform->SetMatrix(hli->m_transform);
-			inverseTransform->Modified();
-
-			// set up transform filter
-			vtkSmartPointer<vtkTransformPolyDataFilter> inverseTransformFilter =
-				vtkSmartPointer<vtkTransformPolyDataFilter>::New();
-
-			inverseTransformFilter->SetInput(hli->m_actor->GetData());
-			inverseTransformFilter->SetTransform(inverseTransform);
-			inverseTransformFilter->Modified();
-			inverseTransformFilter->Update();
-
-			// update the data
-			hli->m_actor->GetData()->DeepCopy(inverseTransformFilter->GetOutput());
-
-			// set transform to identity
-			hli->m_transform->Identity();
-
-			emit UpdateProgressBar(++counterProgressBar);
-			emit UpdateGUI();
-			QCoreApplication::processEvents();
-		}
-	}
-
-	emit UpdateGUI();
-}
 //----------------------------------------------------------------------------
 void
 FastStitchingPlugin::ComputeStats()
@@ -474,7 +385,7 @@ FastStitchingPlugin::LoadStitch()
 	}
 
 	// stitch to just loaded frame to the previous frame (given by last history entry)
-	Stitch(m_Data, hli_last->m_actor->GetData(), hli_last->m_transform, hli->m_actor->GetData(), hli->m_transform);
+	Stitch();
 
 	OVERALL_TIME = timeOverall.elapsed();
 
@@ -557,9 +468,8 @@ FastStitchingPlugin::LoadFrame()
 void
 FastStitchingPlugin::ExtractLandmarks()
 {
-	// TODO: generate indices before...
-	CUDAExtractLandmarks(m_devWCs, m_devSourceIndices, m_devSourceLandmarks);
-	CUDAExtractLandmarks(m_devPrevWCs, m_devTargetIndices, m_devTargetLandmarks);
+	CUDAExtractLandmarks(m_Widget->m_SpinBoxLandmarks->value(), m_devWCs, m_devSourceIndices, m_devSourceLandmarks);
+	CUDAExtractLandmarks(m_Widget->m_SpinBoxLandmarks->value(), m_devPrevWCs, m_devTargetIndices, m_devTargetLandmarks);
 }
 //----------------------------------------------------------------------------
 void
@@ -572,7 +482,7 @@ FastStitchingPlugin::InitializeHistory()
 	HistoryListItem* hli = new HistoryListItem();
 	hli->setText(QDateTime::currentDateTime().time().toString("hh:mm:ss:zzz"));
 	hli->m_actor = vtkSmartPointer<ritk::RImageActorPipeline>::New();
-	hli->m_actor->SetData(m_Data, true);
+	//hli->m_actor->SetData(m_Data, true);
 	hli->m_transform = vtkSmartPointer<vtkMatrix4x4>::New();
 	hli->m_transform->Identity();
 	m_Widget->m_ListWidgetHistory->insertItem(0, hli);
@@ -607,12 +517,6 @@ FastStitchingPlugin::Reset()
 	cutilSafeCall(cudaMalloc((void**)&(m_devSourceLandmarks), m_Widget->m_SpinBoxLandmarks->value()*sizeof(float4)));
 	cutilSafeCall(cudaMalloc((void**)&(m_devTargetLandmarks), m_Widget->m_SpinBoxLandmarks->value()*sizeof(float4)));
 
-	switch (m_Widget->m_ComboBoxClosestPointFinder->currentIndex())
-	{
-	case 0: m_cpf = new ClosestPointFinderRBCGPU(m_Widget->m_SpinBoxLandmarks->value(), static_cast<float>(m_Widget->m_DoubleSpinBoxNrOfRepsFactor->value())); break;
-	case 1: m_cpf = new ClosestPointFinderBruteForceGPU(m_Widget->m_SpinBoxLandmarks->value()); break;
-	}
-
 	int metric;
 	switch (m_Widget->m_ComboBoxMetric->currentIndex())
 	{
@@ -621,26 +525,50 @@ FastStitchingPlugin::Reset()
 	case 2: metric = SQUARED_DISTANCE; break;
 	}
 
-	m_icp = vtkSmartPointer<ExtendedICPTransform>::New();
+	switch (m_Widget->m_ComboBoxClosestPointFinder->currentIndex())
+	{
+	case 0: m_cpf = new ClosestPointFinderRBCGPU(m_Widget->m_SpinBoxLandmarks->value(), metric, m_Widget->m_DoubleSpinBoxRGBWeight->value(), static_cast<float>(m_Widget->m_DoubleSpinBoxNrOfRepsFactor->value())); break;
+	//case 1: m_cpf = new ClosestPointFinderBruteForceGPU(m_Widget->m_SpinBoxLandmarks->value()); break;
+	}
+
+	delete m_icp;
+	m_icp = new ExtendedICPTransform;
 	m_icp->SetClosestPointFinder(m_cpf);
 	m_icp->SetNumLandmarks(m_Widget->m_SpinBoxLandmarks->value());
 
 	m_BufferSize = m_Widget->m_SpinBoxBufferSize->value();
 
+	// create source and target indices and copy to gpu
+	int numLandmarks = m_Widget->m_SpinBoxLandmarks->value();
+	unsigned int* srcIndices = new unsigned int[numLandmarks];
+	int stepSize = (FRAME_SIZE_X * FRAME_SIZE_Y) / numLandmarks;
+
+	for (int i = 0, j = 0; i < numLandmarks; ++i, j += stepSize)
+	{
+		srcIndices[i] = j;
+	}
+
+	// atm source and target indices are the same... no clipping! TODO!!!
+	cutilSafeCall(cudaMemcpy(m_devSourceIndices, srcIndices, numLandmarks*sizeof(unsigned int), cudaMemcpyHostToDevice));
+	cutilSafeCall(cudaMemcpy(m_devTargetIndices, srcIndices, numLandmarks*sizeof(unsigned int), cudaMemcpyHostToDevice));
+
+	delete[] srcIndices;
+
+	m_PreviousTransform = vtkSmartPointer<vtkMatrix4x4>::New();
+	m_PreviousTransform->Identity();
+
 	m_ResetICPandCPFRequired = false;
 }
 //----------------------------------------------------------------------------
 void
-FastStitchingPlugin::Stitch(float4* sourceLMs, float4* targetLMs,
-							vtkMatrix4x4* previousTransformationMatrix,
-							vtkMatrix4x4* outputTransformationMatrix)
+FastStitchingPlugin::Stitch()
 {
-	m_icp->SetSource(sourceLMs);
-	m_icp->SetTarget(targetLMs);
+	m_icp->SetSource(m_devSourceLandmarks);
+	m_icp->SetTarget(m_devTargetLandmarks);
 	m_icp->SetMaxMeanDist(static_cast<float>(m_Widget->m_DoubleSpinBoxMaxRMS->value()));
 	m_icp->SetMaxIter(m_Widget->m_SpinBoxMaxIterations->value());
 
-	CUDATransformPoints(previousTransformationMatrix->Element, sourceLMs, m_Widget->m_SpinBoxLandmarks->value(), NULL);
+	CUDATransformPoints(m_PreviousTransform->Element, m_devSourceLandmarks, m_Widget->m_SpinBoxLandmarks->value(), NULL);
 
 	// new stuff... strange
 	//double* bounds = toBeStitched->GetBounds();
@@ -648,15 +576,12 @@ FastStitchingPlugin::Stitch(float4* sourceLMs, float4* targetLMs,
 	//m_icp->SetNormalizeRGBToDistanceValuesFactor(static_cast<float>(boundDiagonal / sqrt(3.0)));
 
 	// transform vtkPolyData in our own structures and clip simultaneously
-	QTime timeClip;
-	timeClip.start();
-	CLIP_TIME = timeClip.elapsed();
 
 	QTime timeICP;
 	timeICP.start();
 
 	// Start ICP and yield final transformation matrix
-	outputTransformationMatrix->DeepCopy(m_icp->StartICP());
+	m_PreviousTransform->DeepCopy(m_icp->StartICP());
 
 	ICP_TIME = timeICP.elapsed();
 	m_Widget->m_LabelICPMeanTargetDistance->setText(QString::number(m_icp->GetMeanTargetDistance(), 'f', 2));
@@ -665,7 +590,7 @@ FastStitchingPlugin::Stitch(float4* sourceLMs, float4* targetLMs,
 	timeTransform.start();
 
 	// perform the transform on GPU
-	CUDATransformPoints(outputTransformationMatrix->Element, m_devWCs, FRAME_SIZE_X * FRAME_SIZE_Y, NULL);
+	CUDATransformPoints(m_PreviousTransform->Element, m_devWCs, FRAME_SIZE_X * FRAME_SIZE_Y, NULL);
 
 	TRANSFORM_TIME = timeTransform.elapsed();
 

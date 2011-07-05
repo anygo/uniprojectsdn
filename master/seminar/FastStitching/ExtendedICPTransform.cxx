@@ -1,7 +1,5 @@
 #include "ExtendedICPTransform.h"
 
-#include "ClosestPointFinderBruteForceGPU.h"
-
 #include "vtkDataSet.h"
 #include "vtkLandmarkTransform.h"
 #include "vtkMath.h"
@@ -28,14 +26,16 @@ ExtendedICPTransform::ExtendedICPTransform()
 	m_Target = NULL;
 	m_ClosestP = NULL;
 	m_Distances = NULL;
+	m_Indices = NULL;
 }
 
 ExtendedICPTransform::~ExtendedICPTransform()
 {
-	if(m_Source) delete[] m_SourceCoords;
-	if(m_Target) delete[] m_TargetCoords;
+	if(m_Source) delete[] m_Source;
+	if(m_Target) delete[] m_Target;
 	if(m_ClosestP) delete[] m_ClosestP;
 	if(m_Distances)	delete[] m_Distances;
+	if(m_Indices)	delete[] m_Indices;
 }
 //----------------------------------------------------------------------------
 void
@@ -54,7 +54,7 @@ vtkMatrix4x4*
 ExtendedICPTransform::StartICP() 
 {
 	// configure ClosestPointFinder
-	m_ClosestPointFinder->SetTarget(m_TargetCoords, m_TargetColors, m_SourceCoords, m_SourceColors);
+	m_ClosestPointFinder->Initialize( m_devTarget, NULL, m_devSource, NULL);
 
 	m_Accumulate->Identity();
 
@@ -72,11 +72,11 @@ ExtendedICPTransform::StartICP()
 		
 		// Set locators source points and perfom nearest neighbor search
 		
-		unsigned short* indices = m_ClosestPointFinder->FindClosestPoints();
+		m_ClosestPointFinder->FindClosestPoints(m_Indices, m_Distances);
 
 		for(int i = 0; i < m_NumLandmarks; ++i)
 		{
-			int index = indices[i];
+			int index = m_Indices[i];
 			m_ClosestP[i] = m_Target[index];
 		}
 

@@ -84,7 +84,6 @@ SET(HDRS
 	defs.h
 	ExtendedICPTransform.h
 	ClosestPointFinder.h
-	ClosestPointFinderBruteForceGPU.h
 	ClosestPointFinderRBCGPU.h
 )
 
@@ -93,7 +92,6 @@ SET(SRCS
 	FastStitchingPlugin.cxx
 	FastStitchingWidget.cxx
 	ExtendedICPTransform.cxx
-	ClosestPointFinderBruteForceGPU.cxx
 	ClosestPointFinderRBCGPU.cxx
 )
 

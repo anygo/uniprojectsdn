@@ -36,6 +36,7 @@ public:
 		if(m_Source) delete[] m_Source;
 		if(m_Target) delete[] m_Target;
 		if(m_Distances) delete[] m_Distances;
+		if(m_Indices) delete[] m_Indices;
 		if(m_ClosestP) delete[] m_ClosestP;
 
 		// allocate some points used for icp
@@ -43,9 +44,13 @@ public:
 		m_Target = new float4[m_NumLandmarks];
 		m_ClosestP = new float4[m_NumLandmarks];
 		m_Distances = new float[m_NumLandmarks];
+		m_Indices = new unsigned int[m_NumLandmarks];
 	}
 
 	vtkMatrix4x4* StartICP();
+
+	inline void SetMaxIter(int maxIter) { m_MaxIter = maxIter; }
+	inline void SetMaxMeanDist(float maxMean) { m_MaxMeanDist = maxMean; }
 
 	inline void SetClosestPointFinder(ClosestPointFinder* cpf) { m_ClosestPointFinder = cpf; }
 	inline void SetNormalizeRGBToDistanceValuesFactor(float factor) { m_NormalizeRGBToDistanceValuesFactor = factor; }
@@ -56,7 +61,7 @@ public:
 
 protected:
 
-	vtkMatrix4x4* EstimateTransformationMatrix(PointCoords* source, PointCoords* target);
+	vtkMatrix4x4* EstimateTransformationMatrix(float4* source, float4* target);
 
 	float4* m_devSource;
 	float4* m_devTarget;
@@ -66,6 +71,7 @@ protected:
 	float4* m_ClosestP;
 
 	float* m_Distances;
+	unsigned int* m_Indices;
 
 	ClosestPointFinder* m_ClosestPointFinder;
 

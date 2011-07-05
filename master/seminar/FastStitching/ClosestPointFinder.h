@@ -18,7 +18,7 @@ public:
 	ClosestPointFinder(int nrPoints, int metric, float weightRGB) : m_NrOfPoints(nrPoints), m_Metric(metric), m_WeightRGB(weightRGB) {}
 	virtual ~ClosestPointFinder() {}
 
-	virtual void FindClosestPoints(unsigned int* indices, unsigned int* distances) = 0;
+	virtual void FindClosestPoints(unsigned int* indices, float* distances) = 0;
 
 	virtual inline void Initialize(float4* targetCoords, float4* targetColors, float4* sourceCoords, float4* sourceColors) 
 	{

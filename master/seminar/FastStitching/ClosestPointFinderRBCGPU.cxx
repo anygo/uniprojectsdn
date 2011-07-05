@@ -8,85 +8,80 @@
 
 
 extern "C"
-void initGPUMemory(int nrOfPoints, float weightRGB, int metric);
+void CUDAPointsToReps(int nrOfPoints, int nrOfReps, float4* devTargetCoords, float4* devTargetColors, unsigned int* devRepIndices, unsigned int* devPointToRep);
 
 extern "C"
-void transferToGPU(PointCoords* targetCoords, PointColors* targetColors, PointCoords* sourceCoords, PointColors* sourceColors);
+void initGPURBC(int nrOfReps, RepGPU* repsGPU);
 
 extern "C"
-void cleanupGPUCommon();
+void CUDAFindClosestPointsRBC(int nrOfPoints, int nrOfReps, unsigned int* indices, float* distances, float4* targetCoords, float4* targetColors, float4* sourceCoords, float4* sourceColors);
+///////////////
 
-/////////////////////
-
-extern "C"
-void initGPUCommon(PointCoords* targetCoords, PointColors* targetColors, PointCoords* sourceCoords, PointColors* sourceColors, float weightRGB, int metric, int nrOfPoints);
-
-extern "C"
-void initGPURBC(int nrOfReps, RepGPU* repsGPU, unsigned short* repsIndices);
-
-extern "C"
-void cleanupGPURBC(); 
-
-extern "C"
-void PointsToReps(int nrOfReps, unsigned short* pointToRep, unsigned short* reps);
 
 extern "C"
 void FindClosestPointsRBC(int nrOfReps, unsigned short* indices, float* distances);
 
 
-ClosestPointFinderRBCGPU::ClosestPointFinderRBCGPU(int NrOfPoints, int metric, int weightRGB, float nrOfRepsFactor) 
+ClosestPointFinderRBCGPU::ClosestPointFinderRBCGPU(int NrOfPoints, int metric, float weightRGB, float nrOfRepsFactor) 
 	: ClosestPointFinder(NrOfPoints, metric, weightRGB), m_NrOfRepsFactor(nrOfRepsFactor) 
 {
 	m_NrOfReps = std::min( MAX_REPRESENTATIVES, static_cast<int>(m_NrOfRepsFactor * sqrt(static_cast<float>(m_NrOfPoints))) );
 
 	// initialize GPU RBC struct and other data structures
-	m_Reps = new unsigned int[m_NrOfReps];
+	m_RepIndices = new unsigned int[m_NrOfReps];
 	m_RepsGPU = new RepGPU[m_NrOfReps];	
 	m_PointToRep = new unsigned int[m_NrOfPoints];
-	m_RepsIndices = new unsigned int[m_NrOfPoints];
 
-	m_Initialized = false;
+	// RBC GPU pointer
+	cutilSafeCall(cudaMalloc((void**)&(m_devDistances), m_NrOfPoints*sizeof(float)));
+	cutilSafeCall(cudaMalloc((void**)&(m_devIndices), m_NrOfPoints*sizeof(unsigned int)));
+	cutilSafeCall(cudaMalloc((void**)&(m_devPointToRep), m_NrOfPoints*sizeof(unsigned int)));
+	cutilSafeCall(cudaMalloc((void**)&(m_devRepIndices), m_NrOfReps*sizeof(unsigned int)));
+	cutilSafeCall(cudaMalloc((void**)&(m_devReps), m_NrOfReps*sizeof(unsigned int)));
+
+	m_Initialized = true;
 }
 
 ClosestPointFinderRBCGPU::~ClosestPointFinderRBCGPU()
 { 
 	delete[] m_RepsGPU;
 	delete[] m_PointToRep;
-	delete[] m_Reps;
-	delete[] m_RepsIndices;
+	delete[] m_RepIndices;
 
 	// Delete GPU Device Memory
-	cleanupGPURBC();
-	cleanupGPUCommon();
+	cutilSafeCall(cudaFree(m_devDistances));
+	cutilSafeCall(cudaFree(m_devIndices));
+	cutilSafeCall(cudaFree(m_devPointToRep));
+	cutilSafeCall(cudaFree(m_devRepIndices));
+	cutilSafeCall(cudaFree(m_devReps));
 }
 
 void ClosestPointFinderRBCGPU::Initialize(float4* targetCoords, float4* targetColors, float4* sourceCoords, float4* sourceColors)  
 {
-
+	
 	ClosestPointFinder::Initialize(targetCoords, targetColors, sourceCoords, sourceColors); 
-
-	if (!m_Initialized)
-	{
-		initGPUMemory(m_NrOfPoints, m_WeightRGB, m_Metric);
-		m_Initialized = true;
-	}
-
-	transferToGPU(m_TargetCoords, m_TargetColors, m_SourceCoords, m_SourceColors);
-	initRBC();
+	InitializeRBC();
 }
 
 void
-ClosestPointFinderRBCGPU::FindClosestPoints(int* indices, float* distances)
+ClosestPointFinderRBCGPU::FindClosestPoints(unsigned int* indices, float* distances)
 {
+
 	// returns the indices which will then be used in the icp algorithm
-	FindClosestPointsRBC(m_NrOfReps, indices, distances);	
+	CUDAFindClosestPointsRBC(m_NrOfPoints, m_NrOfReps, m_devIndices, m_devDistances, m_devTargetCoords, m_devTargetColors, m_devSourceCoords, m_devSourceColors);
+
+	// Copy distances and indices back to cpu for estimating transformation matrix...
+	cutilSafeCall(cudaMemcpy(indices, m_devIndices, m_NrOfPoints*sizeof(unsigned int), cudaMemcpyDeviceToHost));
+	cutilSafeCall(cudaMemcpy(distances, m_devDistances, m_NrOfPoints*sizeof(float), cudaMemcpyDeviceToHost));
 }
 //----------------------------------------------------------------------------
 void
-ClosestPointFinderRBCGPU::initRBC()
+ClosestPointFinderRBCGPU::InitializeRBC()
 {
+	// Clear vector content
 	m_Representatives.clear();
 
+	// Generate Representant indices randomly in the range from [0 #Landmarks]
 	for (int i = 0; i < m_NrOfReps; ++i)
 	{
 		int rep = rand() % m_NrOfPoints;
@@ -106,29 +101,48 @@ ClosestPointFinderRBCGPU::initRBC()
 		r.index = rep;
 		m_Representatives.push_back(r);
 
-		m_Reps[i] = rep;
+		m_RepIndices[i] = rep;
 	}
 
+	// Copy the indices of the reps to gpu
+	cutilSafeCall(cudaMemcpy(m_devRepIndices, m_RepIndices, m_NrOfReps*sizeof(unsigned int), cudaMemcpyHostToDevice));
+
 	// find closest representative to each point on gpu
-	PointsToReps(m_NrOfReps, m_PointToRep, m_Reps);
+	CUDAPointsToReps(m_NrOfPoints, m_NrOfReps, m_devTargetCoords, m_devTargetColors, m_devRepIndices, m_devPointToRep);
+
+	// Copy the pointToRep mapping to cpu
+	cutilSafeCall(cudaMemcpy(m_PointToRep, m_devPointToRep, m_NrOfPoints*sizeof(unsigned int), cudaMemcpyDeviceToHost));
 
 	for (int i = 0; i < m_NrOfPoints; ++i)
 	{
 		m_Representatives[m_PointToRep[i]].points.push_back(i);
 	}
 
-	unsigned int* offsetPtr = m_RepsIndices;
+	// Create space for the owner lists of the representatives
+	unsigned int* dev_points;
+	unsigned int* repOwnerList = new unsigned int[m_NrOfPoints];
+	unsigned int* offsetPtr = repOwnerList;
+
+	cutilSafeCall(cudaMalloc((void**)&dev_points, m_NrOfPoints*sizeof(unsigned int)));
+	unsigned int* dev_pointsPtr = dev_points;
 
 	for (int i = 0; i < m_NrOfReps; ++i)
 	{
-		m_RepsGPU[i].coords = m_TargetCoords[m_Representatives[i].index];
-		m_RepsGPU[i].colors = m_TargetColors[m_Representatives[i].index];
+		m_RepsGPU[i].index = m_Representatives[i].index;
 		m_RepsGPU[i].nrOfPoints = m_Representatives[i].points.size();
+		m_RepsGPU[i].dev_points = dev_pointsPtr; 
 
 		std::copy(m_Representatives[i].points.begin(), m_Representatives[i].points.end(), offsetPtr);
+
+		dev_pointsPtr += m_RepsGPU[i].nrOfPoints;
 		offsetPtr += m_RepsGPU[i].nrOfPoints;
 	}
 
-	initGPURBC(m_NrOfReps, m_RepsGPU, m_RepsIndices);
+	cutilSafeCall(cudaMemcpy(dev_points, repOwnerList, m_NrOfPoints*sizeof(unsigned int), cudaMemcpyHostToDevice));
+
+	// Just copies the Reps struct onto gpu
+	initGPURBC(m_NrOfReps, m_RepsGPU);
+
+	delete[] repOwnerList;
 
 }

@@ -131,16 +131,11 @@ float kernelComputeDistanceSourceTarget(float4* coords, float4* colors, float4* 
 		float z_dist = coords->z - coords2->z;
 		float spaceDist;
 
-		//switch (dev_conf->metric)
-		//{
 		//case ABSOLUTE_DISTANCE: spaceDist = abs(x_dist) + abs(y_dist) + abs(z_dist); break;
 		//case LOG_ABSOLUTE_DISTANCE: spaceDist = log(abs(x_dist) + abs(y_dist) + abs(z_dist) + 1.f); break;
 		//case SQUARED_DISTANCE: 
 			spaceDist = (x_dist * x_dist) + (y_dist * y_dist) + (z_dist * z_dist); //break;
-		//}
 
-
-		// always use euclidean distance for colors...
 
 		//float r_dist = colors->x - colors2->x; 
 		//float g_dist = colors->y - colors2->y;

@@ -53,8 +53,6 @@ signals:
 protected slots:
 	void LoadStitch();
 	void ResetICPandCPF(); 
-	void LiveFastStitching();
-	void SetThreshold(double thresh) { m_HistogramDifferenceThreshold = thresh; }
 
 
 protected:
@@ -94,7 +92,7 @@ protected:
 	int m_FramesProcessed;
 	QMutex m_Mutex;
 	bool m_ResetICPandCPFRequired;
-	float m_HistogramDifferenceThreshold;
+	int m_NumLandmarks;
 
 	vtkSmartPointer<vtkMatrix4x4>				m_PreviousTransform;
 };

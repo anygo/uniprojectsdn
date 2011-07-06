@@ -15,7 +15,7 @@
 class ClosestPointFinder
 {
 public:
-	ClosestPointFinder(int nrPoints, int metric, float weightRGB) : m_NrOfPoints(nrPoints), m_Metric(metric), m_WeightRGB(weightRGB) {}
+	ClosestPointFinder(int nrPoints, float weightRGB) : m_NrOfPoints(nrPoints), m_WeightRGB(weightRGB) {}
 	virtual ~ClosestPointFinder() {}
 
 	virtual void FindClosestPoints(unsigned int* indices, float* distances) = 0;
@@ -31,7 +31,6 @@ public:
 protected:
 
 	int m_NrOfPoints;
-	int m_Metric;
 	float m_WeightRGB;
 
 	float4* m_devTargetCoords;

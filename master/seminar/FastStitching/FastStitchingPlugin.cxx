@@ -269,40 +269,40 @@ FastStitchingPlugin::Reset()
 void
 FastStitchingPlugin::LoadStitch()
 {
-	size_t freeMemory;
-	size_t totalMemory;
-	cudaMemGetInfo(&freeMemory, &totalMemory);
-	printf("Total memory: %lu\tFree memory: %lu\n",
-           (unsigned long) totalMemory / 1024 / 1024,
-           (unsigned long) freeMemory / 1024 / 1024);
+	//size_t freeMemory, totalMemory;
+	//cudaMemGetInfo(&freeMemory, &totalMemory);
+	//std::cout << (unsigned long) freeMemory / 1024 / 1024 << " MB / " << (unsigned long) totalMemory / 1024 / 1024 << " MB" << std::endl;
 
-	QTime t;
+	//QTime tOverall;
+	//tOverall.start();
+
+	//QTime t;
 
 	if (m_ResetICPandCPFRequired)
 		Reset();
 
 	// load the new frame
-	t.start();
+	//t.start();
 	LoadFrame();
-	std::cout << "LoadFrame in " << t.elapsed() << " ms" << std::endl;
+	//std::cout << "LoadFrame in " << t.elapsed() << " ms" << std::endl;
 
 	if (!m_FirstFrame)
 	{
 		// now we have to extract the landmarks
-		t.start();
+		//t.start();
 		ExtractLandmarks();
-		std::cout << "ExtractLandmarks in " << t.elapsed() << " ms" << std::endl;
+		//std::cout << "ExtractLandmarks in " << t.elapsed() << " ms" << std::endl;
 
 		// stitch to just loaded frame to the previous frame (given by last history entry)
-		t.start();
+		//t.start();
 		Stitch();
-		std::cout << "Stitch in " << t.elapsed() << " ms" << std::endl;
+		//std::cout << "Stitch in " << t.elapsed() << " ms" << std::endl;
 	}
 
 	// Visualize frame
-	t.start();
+	//t.start();
 	CopyToCPUAndVisualizeFrame();
-	std::cout << "CopyToCPUAndVisualizeFrame in " << t.elapsed() << " ms" << std::endl;
+	//std::cout << "CopyToCPUAndVisualizeFrame in " << t.elapsed() << " ms" << std::endl;
 
 	// swap buffers
 	float4* tmp = m_devWCs;
@@ -317,6 +317,8 @@ FastStitchingPlugin::LoadStitch()
 
 
 	m_FirstFrame = false;
+
+	//std::cout << "overall time: " << tOverall.elapsed() << " ms" << std::endl;
 }
 //----------------------------------------------------------------------------
 void
@@ -326,7 +328,7 @@ FastStitchingPlugin::LoadFrame()
 	cutilSafeCall(cudaMemcpyToArray(m_InputImgArr, 0, 0, m_CurrentFrame->GetRangeImage()->GetBufferPointer(), FRAME_SIZE_X*FRAME_SIZE_Y*sizeof(float), cudaMemcpyHostToDevice));
 
 	// Extract color
-	// Copy  m_CurrentFrame->GetRGBImage()->GetBufferPointer() to the GPU, either texture or whatever memory
+	// Copy m_CurrentFrame->GetRGBImage()->GetBufferPointer() to the GPU, either texture or whatever memory
 	cutilSafeCall(cudaMemcpy(m_devColors, m_CurrentFrame->GetRGBImage()->GetBufferPointer(), FRAME_SIZE_X*FRAME_SIZE_Y*sizeof(uchar3), cudaMemcpyHostToDevice));
 	// Compute the world coordinates
 	CUDARangeToWorld(m_devWCs, m_InputImgArr);

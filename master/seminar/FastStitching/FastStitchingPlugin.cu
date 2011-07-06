@@ -58,11 +58,10 @@ void CUDATransformPoints(double transformationMatrix[4][4], float4* toBeTransfor
 }
 
 extern "C"
-void
-CUDAExtractLandmarks(int numLandmarks, float4* devWCsIn, unsigned int* devIndicesIn, float4* devLandmarksOut)
+void CUDAExtractLandmarks(int numLandmarks, float4* devWCsIn, uchar3* devColorsIn, unsigned int* devIndicesIn, float4* devLandmarksOut, float4* devColorsOut)
 {
 	//printf("CUDAExtractLandmarks\n");
-	kernelExtractLandmarks<<<DivUp(numLandmarks, CUDA_THREADS_PER_BLOCK), CUDA_THREADS_PER_BLOCK>>>(devWCsIn, devIndicesIn, devLandmarksOut);
+	kernelExtractLandmarks<<<DivUp(numLandmarks, CUDA_THREADS_PER_BLOCK), CUDA_THREADS_PER_BLOCK>>>(devWCsIn, devColorsIn, devIndicesIn, devLandmarksOut, devColorsOut);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -70,9 +69,10 @@ CUDAExtractLandmarks(int numLandmarks, float4* devWCsIn, unsigned int* devIndice
 ///////////////////////////////////////////////////////////////////////////////
 
 extern "C"
-void initGPURBC(int nrOfReps, RepGPU* repsGPU)
+void initGPURBC(int nrOfReps, RepGPU* repsGPU, float weightRBC)
 {
 	CUDA_SAFE_CALL(cudaMemcpyToSymbol(dev_repsGPU, repsGPU, nrOfReps*sizeof(RepGPU), 0));
+	CUDA_SAFE_CALL(cudaMemcpyToSymbol(devWeightRGB, &weightRBC, 1*sizeof(float), 0));
 }
 
 extern "C"

@@ -77,7 +77,8 @@ protected:
 	float4*										m_devWCs;
 	float4*										m_devPrevWCs;
 	float4*										m_WCs;
-	
+	uchar3*										m_devColors;
+	uchar3*										m_devPrevColors;
 
 	unsigned char*								m_RangeTextureData;
 	cudaArray*									m_InputImgArr;

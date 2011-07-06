@@ -248,6 +248,9 @@ FastStitchingPlugin::VisualizeFrame()
 {
 	cutilSafeCall(cudaMemcpy(m_WCs, m_devWCs, FRAME_SIZE_X*FRAME_SIZE_Y*sizeof(float4), cudaMemcpyDeviceToHost));
 
+	if (!m_Widget->m_CheckBoxShowFrames->isChecked())
+		return;
+
 	vtkSmartPointer<vtkPoints> points =
 		vtkSmartPointer<vtkPoints>::New();
 
@@ -294,7 +297,7 @@ FastStitchingPlugin::VisualizeFrame()
 
 
 	// VISUALIZATION BUFFER
-	const int bufSize = 1;
+	const int bufSize = 15;
 
 	static int bufCtr = 0;
 	static vtkSmartPointer<ritk::RImageActorPipeline> actors[bufSize];

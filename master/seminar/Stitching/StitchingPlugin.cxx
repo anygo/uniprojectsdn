@@ -162,7 +162,7 @@ StitchingPlugin::ComputeStatistics()
 	QTime t;
 	t.start();
 
-	const int numIter = 15;
+	const int numIter = 10;
 	const int numPoints = 1000;
 
 	if (m_Widget->m_ListWidgetHistory->selectedItems().size() != 1)
@@ -175,6 +175,7 @@ StitchingPlugin::ComputeStatistics()
 	PointCoords mean[numPoints];
 	float distToMean[numIter][numPoints];
 	float distMean[numPoints];
+	float stddev[numPoints];
 
 	HistoryListItem* hli = static_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->selectedItems()[0]);
 	UndoTransformForSelectedActors();
@@ -249,7 +250,30 @@ StitchingPlugin::ComputeStatistics()
 		overallDistMean += distMean[i];
 	overallDistMean /= numPoints;
 
-	std::cout << "mean of mean distances: " << overallDistMean << std::endl;
+
+	for (int i = 0; i < numPoints; ++i)
+		stddev[i] = 0.f;
+
+	// compute stddev
+	for (int i = 0; i < numIter; ++i)
+	{
+		for (int j = 0; j < numPoints; ++j)
+		{
+			stddev[i] += (distToMean[i][j] - distMean[j]) * (distToMean[i][j] - distMean[j]) / static_cast<float>(numIter);
+		}
+	}
+
+	for (int i = 0; i < numPoints; ++i)
+		stddev[i] = std::sqrt(stddev[i]);
+
+	float overallStddev = 0.f;
+
+	for (int i = 0; i < numPoints; ++i)
+		overallStddev += stddev[i];
+	overallStddev /= numPoints;
+	
+
+	std::cout << overallDistMean << " +- " << overallStddev << std::endl;
 
 	std::cout << t.elapsed() << " ms" << std::endl;
 }
@@ -1114,6 +1138,9 @@ StitchingPlugin::Stitch(vtkPolyData* toBeStitched, vtkPolyData* previousFrame,
 	timeTransform.start();
 	// update output parameter
 	outputTransformationMatrix->DeepCopy(m_icp->GetMatrix());
+
+	// print matrix
+	//outputTransformationMatrix->Print(std::cout);
 
 	// perform the transform
 	vtkSmartPointer<vtkTransformPolyDataFilter> icpTransformFilter =

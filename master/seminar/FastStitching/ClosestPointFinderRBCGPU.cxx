@@ -22,8 +22,8 @@ extern "C"
 void FindClosestPointsRBC(int nrOfReps, unsigned short* indices, float* distances);
 
 
-ClosestPointFinderRBCGPU::ClosestPointFinderRBCGPU(int NrOfPoints, int metric, float weightRGB, float nrOfRepsFactor) 
-	: ClosestPointFinder(NrOfPoints, metric, weightRGB), m_NrOfRepsFactor(nrOfRepsFactor) 
+ClosestPointFinderRBCGPU::ClosestPointFinderRBCGPU(int NrOfPoints, float weightRGB, float nrOfRepsFactor) 
+	: ClosestPointFinder(NrOfPoints, weightRGB), m_NrOfRepsFactor(nrOfRepsFactor) 
 {
 	//std::cout << "ClosestPointFinderRBCGPU" << std::endl;
 

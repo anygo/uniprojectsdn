@@ -55,11 +55,11 @@ FastStitchingPlugin::FastStitchingPlugin()
 
 	// our signals and slots
 	connect(m_Widget->m_PushButtonStitchFrame,				SIGNAL(clicked()),								this, SLOT(LoadStitch()));
-	connect(m_Widget->m_ComboBoxClosestPointFinder,			SIGNAL(currentIndexChanged(int)),				this, SLOT(ResetICPandCPF()));
 	connect(m_Widget->m_SpinBoxLandmarks,					SIGNAL(valueChanged(int)),						this, SLOT(ResetICPandCPF()));
 	connect(m_Widget->m_DoubleSpinBoxRGBWeight,				SIGNAL(valueChanged(double)),					this, SLOT(ResetICPandCPF()));
-	connect(m_Widget->m_ComboBoxMetric,						SIGNAL(currentIndexChanged(int)),				this, SLOT(ResetICPandCPF()));
-	connect(this,											SIGNAL(LiveFastStitchingFrameAvailable()),		this, SLOT(LiveFastStitching()));
+	connect(this,											SIGNAL(LiveFastStitchingFrameAvailable()),		this, SLOT(LoadStitch()));
+
+	m_NumLandmarks = m_Widget->m_SpinBoxLandmarks->value();
 
 	// initialize member objects
 	m_RangeTextureData = new unsigned char[FRAME_SIZE_X*FRAME_SIZE_Y];
@@ -76,23 +76,8 @@ FastStitchingPlugin::FastStitchingPlugin()
 	// iterative closest point (ICP) transformation
 	m_icp = new ExtendedICPTransform;
 
-	int metric;
-	switch (m_Widget->m_ComboBoxMetric->currentIndex())
-	{
-	case 0: metric = LOG_ABSOLUTE_DISTANCE; break;
-	case 1: metric = ABSOLUTE_DISTANCE; break;
-	case 2: metric = SQUARED_DISTANCE; break;
-	}
-
 	// initialize ClosestPointFinder
-	switch (m_Widget->m_ComboBoxClosestPointFinder->currentIndex())
-	{
-	case 0: m_cpf = new ClosestPointFinderRBCGPU(m_Widget->m_SpinBoxLandmarks->value(), metric, m_Widget->m_DoubleSpinBoxRGBWeight->value(), static_cast<float>(m_Widget->m_DoubleSpinBoxNrOfRepsFactor->value())); break;
-	//case 1: m_cpf = new ClosestPointFinderBruteForceGPU(m_Widget->m_SpinBoxLandmarks->value()); break;
-	}
-
-	// dirty hack - we just initialized m_icp and m_cpf, but the plugin crashes if we don't do it again (Qt contexts?!)
-	m_ResetICPandCPFRequired = true;
+	m_cpf = new ClosestPointFinderRBCGPU(m_NumLandmarks, m_Widget->m_DoubleSpinBoxRGBWeight->value(), static_cast<float>(m_Widget->m_DoubleSpinBoxNrOfRepsFactor->value()));
 
 	// comparison of two consecutive frames
 	m_LMIndices = NULL;
@@ -104,6 +89,9 @@ FastStitchingPlugin::FastStitchingPlugin()
 
 	m_PreviousTransform = vtkSmartPointer<vtkMatrix4x4>::New();
 	m_PreviousTransform->Identity();
+
+	// dirty hack - we just initialized m_icp and m_cpf, but the plugin crashes if we don't do it again (Qt contexts?!)
+	m_ResetICPandCPFRequired = true;
 }
 
 FastStitchingPlugin::~FastStitchingPlugin()
@@ -143,27 +131,8 @@ FastStitchingPlugin::GetPluginGUI()
 }
 //----------------------------------------------------------------------------
 void
-FastStitchingPlugin::LiveFastStitching()
-{
-	//std::cout << "LiveFastStitching" << std::endl;
-	m_Mutex.lock();
-	try
-	{
-		LoadStitch();
-	} catch (std::exception &e)
-	{
-		std::cout << "Exception: \"" << e.what() << "\""<< std::endl;
-		m_Mutex.unlock();
-		return;
-	}
-
-	m_Mutex.unlock();
-}
-
-void
 FastStitchingPlugin::ProcessEvent(ritk::Event::Pointer EventP)
 {
-	//std::cout << "ProcessEvent" << std::endl;
 	// New frame event
 	if (EventP->type() == ritk::NewFrameEvent::EventType)
 	{
@@ -297,7 +266,7 @@ FastStitchingPlugin::VisualizeFrame()
 
 
 	// VISUALIZATION BUFFER
-	const int bufSize = 15;
+	const int bufSize = 10;
 
 	static int bufCtr = 0;
 	static vtkSmartPointer<ritk::RImageActorPipeline> actors[bufSize];
@@ -309,7 +278,7 @@ FastStitchingPlugin::VisualizeFrame()
 		m_Widget->m_VisualizationWidget3D->AddActor(actors[bufCtr]);
 	} else
 	{
-		actors[bufCtr%bufSize]->SetData(polyData, true);
+		actors[bufCtr % bufSize]->SetData(polyData, true);
 	}
 
 	++bufCtr;
@@ -318,8 +287,6 @@ FastStitchingPlugin::VisualizeFrame()
 void
 FastStitchingPlugin::LoadFrame()
 {
-	//std::cout << "LoadFrame" << std::endl;
-
 	// Copy the input data to the device
 	cutilSafeCall(cudaMemcpyToArray(m_InputImgArr, 0, 0, m_CurrentFrame->GetRangeImage()->GetBufferPointer(), FRAME_SIZE_X*FRAME_SIZE_Y*sizeof(float), cudaMemcpyHostToDevice));
 
@@ -332,8 +299,8 @@ FastStitchingPlugin::ExtractLandmarks()
 {
 	//std::cout << "ExtractLandmarks" << std::endl;
 
-	CUDAExtractLandmarks(m_Widget->m_SpinBoxLandmarks->value(), m_devWCs, m_devSourceIndices, m_devSourceLandmarks);
-	CUDAExtractLandmarks(m_Widget->m_SpinBoxLandmarks->value(), m_devPrevWCs, m_devTargetIndices, m_devTargetLandmarks);
+	CUDAExtractLandmarks(m_NumLandmarks, m_devWCs, m_devSourceIndices, m_devSourceLandmarks);
+	CUDAExtractLandmarks(m_NumLandmarks, m_devPrevWCs, m_devTargetIndices, m_devTargetLandmarks);
 }
 //----------------------------------------------------------------------------
 void
@@ -347,56 +314,44 @@ FastStitchingPlugin::ResetICPandCPF()
 void
 FastStitchingPlugin::Reset() 
 {
-	std::cout << "Reset" << std::endl;
+	m_NumLandmarks = m_Widget->m_SpinBoxLandmarks->value();
 
 	if(m_ClippedLMIndices) delete[] m_ClippedLMIndices;
 	if(m_LMIndices) delete[] m_LMIndices;
 
-	m_ClippedLMIndices = new unsigned int[m_Widget->m_SpinBoxLandmarks->value()];
-	m_LMIndices = new unsigned int[m_Widget->m_SpinBoxLandmarks->value()];
+	m_ClippedLMIndices = new unsigned int[m_NumLandmarks];
+	m_LMIndices = new unsigned int[m_NumLandmarks];
 
 	if(m_devSourceIndices) cutilSafeCall(cudaFree(m_devSourceIndices));
 	if(m_devTargetIndices) cutilSafeCall(cudaFree(m_devTargetIndices));
 	if(m_devSourceLandmarks) cutilSafeCall(cudaFree(m_devSourceLandmarks));
 	if(m_devTargetLandmarks) cutilSafeCall(cudaFree(m_devTargetLandmarks));
 
-	cutilSafeCall(cudaMalloc((void**)&(m_devSourceIndices), m_Widget->m_SpinBoxLandmarks->value()*sizeof(unsigned int)));
-	cutilSafeCall(cudaMalloc((void**)&(m_devTargetIndices), m_Widget->m_SpinBoxLandmarks->value()*sizeof(unsigned int)));
-	cutilSafeCall(cudaMalloc((void**)&(m_devSourceLandmarks), m_Widget->m_SpinBoxLandmarks->value()*sizeof(float4)));
-	cutilSafeCall(cudaMalloc((void**)&(m_devTargetLandmarks), m_Widget->m_SpinBoxLandmarks->value()*sizeof(float4)));
+	cutilSafeCall(cudaMalloc((void**)&(m_devSourceIndices), m_NumLandmarks*sizeof(unsigned int)));
+	cutilSafeCall(cudaMalloc((void**)&(m_devTargetIndices), m_NumLandmarks*sizeof(unsigned int)));
+	cutilSafeCall(cudaMalloc((void**)&(m_devSourceLandmarks), m_NumLandmarks*sizeof(float4)));
+	cutilSafeCall(cudaMalloc((void**)&(m_devTargetLandmarks), m_NumLandmarks*sizeof(float4)));
 
-	int metric;
-	switch (m_Widget->m_ComboBoxMetric->currentIndex())
-	{
-	case 0: metric = LOG_ABSOLUTE_DISTANCE; break;
-	case 1: metric = ABSOLUTE_DISTANCE; break;
-	case 2: metric = SQUARED_DISTANCE; break;
-	}
 
-	switch (m_Widget->m_ComboBoxClosestPointFinder->currentIndex())
-	{
-	case 0: m_cpf = new ClosestPointFinderRBCGPU(m_Widget->m_SpinBoxLandmarks->value(), metric, m_Widget->m_DoubleSpinBoxRGBWeight->value(), static_cast<float>(m_Widget->m_DoubleSpinBoxNrOfRepsFactor->value())); break;
-	//case 1: m_cpf = new ClosestPointFinderBruteForceGPU(m_Widget->m_SpinBoxLandmarks->value()); break;
-	}
+	m_cpf = new ClosestPointFinderRBCGPU(m_NumLandmarks, m_Widget->m_DoubleSpinBoxRGBWeight->value(), static_cast<float>(m_Widget->m_DoubleSpinBoxNrOfRepsFactor->value()));
 
 	delete m_icp;
 	m_icp = new ExtendedICPTransform;
 	m_icp->SetClosestPointFinder(m_cpf);
-	m_icp->SetNumLandmarks(m_Widget->m_SpinBoxLandmarks->value());
+	m_icp->SetNumLandmarks(m_NumLandmarks);
 
 	// create source and target indices and copy to gpu
-	int numLandmarks = m_Widget->m_SpinBoxLandmarks->value();
-	unsigned int* srcIndices = new unsigned int[numLandmarks];
-	int stepSize = (FRAME_SIZE_X * FRAME_SIZE_Y) / numLandmarks;
+	unsigned int* srcIndices = new unsigned int[m_NumLandmarks];
+	int stepSize = (FRAME_SIZE_X * FRAME_SIZE_Y) / m_NumLandmarks;
 
-	for (int i = 0, j = 0; i < numLandmarks; ++i, j += stepSize)
+	for (int i = 0, j = 0; i < m_NumLandmarks; ++i, j += stepSize)
 	{
 		srcIndices[i] = j;
 	}
 
 	// atm source and target indices are the same... no clipping! TODO!!!
-	cutilSafeCall(cudaMemcpy(m_devSourceIndices, srcIndices, numLandmarks*sizeof(unsigned int), cudaMemcpyHostToDevice));
-	cutilSafeCall(cudaMemcpy(m_devTargetIndices, srcIndices, numLandmarks*sizeof(unsigned int), cudaMemcpyHostToDevice));
+	cutilSafeCall(cudaMemcpy(m_devSourceIndices, srcIndices, m_NumLandmarks*sizeof(unsigned int), cudaMemcpyHostToDevice));
+	cutilSafeCall(cudaMemcpy(m_devTargetIndices, srcIndices, m_NumLandmarks*sizeof(unsigned int), cudaMemcpyHostToDevice));
 
 	delete[] srcIndices;
 
@@ -416,10 +371,10 @@ FastStitchingPlugin::Stitch()
 	m_icp->SetMaxIter(m_Widget->m_SpinBoxMaxIterations->value());
 
 	// transform the landmarks with previous transformation matrix
-	CUDATransformPoints(m_PreviousTransform->Element, m_devSourceLandmarks, m_Widget->m_SpinBoxLandmarks->value(), NULL);
+	CUDATransformPoints(m_PreviousTransform->Element, m_devSourceLandmarks, m_NumLandmarks, NULL);
 
 	// and to all WCs TODO: combine with later transform
-	CUDATransformPoints(m_PreviousTransform->Element, m_devWCs, m_Widget->m_SpinBoxLandmarks->value(), NULL);
+	CUDATransformPoints(m_PreviousTransform->Element, m_devWCs, m_NumLandmarks, NULL);
 
 	// new stuff... strange
 	//double* bounds = toBeStitched->GetBounds();

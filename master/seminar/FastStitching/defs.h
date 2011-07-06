@@ -38,13 +38,4 @@ typedef struct RepGPU
 } RepGPU;
 
 
-// enum that includes all implemented distance metrics used during ICP
-enum ICP_METRIC
-{
-	LOG_ABSOLUTE_DISTANCE,
-	ABSOLUTE_DISTANCE,
-	SQUARED_DISTANCE
-};
-
-
 #endif // defs_H__

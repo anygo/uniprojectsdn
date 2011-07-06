@@ -26,7 +26,7 @@ class ClosestPointFinderRBCGPU : public ClosestPointFinder
 	} Representative;
 
 public:
-	ClosestPointFinderRBCGPU(int NrOfPoints, int metric, float weightRGB, float nrOfRepsFactor);
+	ClosestPointFinderRBCGPU(int NrOfPoints, float weightRGB, float nrOfRepsFactor);
 
 	~ClosestPointFinderRBCGPU();
 

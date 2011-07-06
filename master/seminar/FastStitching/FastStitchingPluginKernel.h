@@ -26,9 +26,7 @@ __constant__ RepGPU dev_repsGPU[MAX_REPRESENTATIVES];
 texture<float, 2, cudaReadModeElementType> InputImageTexture;
 
 
-///////////////////////////////////////////////////////////////////////////////
-// Common
-///////////////////////////////////////////////////////////////////////////////
+
 template<unsigned int BlockSizeX, unsigned int BlockSizeY>
 __global__ void
 CUDARangeToWorldKernel(float4* duplicate)
@@ -154,11 +152,6 @@ float kernelComputeDistanceSourceTarget(float4* coords, float4* colors, float4* 
 		return (1 - devWeightRGB[0]) * spaceDist + devWeightRGB[0] * colorDist;
 }
 
-
-
-///////////////////////////////////////////////////////////////////////////////
-// Random Ball Cover
-///////////////////////////////////////////////////////////////////////////////
 __global__
 void kernelRBC(int nrOfReps, unsigned int* indices, float* distances, float4* targetCoords, float4* targetColors, float4* sourceCoords, float4* sourceColors)
 {

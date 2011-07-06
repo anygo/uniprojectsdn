@@ -33,6 +33,7 @@ ClosestPointFinderRBCGPU::ClosestPointFinderRBCGPU(int NrOfPoints, float weightR
 	m_RepIndices = new unsigned int[m_NrOfReps];
 	m_RepsGPU = new RepGPU[m_NrOfReps];	
 	m_PointToRep = new unsigned int[m_NrOfPoints];
+	m_RepOwnerList = new unsigned int[m_NrOfPoints];
 
 	// RBC GPU pointer
 	cutilSafeCall(cudaMalloc((void**)&(m_devDistances), m_NrOfPoints*sizeof(float)));
@@ -40,6 +41,7 @@ ClosestPointFinderRBCGPU::ClosestPointFinderRBCGPU(int NrOfPoints, float weightR
 	cutilSafeCall(cudaMalloc((void**)&(m_devPointToRep), m_NrOfPoints*sizeof(unsigned int)));
 	cutilSafeCall(cudaMalloc((void**)&(m_devRepIndices), m_NrOfReps*sizeof(unsigned int)));
 	cutilSafeCall(cudaMalloc((void**)&(m_devReps), m_NrOfReps*sizeof(unsigned int)));
+	cutilSafeCall(cudaMalloc((void**)&(m_devRepOwnerList), m_NrOfPoints*sizeof(unsigned int)));
 
 	m_Initialized = true;
 }
@@ -50,6 +52,7 @@ ClosestPointFinderRBCGPU::~ClosestPointFinderRBCGPU()
 	delete[] m_RepsGPU;
 	delete[] m_PointToRep;
 	delete[] m_RepIndices;
+	delete[] m_RepOwnerList;
 
 	// Delete GPU Device Memory
 	cutilSafeCall(cudaFree(m_devDistances));
@@ -57,6 +60,7 @@ ClosestPointFinderRBCGPU::~ClosestPointFinderRBCGPU()
 	cutilSafeCall(cudaFree(m_devPointToRep));
 	cutilSafeCall(cudaFree(m_devRepIndices));
 	cutilSafeCall(cudaFree(m_devReps));
+	cutilSafeCall(cudaFree(m_devRepOwnerList));
 }
 
 void
@@ -127,12 +131,8 @@ ClosestPointFinderRBCGPU::InitializeRBC()
 	}
 
 	// Create space for the owner lists of the representatives
-	unsigned int* dev_points;
-	unsigned int* repOwnerList = new unsigned int[m_NrOfPoints];
-	unsigned int* offsetPtr = repOwnerList;
-
-	cutilSafeCall(cudaMalloc((void**)&dev_points, m_NrOfPoints*sizeof(unsigned int)));
-	unsigned int* dev_pointsPtr = dev_points;
+	unsigned int* offsetPtr = m_RepOwnerList;
+	unsigned int* dev_pointsPtr = m_devRepOwnerList;
 
 	for (int i = 0; i < m_NrOfReps; ++i)
 	{
@@ -146,11 +146,9 @@ ClosestPointFinderRBCGPU::InitializeRBC()
 		offsetPtr += m_RepsGPU[i].nrOfPoints;
 	}
 
-	cutilSafeCall(cudaMemcpy(dev_points, repOwnerList, m_NrOfPoints*sizeof(unsigned int), cudaMemcpyHostToDevice));
+	cutilSafeCall(cudaMemcpy(m_devRepOwnerList, m_RepOwnerList, m_NrOfPoints*sizeof(unsigned int), cudaMemcpyHostToDevice));
 
 	// Just copies the Reps struct onto gpu
 	initGPURBC(m_NrOfReps, m_RepsGPU);
-
-	delete[] repOwnerList;
 
 }

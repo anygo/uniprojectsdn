@@ -44,16 +44,16 @@ ExtendedICPTransform::~ExtendedICPTransform()
 }
 //----------------------------------------------------------------------------
 void
-ExtendedICPTransform::SetSource(float4 *source)
+ExtendedICPTransform::SetSource(float4 *source, float4* sourceColors)
 {
-	//std::cout << "SetSource" << std::endl;
+	m_devSourceColors = sourceColors;
 	m_devSource = source;
 }
 //----------------------------------------------------------------------------
 void
-ExtendedICPTransform::SetTarget(float4 *target)
+ExtendedICPTransform::SetTarget(float4 *target, float4* targetColors)
 {
-	//std::cout << "SetTarget" << std::endl;
+	m_devTargetColors = targetColors;
 	m_devTarget = target;
 }
 //----------------------------------------------------------------------------
@@ -63,7 +63,7 @@ ExtendedICPTransform::StartICP()
 	//std::cout << "StartICP" << std::endl;
 
 	// configure ClosestPointFinder
-	m_ClosestPointFinder->Initialize( m_devTarget, NULL, m_devSource, NULL);
+	m_ClosestPointFinder->Initialize( m_devTarget, m_devTargetColors, m_devSource, m_devSourceColors);
 
 	m_Accumulate->Identity();
 
@@ -80,7 +80,6 @@ ExtendedICPTransform::StartICP()
 		cutilSafeCall(cudaMemcpy(m_Source, m_devSource, m_NumLandmarks*sizeof(float4), cudaMemcpyDeviceToHost));
 		
 		// Set locators source points and perfom nearest neighbor search
-		
 		m_ClosestPointFinder->FindClosestPoints(m_Indices, m_Distances);
 
 		for(int i = 0; i < m_NumLandmarks; ++i)

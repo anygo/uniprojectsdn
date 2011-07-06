@@ -47,6 +47,7 @@ protected:
 	RepGPU* m_RepsGPU;
 	unsigned int* m_RepIndices;
 	unsigned int* m_PointToRep;
+	unsigned int* m_RepOwnerList;
 	
 	// GPU pointer
 	float* m_devDistances;
@@ -56,6 +57,7 @@ protected:
 	unsigned int* m_devRepIndices;
 	unsigned int* m_devPointToRep;
 	unsigned int* m_devReps;
+	unsigned int* m_devRepOwnerList;
 
 };
 

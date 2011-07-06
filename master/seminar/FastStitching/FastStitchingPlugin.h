@@ -48,11 +48,11 @@ signals:
 	void UpdateGUI();
 	void UpdateStats();
 	void RecordFrameAvailable();
-	void LiveFastStitchingFrameAvailable();
+	void NewFrameAvailable();
 
 protected slots:
 	void LoadStitch();
-	void ResetICPandCPF(); 
+	void ResetICPandCPF() { m_ResetICPandCPFRequired = true; } 
 
 
 protected:
@@ -64,10 +64,11 @@ protected:
 	void Reset();
 	void ExtractLandmarks();
 	void Stitch();
-	void VisualizeFrame();
+	void CopyToCPUAndVisualizeFrame();
 
 	
 	// our members
+	bool m_FirstFrame;
 	ritk::NewFrameEvent::RImageConstPointer		m_CurrentFrame;
 	float*										m_CurrentHist;
 	float*										m_PreviousHist;
@@ -83,11 +84,17 @@ protected:
 	unsigned int*								m_ClippedLMIndices;
 	unsigned int*								m_LMIndices;
 
+
+	unsigned int*								m_SrcIndices;
+	unsigned int*								m_TargetIndices;
+
 	unsigned int*								m_devSourceIndices;
 	unsigned int*								m_devTargetIndices;
 
 	float4*										m_devSourceLandmarks;
 	float4*										m_devTargetLandmarks;
+	float4*										m_devCurLandmarksColor;
+	float4*										m_devPrevLandmarksColor;
 
 	int m_FramesProcessed;
 	QMutex m_Mutex;

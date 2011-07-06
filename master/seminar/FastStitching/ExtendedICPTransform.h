@@ -25,8 +25,8 @@ public:
 	ExtendedICPTransform();
 	~ExtendedICPTransform();
 
-	void SetSource(float4* devSource);
-	void SetTarget(float4* devTarget);
+	void SetSource(float4* devSource, float4* m_devSourceColors);
+	void SetTarget(float4* devTarget, float4* m_devTargetColors);
 
 	// set and get methods
 	inline void SetNumLandmarks(int landmarks) { 
@@ -67,10 +67,13 @@ protected:
 
 	float4* m_devSource;
 	float4* m_devTarget;
+	float4* m_devSourceColors;
+	float4* m_devTargetColors;
 
 	float4* m_Source;
 	float4* m_Target;
 	float4* m_ClosestP;
+	
 
 	float* m_devDistances;
 

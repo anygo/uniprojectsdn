@@ -11,7 +11,7 @@ extern "C"
 void CUDAPointsToReps(int nrOfPoints, int nrOfReps, float4* devTargetCoords, float4* devTargetColors, unsigned int* devRepIndices, unsigned int* devPointToRep);
 
 extern "C"
-void initGPURBC(int nrOfReps, RepGPU* repsGPU);
+void initGPURBC(int nrOfReps, RepGPU* repsGPU, float weightRGB);
 
 extern "C"
 void CUDAFindClosestPointsRBC(int nrOfPoints, int nrOfReps, unsigned int* indices, float* distances, float4* targetCoords, float4* targetColors, float4* sourceCoords, float4* sourceColors);
@@ -149,6 +149,6 @@ ClosestPointFinderRBCGPU::InitializeRBC()
 	cutilSafeCall(cudaMemcpy(m_devRepOwnerList, m_RepOwnerList, m_NrOfPoints*sizeof(unsigned int), cudaMemcpyHostToDevice));
 
 	// Just copies the Reps struct onto gpu
-	initGPURBC(m_NrOfReps, m_RepsGPU);
+	initGPURBC(m_NrOfReps, m_RepsGPU, m_WeightRGB);
 
 }

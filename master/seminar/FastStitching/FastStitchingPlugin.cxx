@@ -38,7 +38,7 @@ extern "C"
 void CUDARangeToWorld(float4* duplicate, const cudaArray *InputImageArray);
 
 extern "C"
-void CUDAExtractLandmarks(int numLandmarks, float4* devWCsIn, unsigned int* devIndicesIn, float4* devLandmarksOut);
+void CUDAExtractLandmarks(int numLandmarks, float4* devWCsIn, uchar3* devColorsIn, unsigned int* devIndicesIn, float4* devLandmarksOut, float4* devColorsOut);
 
 extern "C"
 void CUDATransformPoints(double transformationMatrix[4][4], float4* toBeTransformed, int numPoints, float* distances);
@@ -70,6 +70,9 @@ FastStitchingPlugin::FastStitchingPlugin()
 
 	cutilSafeCall(cudaMalloc((void**)&(m_devWCs), FRAME_SIZE_X*FRAME_SIZE_Y*sizeof(float4)));
 	cutilSafeCall(cudaMalloc((void**)&(m_devPrevWCs), FRAME_SIZE_X*FRAME_SIZE_Y*sizeof(float4)));
+
+	cutilSafeCall(cudaMalloc((void**)&(m_devColors), FRAME_SIZE_X*FRAME_SIZE_Y*sizeof(uchar3)));
+	cutilSafeCall(cudaMalloc((void**)&(m_devPrevColors), FRAME_SIZE_X*FRAME_SIZE_Y*sizeof(uchar3)));
 	
 	m_FramesProcessed = 0;
 
@@ -88,7 +91,8 @@ FastStitchingPlugin::FastStitchingPlugin()
 	m_devTargetLandmarks = NULL;
 	m_SrcIndices = NULL;
 	m_TargetIndices = NULL;
-	m_LandmarksColor = NULL;
+	m_devCurLandmarksColor = NULL;
+	m_devPrevLandmarksColor = NULL;
 
 	m_PreviousTransform = vtkSmartPointer<vtkMatrix4x4>::New();
 	m_PreviousTransform->Identity();
@@ -109,11 +113,13 @@ FastStitchingPlugin::~FastStitchingPlugin()
 	if(m_ClippedLMIndices) delete[] m_ClippedLMIndices;
 	if(m_SrcIndices) delete[] m_SrcIndices;
 	if(m_TargetIndices) delete[] m_TargetIndices;
-	if(m_LandmarksColor) delete[] m_LandmarksColor;
 
 	// Free GPU Memory that holds the previous and current world data
 	cutilSafeCall(cudaFreeArray(m_InputImgArr));
 	cutilSafeCall(cudaFree(m_devWCs));
+	cutilSafeCall(cudaFree(m_devPrevWCs));
+	cutilSafeCall(cudaFree(m_devColors));
+	cutilSafeCall(cudaFree(m_devPrevColors));
 
 	if(m_devSourceIndices) cutilSafeCall(cudaFree(m_devSourceIndices));
 	if(m_devTargetIndices) cutilSafeCall(cudaFree(m_devTargetIndices));
@@ -186,15 +192,11 @@ FastStitchingPlugin::Reset()
 	if(m_LMIndices) delete[] m_LMIndices;
 	if(m_SrcIndices) delete[] m_SrcIndices;
 	if(m_TargetIndices) delete[] m_TargetIndices;
-	if(m_LandmarksColor) delete[] m_LandmarksColor;
 
-	
 	m_SrcIndices = new unsigned int[m_NumLandmarks];
 	m_TargetIndices = new unsigned int[m_NumLandmarks];
-
 	m_ClippedLMIndices = new unsigned int[m_NumLandmarks];
 	m_LMIndices = new unsigned int[m_NumLandmarks];
-	m_LandmarksColor = new float4[m_NumLandmarks];
 
 	if(m_devSourceIndices) cutilSafeCall(cudaFree(m_devSourceIndices));
 	if(m_devTargetIndices) cutilSafeCall(cudaFree(m_devTargetIndices));
@@ -203,22 +205,23 @@ FastStitchingPlugin::Reset()
 	if(m_devCurLandmarksColor) cutilSafeCall(cudaFree(m_devCurLandmarksColor));
 	if(m_devPrevLandmarksColor) cutilSafeCall(cudaFree(m_devPrevLandmarksColor));
 
+	// Landmark indices
 	cutilSafeCall(cudaMalloc((void**)&(m_devSourceIndices), m_NumLandmarks*sizeof(unsigned int)));
 	cutilSafeCall(cudaMalloc((void**)&(m_devTargetIndices), m_NumLandmarks*sizeof(unsigned int)));
+	// Landmark 3D Points
 	cutilSafeCall(cudaMalloc((void**)&(m_devSourceLandmarks), m_NumLandmarks*sizeof(float4)));
 	cutilSafeCall(cudaMalloc((void**)&(m_devTargetLandmarks), m_NumLandmarks*sizeof(float4)));
-	// TODO COLORS
+	// Landmark RGB Color
 	cutilSafeCall(cudaMalloc((void**)&(m_devCurLandmarksColor), m_NumLandmarks*sizeof(float4)));
 	cutilSafeCall(cudaMalloc((void**)&(m_devPrevLandmarksColor), m_NumLandmarks*sizeof(float4)));
 
-
+	delete m_cpf;
 	m_cpf = new ClosestPointFinderRBCGPU(m_NumLandmarks, m_Widget->m_DoubleSpinBoxRGBWeight->value(), static_cast<float>(m_Widget->m_DoubleSpinBoxNrOfRepsFactor->value()));
 
 	delete m_icp;
 	m_icp = new ExtendedICPTransform;
 	m_icp->SetClosestPointFinder(m_cpf);
 	m_icp->SetNumLandmarks(m_NumLandmarks);
-
 
 	int validXStart = 15;
 	int validXEnd = 600;
@@ -233,7 +236,7 @@ FastStitchingPlugin::Reset()
 		if(j % FRAME_SIZE_X > validXEnd)
 			j += FRAME_SIZE_X - validXEnd + validXStart;
 
-		targetIndices[i] = j;
+		m_TargetIndices[i] = j;
 	}
 
 	double clipPercentage = m_Widget->m_DoubleSpinBoxClipPercentage->value();
@@ -251,11 +254,11 @@ FastStitchingPlugin::Reset()
 		if(j % FRAME_SIZE_X > validXEnd)
 			j += FRAME_SIZE_X - validXEnd + validXStart;
 
-		srcIndices[i] = j;
+		m_SrcIndices[i] = j;
 	}
 
-	cutilSafeCall(cudaMemcpy(m_devSourceIndices, srcIndices, m_NumLandmarks*sizeof(unsigned int), cudaMemcpyHostToDevice));
-	cutilSafeCall(cudaMemcpy(m_devTargetIndices, targetIndices, m_NumLandmarks*sizeof(unsigned int), cudaMemcpyHostToDevice));
+	cutilSafeCall(cudaMemcpy(m_devSourceIndices, m_SrcIndices, m_NumLandmarks*sizeof(unsigned int), cudaMemcpyHostToDevice));
+	cutilSafeCall(cudaMemcpy(m_devTargetIndices, m_TargetIndices, m_NumLandmarks*sizeof(unsigned int), cudaMemcpyHostToDevice));
 
 	m_PreviousTransform = vtkSmartPointer<vtkMatrix4x4>::New();
 	m_PreviousTransform->Identity();
@@ -307,9 +310,10 @@ FastStitchingPlugin::LoadStitch()
 	m_devPrevWCs = tmp;
 
 	// TODO swap the landmark colors
-	tmp = m_devCurLandmarksColor;
-	m_devCurLandmarksColor = m_devPrevLandmarksColor;
-	m_devPrevLandmarksColor = tmp;
+	uchar3* colorTmp;
+	colorTmp = m_devColors;
+	m_devColors = m_devPrevColors;
+	m_devPrevColors = colorTmp;
 
 
 	m_FirstFrame = false;
@@ -321,41 +325,27 @@ FastStitchingPlugin::LoadFrame()
 	// Copy the input data to the device
 	cutilSafeCall(cudaMemcpyToArray(m_InputImgArr, 0, 0, m_CurrentFrame->GetRangeImage()->GetBufferPointer(), FRAME_SIZE_X*FRAME_SIZE_Y*sizeof(float), cudaMemcpyHostToDevice));
 
-	// TODO: Also copy  m_CurrentFrame->GetRGBImage()->GetBufferPointer() to the GPU, either texture or whatever memory
-	
-
+	// Extract color
+	// Copy  m_CurrentFrame->GetRGBImage()->GetBufferPointer() to the GPU, either texture or whatever memory
+	cutilSafeCall(cudaMemcpy(m_devColors, m_CurrentFrame->GetRGBImage()->GetBufferPointer(), FRAME_SIZE_X*FRAME_SIZE_Y*sizeof(uchar3), cudaMemcpyHostToDevice));
 	// Compute the world coordinates
 	CUDARangeToWorld(m_devWCs, m_InputImgArr);
-
-	// Extract color
-	//typedef itk::ImageRegionConstIterator<RImageType::RGBImageType> IteratorType;
-	//IteratorType it(m_CurrentFrame->GetRGBImage(), m_CurrentFrame->GetRGBImage()->GetRequestedRegion());
-
-	//it.GoToBegin();
-	//for (int i = 0; i < m_NumLandmarks; ++i)
-	//{
-	//	it.SetIndex(m_SrcIndices[i]);
-	//	m_LandmarksColor[i] = make_float4(it.Value()[0], it.Value()[1], it.Value()[2], 1.);
-	//}
-
-	//cutilSafeCall(cudaMemcpy(m_devCurLandmarksColor, m_LandmarksColor, m_NumLandmarks*sizeof(float4), cudaMemcpyHostToDevice));
 
 }
 //----------------------------------------------------------------------------
 void
 FastStitchingPlugin::ExtractLandmarks()
 {
-	// TODO: Change Function that it parallely also extracs color
-	CUDAExtractLandmarks(m_NumLandmarks, m_devWCs, m_devSourceIndices, m_devSourceLandmarks);
-	CUDAExtractLandmarks(m_NumLandmarks, m_devPrevWCs, m_devTargetIndices, m_devTargetLandmarks);
-	
+	// Extract Landmarks Points and Color Information
+	CUDAExtractLandmarks(m_NumLandmarks, m_devWCs, m_devColors, m_devSourceIndices, m_devSourceLandmarks, m_devCurLandmarksColor);
+	CUDAExtractLandmarks(m_NumLandmarks, m_devPrevWCs, m_devPrevColors, m_devTargetIndices, m_devTargetLandmarks, m_devPrevLandmarksColor);
 }
 //----------------------------------------------------------------------------
 void
 FastStitchingPlugin::Stitch()
 {
 	m_icp->SetSource(m_devSourceLandmarks, m_devCurLandmarksColor);
-	m_icp->SetTarget(m_devTargetLandmarks, m_devCurLandmarksColor);
+	m_icp->SetTarget(m_devTargetLandmarks, m_devPrevLandmarksColor);
 
 	m_icp->SetMaxMeanDist(static_cast<float>(m_Widget->m_DoubleSpinBoxMaxRMS->value()));
 	m_icp->SetMaxIter(m_Widget->m_SpinBoxMaxIterations->value());
@@ -377,6 +367,7 @@ FastStitchingPlugin::Stitch()
 
 	// combine previous transform with estimated transform to transform all WCs
 	vtkMatrix4x4::Multiply4x4(icpMatrix, m_PreviousTransform, m_PreviousTransform);
+	// THIS ORDER OF MULTIPLICATION SHOULD BE THE RIGHT ONE!
 
 	// perform the transform on GPU (m_PreviousTransform is now the current transform)
 	CUDATransformPoints(m_PreviousTransform->Element, m_devWCs, FRAME_SIZE_X * FRAME_SIZE_Y, NULL);

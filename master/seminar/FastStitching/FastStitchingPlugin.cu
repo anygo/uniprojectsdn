@@ -8,7 +8,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 extern "C"
 void
-CUDARangeToWorld(float4* duplicate, const cudaArray *InputImageArray, int w, int h)
+CUDARangeToWorld(float4* duplicate, const cudaArray *InputImageArray)
 {
 	// Set input image texture parameters and bind texture to the array. Texture is defined in the kernel
 	InputImageTexture.addressMode[0] = cudaAddressModeClamp;
@@ -19,8 +19,8 @@ CUDARangeToWorld(float4* duplicate, const cudaArray *InputImageArray, int w, int
 	
 	// Kernel Invocation
 	dim3 DimBlock(16, 16);
-	dim3 DimGrid(DivUp(w, DimBlock.x), DivUp(h, DimBlock.y));
-	CUDARangeToWorldKernel<16,16><<<DimGrid,DimBlock>>>(w, h, duplicate);
+	dim3 DimGrid(DivUp(FRAME_SIZE_X, DimBlock.x), DivUp(FRAME_SIZE_Y, DimBlock.y));
+	CUDARangeToWorldKernel<16,16><<<DimGrid,DimBlock>>>(duplicate);
 
 	// Unbind texture
 	cutilSafeCall(cudaUnbindTexture(InputImageTexture));

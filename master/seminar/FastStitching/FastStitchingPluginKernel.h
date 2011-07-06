@@ -31,7 +31,7 @@ texture<float, 2, cudaReadModeElementType> InputImageTexture;
 ///////////////////////////////////////////////////////////////////////////////
 template<unsigned int BlockSizeX, unsigned int BlockSizeY>
 __global__ void
-CUDARangeToWorldKernel(unsigned int NX, unsigned int NY, float4* duplicate)
+CUDARangeToWorldKernel(float4* duplicate)
 {
 	// 2D index and linear index within this thread block
 	int tu = threadIdx.x;
@@ -42,7 +42,7 @@ CUDARangeToWorldKernel(unsigned int NX, unsigned int NY, float4* duplicate)
 	float gv = blockIdx.y*BlockSizeY+tv;
 
 	// Check for out-of-bounds
-	if ( gu >= NX || gv >= NY )
+	if ( gu >= FRAME_SIZE_X || gv >= FRAME_SIZE_Y )
 		return;
 
 	// The range value
@@ -56,17 +56,17 @@ CUDARangeToWorldKernel(unsigned int NX, unsigned int NY, float4* duplicate)
 
 	float X2Z = 1.209f;
 	float Y2Z = 0.9132f;
-	float fNormalizedX = gu / NX - 0.5f; // check for float
+	float fNormalizedX = gu / FRAME_SIZE_X - 0.5f; // check for float
 	float x = fNormalizedX * value * X2Z;
 
-	float fNormalizedY = 0.5f - gv / NY;
+	float fNormalizedY = 0.5f - gv / FRAME_SIZE_Y;
 	float y = fNormalizedY * value * Y2Z;
 
 	// World coordinates
 	WC = make_float4(x, y, value, 1.0f);
 
 	// Set the WC for the duplicate without Mesh Structure
-	duplicate[(int)(gv*NX + gu)] = WC;
+	duplicate[(int)(gv*FRAME_SIZE_X + gu)] = WC;
 }
 
 __global__
@@ -118,7 +118,7 @@ void kernelExtractLandmarks(float4* devWCsIn, unsigned int* devIndicesIn, float4
 	
 	int idx = devIndicesIn[tid];
 	while (devWCsIn[idx].x != devWCsIn[idx].x)
-		idx = (idx + 16) % (FRAME_SIZE_X * FRAME_SIZE_Y);
+		idx = (idx + 1) % (FRAME_SIZE_X * FRAME_SIZE_Y);
 
 	devLandmarksOut[tid] = devWCsIn[idx];
 }
@@ -131,18 +131,17 @@ float kernelComputeDistanceSourceTarget(float4* coords, float4* colors, float4* 
 		float z_dist = coords->z - coords2->z;
 		float spaceDist;
 
-		//case ABSOLUTE_DISTANCE: spaceDist = abs(x_dist) + abs(y_dist) + abs(z_dist); break;
-		//case LOG_ABSOLUTE_DISTANCE: spaceDist = log(abs(x_dist) + abs(y_dist) + abs(z_dist) + 1.f); break;
-		//case SQUARED_DISTANCE: 
-			spaceDist = (x_dist * x_dist) + (y_dist * y_dist) + (z_dist * z_dist); //break;
+		//spaceDist = abs(x_dist) + abs(y_dist) + abs(z_dist);
+		//spaceDist = log(abs(x_dist) + abs(y_dist) + abs(z_dist) + 1.f);
+		spaceDist = (x_dist * x_dist) + (y_dist * y_dist) + (z_dist * z_dist);
 
 
-		//float r_dist = colors->x - colors2->x; 
-		//float g_dist = colors->y - colors2->y;
-		//float b_dist = colors->z - colors2->z;
-		//float colorDist = (r_dist * r_dist) + (g_dist * g_dist) + (b_dist * b_dist);
+		float r_dist = colors->x - colors2->x; 
+		float g_dist = colors->y - colors2->y;
+		float b_dist = colors->z - colors2->z;
+		float colorDist = (r_dist * r_dist) + (g_dist * g_dist) + (b_dist * b_dist);
 	
-		//return (1 - devWeightRGB) * spaceDist + devWeightRGB * colorDist;
+		return (1 - devWeightRGB) * spaceDist + devWeightRGB * colorDist;
 		return spaceDist;
 }
 
@@ -161,10 +160,10 @@ void kernelRBC(int nrOfReps, unsigned int* indices, float* distances, float4* ta
 	//	return;
 
 	float4 coords = sourceCoords[tid];
-	//float4 colors = sourceColors[tid];
+	float4 colors = sourceColors[tid];
 
 	__shared__ float4 repCoordsBuffer[CUDA_BUFFER_SIZE];
-	//__shared__ float4 repColorsBuffer[CUDA_BUFFER_SIZE];
+	__shared__ float4 repColorsBuffer[CUDA_BUFFER_SIZE];
 
 	float minDist = FLT_MAX;
 	int nearestRepresentative;
@@ -180,13 +179,13 @@ void kernelRBC(int nrOfReps, unsigned int* indices, float* distances, float4* ta
 			{
 				unsigned int idx = dev_repsGPU[i + threadIdx.x].index;
 				repCoordsBuffer[threadIdx.x] = targetCoords[idx];
-				//repColorsBuffer[threadIdx.x] = targetColors[idx];
+				repColorsBuffer[threadIdx.x] = targetColors[idx];
 			}
 			__syncthreads();
 		}
 
-		//float dist = kernelComputeDistanceSourceTarget(&coords, &colors, &(repCoordsBuffer[i % CUDA_BUFFER_SIZE]), &(repColorsBuffer[i % CUDA_BUFFER_SIZE]));
-		float dist = kernelComputeDistanceSourceTarget(&coords, NULL, &(repCoordsBuffer[i % CUDA_BUFFER_SIZE]), NULL);
+		float dist = kernelComputeDistanceSourceTarget(&coords, &colors, &(repCoordsBuffer[i % CUDA_BUFFER_SIZE]), &(repColorsBuffer[i % CUDA_BUFFER_SIZE]));
+		//float dist = kernelComputeDistanceSourceTarget(&coords, NULL, &(repCoordsBuffer[i % CUDA_BUFFER_SIZE]), NULL);
 
 		if (dist < minDist)
 		{
@@ -201,9 +200,9 @@ void kernelRBC(int nrOfReps, unsigned int* indices, float* distances, float4* ta
 	for (int i = 0; i < dev_repsGPU[nearestRepresentative].nrOfPoints; ++i)
 	{
 		unsigned int idx = dev_repsGPU[nearestRepresentative].dev_points[i];
-		//float dist = kernelComputeDistanceSourceTarget(&coords, &colors, &(targetCoords[idx]), &(targetColors[idx]));
+		float dist = kernelComputeDistanceSourceTarget(&coords, &colors, &(targetCoords[idx]), &(targetColors[idx]));
 
-		float dist = kernelComputeDistanceSourceTarget(&coords, NULL, &(targetCoords[idx]), NULL);
+		//float dist = kernelComputeDistanceSourceTarget(&coords, NULL, &(targetCoords[idx]), NULL);
 
 		if (dist < minDist)
 		{

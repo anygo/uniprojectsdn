@@ -61,7 +61,9 @@ extern "C"
 void CUDAExtractLandmarks(int numLandmarks, float4* devWCsIn, uchar3* devColorsIn, unsigned int* devIndicesIn, float4* devLandmarksOut, float4* devColorsOut)
 {
 	//printf("CUDAExtractLandmarks\n");
-	kernelExtractLandmarks<<<DivUp(numLandmarks, CUDA_THREADS_PER_BLOCK), CUDA_THREADS_PER_BLOCK>>>(devWCsIn, devColorsIn, devIndicesIn, devLandmarksOut, devColorsOut);
+	kernelExtractLandmarks<<<DivUp(numLandmarks, CUDA_THREADS_PER_BLOCK), CUDA_THREADS_PER_BLOCK>>>(numLandmarks, devWCsIn, devColorsIn, devIndicesIn, devLandmarksOut, devColorsOut);
+	cudaThreadSynchronize();
+	CUT_CHECK_ERROR("Kernel execution failed (while trying to find closest points)");
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -80,7 +82,7 @@ void CUDAFindClosestPointsRBC(int nrOfPoints, int nrOfReps, unsigned int* indice
 {
 	// find the closest point for each pixel
 	kernelRBC<<<DivUp(nrOfPoints, CUDA_THREADS_PER_BLOCK), CUDA_THREADS_PER_BLOCK>>>(nrOfReps, indices, distances, targetCoords, targetColors, sourceCoords, sourceColors);
-	
+	cudaThreadSynchronize();
 	CUT_CHECK_ERROR("Kernel execution failed (while trying to find closest points)");
 }
 

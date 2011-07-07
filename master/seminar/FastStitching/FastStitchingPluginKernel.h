@@ -109,11 +109,13 @@ void kernelTransformPointsAndComputeDistance(float4* points, float* distances, i
 }
 
 __global__
-void kernelExtractLandmarks(float4* devWCsIn, uchar3* devColorsIn, unsigned int* devIndicesIn, float4* devLandmarksOut, float4* devColorsOut)
+void kernelExtractLandmarks(int numLandmarks, float4* devWCsIn, uchar3* devColorsIn, unsigned int* devIndicesIn, float4* devLandmarksOut, float4* devColorsOut)
 {
 	// get source[tid] for this thread
 	int tid = blockIdx.x*blockDim.x + threadIdx.x;
-	
+	if(tid >= numLandmarks)
+		return;
+
 	int idx = devIndicesIn[tid];
 	while (devWCsIn[idx].x != devWCsIn[idx].x)
 		idx = (idx + 1) % (FRAME_SIZE_X * FRAME_SIZE_Y);

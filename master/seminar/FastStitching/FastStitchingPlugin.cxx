@@ -57,6 +57,7 @@ FastStitchingPlugin::FastStitchingPlugin()
 	connect(m_Widget->m_PushButtonStitchFrame,				SIGNAL(clicked()),								this, SLOT(LoadStitch()));
 	connect(m_Widget->m_SpinBoxLandmarks,					SIGNAL(valueChanged(int)),						this, SLOT(ResetICPandCPF()));
 	connect(m_Widget->m_DoubleSpinBoxRGBWeight,				SIGNAL(valueChanged(double)),					this, SLOT(ResetICPandCPF()));
+	connect(m_Widget->m_DoubleSpinBoxClipPercentage,		SIGNAL(valueChanged(double)),					this, SLOT(ResetICPandCPF()));
 	connect(this,											SIGNAL(NewFrameAvailable()),					this, SLOT(LoadStitch()));
 
 	m_NumLandmarks = m_Widget->m_SpinBoxLandmarks->value();
@@ -246,6 +247,8 @@ FastStitchingPlugin::Reset()
 	validYStart += (validYEnd-validYStart)*clipPercentage;
 	validYEnd -= (validYEnd-validYStart)*clipPercentage;
 
+	std::cout << "xStart " <<validXStart << " xEnd " << validXEnd << " yStart " << validYStart << " yEnd " << validYEnd << std::endl;
+
 	nrOfValidPoints = (validXEnd - validXStart) * (validYEnd - validYStart);
 	stepSize = nrOfValidPoints / m_NumLandmarks;
 
@@ -256,6 +259,36 @@ FastStitchingPlugin::Reset()
 
 		m_SrcIndices[i] = j;
 	}
+
+	//std::ofstream lmSource("landmarkSamplingSource.txt");
+	//std::ofstream lmTarget("landmarkSamplingTarget.txt");
+
+	//for(int k = 0; k < m_NumLandmarks; ++k)
+	//{
+	//	int rowT = m_TargetIndices[k] / FRAME_SIZE_X;
+	//	int colT = m_TargetIndices[k] % FRAME_SIZE_X;
+	//	int rowS = m_SrcIndices[k] / FRAME_SIZE_X;
+	//	int colS = m_SrcIndices[k] % FRAME_SIZE_X;
+
+	//	lmTarget << "(" << rowT << "," << colT << ")" << std::endl;
+	//	lmSource << "(" << rowS << "," << colS << ")" << std::endl;
+	//}
+
+	//
+	//lmSource.close();
+	//lmTarget.close();
+
+	////for (int i = 0; i < FRAME_SIZE_Y; ++i)
+	////{
+	////	for (int j = 0; j < FRAME_SIZE_X; ++j)
+	////	{
+	////			lmSource << "o";
+	////			lmTarget << "o";
+	////		
+	////	}
+	////	lmSource << std::endl;
+	////	lmTarget << std::endl;
+	////}
 
 	cutilSafeCall(cudaMemcpy(m_devSourceIndices, m_SrcIndices, m_NumLandmarks*sizeof(unsigned int), cudaMemcpyHostToDevice));
 	cutilSafeCall(cudaMemcpy(m_devTargetIndices, m_TargetIndices, m_NumLandmarks*sizeof(unsigned int), cudaMemcpyHostToDevice));
@@ -269,9 +302,9 @@ FastStitchingPlugin::Reset()
 void
 FastStitchingPlugin::LoadStitch()
 {
-	//size_t freeMemory, totalMemory;
-	//cudaMemGetInfo(&freeMemory, &totalMemory);
-	//std::cout << (unsigned long) freeMemory / 1024 / 1024 << " MB / " << (unsigned long) totalMemory / 1024 / 1024 << " MB" << std::endl;
+	size_t freeMemory, totalMemory;
+	cudaMemGetInfo(&freeMemory, &totalMemory);
+	std::cout << (unsigned long) freeMemory / 1024 / 1024 << " MB / " << (unsigned long) totalMemory / 1024 / 1024 << " MB" << std::endl;
 
 	//QTime tOverall;
 	//tOverall.start();
@@ -309,7 +342,7 @@ FastStitchingPlugin::LoadStitch()
 	m_devWCs = m_devPrevWCs;
 	m_devPrevWCs = tmp;
 
-	// TODO swap the landmark colors
+	// swap the landmark colors
 	uchar3* colorTmp;
 	colorTmp = m_devColors;
 	m_devColors = m_devPrevColors;
@@ -435,7 +468,7 @@ FastStitchingPlugin::CopyToCPUAndVisualizeFrame()
 
 
 	// VISUALIZATION BUFFER
-	const int bufSize = 50;
+	const int bufSize = 30;
 
 	static int bufCtr = 0;
 	static vtkSmartPointer<ritk::RImageActorPipeline> actors[bufSize];

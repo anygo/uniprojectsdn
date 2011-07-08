@@ -232,10 +232,10 @@ FastStitchingPlugin::Reset()
 	int nrOfValidPoints = (validXEnd - validXStart) * (validYEnd - validYStart);
 	int stepSize = nrOfValidPoints / m_NumLandmarks;
 
-	for (int i = 0, j = validYStart*FRAME_SIZE_X + validXStart; i < m_NumLandmarks; ++i, j += stepSize)
+	for (int i = 0, j = validXStart*FRAME_SIZE_Y + validYStart; i < m_NumLandmarks; ++i, j += stepSize)
 	{
-		if(j % FRAME_SIZE_X > validXEnd)
-			j += FRAME_SIZE_X - validXEnd + validXStart;
+		if(j % FRAME_SIZE_Y > validYEnd)
+			j += FRAME_SIZE_Y - validYEnd + validYStart;
 
 		m_TargetIndices[i] = j;
 	}
@@ -252,10 +252,10 @@ FastStitchingPlugin::Reset()
 	nrOfValidPoints = (validXEnd - validXStart) * (validYEnd - validYStart);
 	stepSize = nrOfValidPoints / m_NumLandmarks;
 
-	for (int i = 0, j = validYStart*FRAME_SIZE_X + validXStart; i < m_NumLandmarks; ++i, j += stepSize)
+	for (int i = 0, j = validXStart*FRAME_SIZE_Y + validYStart; i < m_NumLandmarks; ++i, j += stepSize)
 	{
-		if(j % FRAME_SIZE_X > validXEnd)
-			j += FRAME_SIZE_X - validXEnd + validXStart;
+		if(j % FRAME_SIZE_Y > validXEnd)
+			j += FRAME_SIZE_Y - validYEnd + validYStart;
 
 		m_SrcIndices[i] = j;
 	}
@@ -417,6 +417,7 @@ FastStitchingPlugin::CopyToCPUAndVisualizeFrame()
 {
 	// copy transformed WC data from GPU to CPU
 	cutilSafeCall(cudaMemcpy(m_WCs, m_devWCs, FRAME_SIZE_X*FRAME_SIZE_Y*sizeof(float4), cudaMemcpyDeviceToHost));
+	//cutilSafeCall(cudaMemcpy(m_WCs, m_devTargetLandmarks, m_NumLandmarks*sizeof(float4), cudaMemcpyDeviceToHost));
 
 
 	if (!m_Widget->m_CheckBoxShowFrames->isChecked())
@@ -439,6 +440,7 @@ FastStitchingPlugin::CopyToCPUAndVisualizeFrame()
 	it.GoToBegin();
 
 	for (int i = 0; i < FRAME_SIZE_X*FRAME_SIZE_Y; ++i, ++it)
+	//for (int i = 0; i < m_NumLandmarks; ++i, ++it)
 	{
 		p = m_WCs[i];
 
@@ -449,6 +451,7 @@ FastStitchingPlugin::CopyToCPUAndVisualizeFrame()
 			float g = it.Value()[1];
 			float b = it.Value()[2];
 			colors->InsertNextTuple4(r, g, b, 255);
+			//colors->InsertNextTuple4(0, 0, 0, 255);
 		}
 	}
 

@@ -51,13 +51,23 @@
            </property>
           </widget>
          </item>
-         <item row="1" column="0">
+         <item row="2" column="0">
           <widget class="QPushButton" name="m_PushButtonComputeStatistics">
            <property name="toolTip">
             <string>stitches the actors to the previous actors</string>
            </property>
            <property name="text">
             <string>Compute Statistics</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QPushButton" name="m_PushButtonRunTest">
+           <property name="toolTip">
+            <string>stitches the actors to the previous actors</string>
+           </property>
+           <property name="text">
+            <string>Run Test</string>
            </property>
           </widget>
          </item>
@@ -377,19 +387,6 @@
                 </widget>
                </item>
                <item>
-                <widget class="QCheckBox" name="m_CheckBoxRemoveOutliers">
-                 <property name="enabled">
-                  <bool>true</bool>
-                 </property>
-                 <property name="text">
-                  <string>Remove / Ignore Outliers</string>
-                 </property>
-                 <property name="checked">
-                  <bool>false</bool>
-                 </property>
-                </widget>
-               </item>
-               <item>
                 <spacer name="verticalSpacer_3">
                  <property name="orientation">
                   <enum>Qt::Vertical</enum>
@@ -491,39 +488,13 @@
                   <double>0.100000000000000</double>
                  </property>
                  <property name="maximum">
-                  <double>1000.000000000000000</double>
+                  <double>2048.000000000000000</double>
                  </property>
                  <property name="singleStep">
                   <double>0.500000000000000</double>
                  </property>
                  <property name="value">
                   <double>1.000000000000000</double>
-                 </property>
-                </widget>
-               </item>
-               <item row="5" column="0">
-                <widget class="QLabel" name="label_17">
-                 <property name="text">
-                  <string>Assumed Rate of Outliers</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="5" column="1">
-                <widget class="QDoubleSpinBox" name="m_DoubleSpinBoxOutlierRate">
-                 <property name="enabled">
-                  <bool>false</bool>
-                 </property>
-                 <property name="decimals">
-                  <number>6</number>
-                 </property>
-                 <property name="maximum">
-                  <double>0.990000000000000</double>
-                 </property>
-                 <property name="singleStep">
-                  <double>0.050000000000000</double>
-                 </property>
-                 <property name="value">
-                  <double>0.100000000000000</double>
                  </property>
                 </widget>
                </item>
@@ -569,7 +540,7 @@
                  </property>
                 </widget>
                </item>
-               <item row="6" column="1">
+               <item row="5" column="1">
                 <spacer name="verticalSpacer_4">
                  <property name="orientation">
                   <enum>Qt::Vertical</enum>
@@ -1218,22 +1189,6 @@
     <hint type="destinationlabel">
      <x>784</x>
      <y>454</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>m_CheckBoxRemoveOutliers</sender>
-   <signal>clicked(bool)</signal>
-   <receiver>m_DoubleSpinBoxOutlierRate</receiver>
-   <slot>setEnabled(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>936</x>
-     <y>328</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>936</x>
-     <y>323</y>
     </hint>
    </hints>
   </connection>

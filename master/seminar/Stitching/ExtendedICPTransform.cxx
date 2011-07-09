@@ -28,13 +28,13 @@ ExtendedICPTransform::ExtendedICPTransform() : vtkLinearTransform()
 {
 	m_Source = vtkSmartPointer<vtkPolyData>::New();
 	m_Target = vtkSmartPointer<vtkPolyData>::New();
-	m_LandmarkTransform = vtkSmartPointer<vtkLandmarkTransform>::New();
 	m_Accumulate = vtkTransform::New();
 	m_Accumulate->PostMultiply();
 	m_SourceCoords = NULL;
 	m_SourceColors = NULL;
 	m_TargetCoords = NULL;
 	m_TargetColors = NULL;
+	m_ClosestP = NULL;
 	m_Distances = NULL;
 }
 
@@ -44,6 +44,7 @@ ExtendedICPTransform::~ExtendedICPTransform()
 	if(m_SourceColors) delete[] m_SourceColors;
 	if(m_TargetCoords) delete[] m_TargetCoords;
 	if(m_TargetColors) delete[] m_TargetColors;
+	if(m_ClosestP) delete[] m_ClosestP;
 	if(m_Distances)	delete[] m_Distances;
 }
 //----------------------------------------------------------------------------
@@ -78,15 +79,6 @@ ExtendedICPTransform::GetMTime()
 	if (m_Target)
 	{
 		mtime = m_Target->GetMTime(); 
-		if (mtime > result)
-		{
-			result = mtime;
-		}
-	}
-
-	if (m_LandmarkTransform)
-	{
-		mtime = m_LandmarkTransform->GetMTime();
 		if (mtime > result)
 		{
 			result = mtime;
@@ -214,16 +206,8 @@ ExtendedICPTransform::vtkPolyDataToPointCoordsAndColors(double percentage)
 void
 ExtendedICPTransform::InternalUpdate() 
 {
-	// for some reason, we need this
-	m_Points1->Modified();
-	m_Points2->Modified();
-	m_Closestp->Modified();
-
 	// configure ClosestPointFinder
-	//QTime ts;
-	//ts.start();
 	m_ClosestPointFinder->SetTarget(m_TargetCoords, m_TargetColors, m_SourceCoords, m_SourceColors);
-	//std::cout << "SetTarget() " << ts.elapsed() << " ms" << std::endl;
 
 	m_Accumulate->Identity();
 
@@ -234,151 +218,278 @@ ExtendedICPTransform::InternalUpdate()
 		m_Accumulate->Concatenate(m_PreviousTransformationMatrix);
 	}
 
-	double p1[3], p2[3];
+	vtkSmartPointer<vtkMatrix4x4> mat = vtkSmartPointer<vtkMatrix4x4>::New();
+
 	unsigned short* indices;
-
-	for (int i = 0; i < m_NumLandmarks; i++)
-	{
-		m_Points1->SetPoint(static_cast<vtkIdType>(i), m_SourceCoords[i].x, m_SourceCoords[i].y, m_SourceCoords[i].z);
-	}
-
-	// go
-	vtkSmartPointer<vtkPoints> a2;
-	if (m_RemoveOutliers && m_OutlierRate > 0.0)
-	{
-		a2 = vtkSmartPointer<vtkPoints>::New();
-	}
-
-	vtkSmartPointer<vtkPoints> temp;
-	vtkSmartPointer<vtkPoints> a = m_Points1;
-	vtkSmartPointer<vtkPoints> b = m_Points2;
-
 	float totaldist;
 	m_NumIter = 0;
 
-	QTime findTime;
-	int findTimeElapsed = 0;
+//#define RUNTIME_EVALUATION
+#ifdef RUNTIME_EVALUATION
+	const int RUNTIME_ITER = 50;
+	double RUNTIMES_ELAPSED[3] = {0,0,0};
+	QTime T_RUNTIME;
+#endif
+
 	while (true)
 	{
 		// Set locators source points and perfom nearest neighbor search
-		findTime.start();
-		indices = m_ClosestPointFinder->FindClosestPoints(m_SourceCoords, m_SourceColors);
-		findTimeElapsed += findTime.elapsed();
-
-		if (m_RemoveOutliers && m_OutlierRate > 0.0)
+#ifdef RUNTIME_EVALUATION
+		T_RUNTIME.start();
+		for (int runtimeIteration = 0; runtimeIteration < RUNTIME_ITER; ++runtimeIteration)
 		{
-			std::vector<float> sortedDistances(m_NumLandmarks);
-			float* dists = m_ClosestPointFinder->GetDistances();
-			m_MeanTargetDistance = 0;
-			for(int i = 0; i < m_NumLandmarks; ++i)
-			{
-				sortedDistances[i] = dists[i];
-				m_MeanTargetDistance += (dists[i]);
-			}
-			m_MeanTargetDistance /= static_cast<float>(m_NumLandmarks);
+#endif
+			indices = m_ClosestPointFinder->FindClosestPoints(m_SourceCoords, m_SourceColors);
 
-			std::sort(sortedDistances.begin(), sortedDistances.end());
+#ifdef RUNTIME_EVALUATION
+		}
+		RUNTIMES_ELAPSED[0] += T_RUNTIME.elapsed();
+#endif
 
-			int thresholdIdx = floor((1.0 - m_OutlierRate) * static_cast<float>(m_NumLandmarks - 1));
-			float threshold = sortedDistances[thresholdIdx];
-
-			int number = thresholdIdx + 1;
-
-			// perfect match?
-			if (threshold < FLT_EPSILON)
-			{
-				threshold = FLT_MAX;
-				number = m_NumLandmarks;
-			}
-
-			// calling Modified() is necessary otherwise object properties won't change
-			m_Closestp->SetNumberOfPoints(number);
-			a2->SetNumberOfPoints(number);
-			m_Closestp->Modified();
-			a2->Modified();
-
-			int count = 0;
-			for(int i = 0; i < m_NumLandmarks; ++i)
-			{
-				if(dists[i] <= threshold) 
-				{
-					int index = indices[i];
-					m_Closestp->SetPoint(count, m_TargetCoords[index].x, m_TargetCoords[index].y, m_TargetCoords[index].z);
-					a2->SetPoint(count, m_SourceCoords[i].x, m_SourceCoords[i].y, m_SourceCoords[i].z);
-					++count;
-				}
-			}
-			m_LandmarkTransform->SetSourceLandmarks(a2);
-
-		} else
+		for(int i = 0; i < m_NumLandmarks; ++i)
 		{
-			for(int i = 0; i < m_NumLandmarks; ++i)
-			{
-				int index = indices[i];
-				m_Closestp->SetPoint(i, m_TargetCoords[index].x, m_TargetCoords[index].y, m_TargetCoords[index].z);
-			}
-			m_LandmarkTransform->SetSourceLandmarks(a);
+			int index = indices[i];
+			m_ClosestP[i].x = m_TargetCoords[index].x;
+			m_ClosestP[i].y = m_TargetCoords[index].y;
+			m_ClosestP[i].z = m_TargetCoords[index].z;
 		}
 
-		// build the landmark transform
-		m_LandmarkTransform->SetTargetLandmarks(m_Closestp);
-		m_LandmarkTransform->Update();
+#ifdef RUNTIME_EVALUATION
+		T_RUNTIME.start();
+		for (int runtimeIteration = 0; runtimeIteration < RUNTIME_ITER; ++runtimeIteration)
+		{
+#endif
+			mat->DeepCopy(EstimateTransformationMatrix(m_SourceCoords, m_ClosestP));
+
+#ifdef RUNTIME_EVALUATION
+		}
+		RUNTIMES_ELAPSED[1] += T_RUNTIME.elapsed();
+#endif		
 
 		// concatenate transformation matrices
-		m_Accumulate->Concatenate(m_LandmarkTransform->GetMatrix());
+		m_Accumulate->Concatenate(mat);
 
 		++m_NumIter;
 		if (m_NumIter >= m_MaxIter) 
-		{
 			break;
-		}
 
 		// move mesh and compute mean distance to previous iteration
 		totaldist = 0.f;
 
 		// transform on gpu
-		if (m_ClosestPointFinder->usesGPU())
-		{	
-			TransformPointsDirectlyOnGPU(m_LandmarkTransform->GetMatrix()->Element, m_SourceCoords, m_Distances);
-			for(int i = 0; i < m_NumLandmarks; i++)
-			{
-				totaldist += m_Distances[i];
-				b->SetPoint(i, m_SourceCoords[i].x, m_SourceCoords[i].y, m_SourceCoords[i].z);
-			}	
-
-		} else
+#ifdef RUNTIME_EVALUATION
+		vtkMatrix4x4* matInv = vtkMatrix4x4::New();
+		vtkMatrix4x4::Invert(mat, matInv);
+		T_RUNTIME.start();		
+		for (int runtimeIteration = 0; runtimeIteration < RUNTIME_ITER / 2; ++runtimeIteration)
 		{
-			for(int i = 0; i < m_NumLandmarks; i++)
-			{
-				a->GetPoint(i, p1);
-				m_LandmarkTransform->InternalTransformPoint(p1, p2);
-				b->SetPoint(i, p2);
-
-				totaldist += vtkMath::Distance2BetweenPoints(p1, p2);
-			}
+#endif
+			TransformPointsDirectlyOnGPU(mat->Element, m_SourceCoords, m_Distances);
+			
+#ifdef RUNTIME_EVALUATION
+			TransformPointsDirectlyOnGPU(matInv->Element, m_SourceCoords, m_Distances);	
 		}
+		TransformPointsDirectlyOnGPU(mat->Element, m_SourceCoords, m_Distances);
+		RUNTIMES_ELAPSED[2] += T_RUNTIME.elapsed();
+#endif
 
+		for(int i = 0; i < m_NumLandmarks; i++)
+		{
+			totaldist += m_Distances[i];
+		}	
+		
 		m_MeanDist = totaldist / (float)m_NumLandmarks;
 
 		if (m_MeanDist <= m_MaxMeanDist)
-		{
 			break;
-		}
-
-		// swap
-		temp = a;
-		a = b;
-		b = temp;
-
-		if (!m_ClosestPointFinder->usesGPU())
-		{
-			vtkPolyDataToPointCoords(a, m_SourceCoords);
-		}
 	} 
-
-	//std::cout << "avg findTimeElapsed: " << static_cast<double>(findTimeElapsed) / static_cast<double>(m_NumIter) << std::endl;
 
 	// now recover accumulated result
 	this->Matrix->DeepCopy(m_Accumulate->GetMatrix());
 
+	std::ofstream file("icpRuntimeSeparation.txt", ios::app);
+
+#ifdef RUNTIME_EVALUATION
+	std::cout << "Runtime Evaluation:" << std::endl;
+	double RUNTIME_OVERALL = RUNTIMES_ELAPSED[0] + RUNTIMES_ELAPSED[1] + RUNTIMES_ELAPSED[2];
+	std::cout << "step0: " << (double)RUNTIMES_ELAPSED[0] / (double)(RUNTIME_ITER*m_NumIter) << " | " << (RUNTIMES_ELAPSED[0]*100) / RUNTIME_OVERALL << " %" << std::endl;
+	std::cout << "step1: " << (double)RUNTIMES_ELAPSED[1] / (double)(RUNTIME_ITER*m_NumIter) << " | " << (RUNTIMES_ELAPSED[1]*100) / RUNTIME_OVERALL << " %" << std::endl;
+	std::cout << "step2: " << (double)RUNTIMES_ELAPSED[2] / (double)(RUNTIME_ITER*m_NumIter) << " | " << (RUNTIMES_ELAPSED[2]*100) / RUNTIME_OVERALL << " %" << std::endl;
+	std::cout << std::endl;
+
+	file << m_NumLandmarks << " " << (RUNTIMES_ELAPSED[0]*100) / RUNTIME_OVERALL << " " << (RUNTIMES_ELAPSED[1]*100) / RUNTIME_OVERALL << " " << (RUNTIMES_ELAPSED[2]*100) / RUNTIME_OVERALL << " " <<
+		(double)RUNTIMES_ELAPSED[0] / (double)(RUNTIME_ITER*m_NumIter) << " " << (double)RUNTIMES_ELAPSED[1] / (double)(RUNTIME_ITER*m_NumIter) << " " << (double)RUNTIMES_ELAPSED[2] / (double)(RUNTIME_ITER*m_NumIter) << std::endl;
+#endif
+}
+
+vtkMatrix4x4*
+ExtendedICPTransform::EstimateTransformationMatrix(PointCoords* source, PointCoords* target)
+{
+	int i;
+
+	vtkSmartPointer<vtkMatrix4x4> mat = vtkSmartPointer<vtkMatrix4x4>::New();
+
+	// -- find the centroid of each set --
+	double source_centroid[3] = {0,0,0};
+	double target_centroid[3] = {0,0,0};
+	for(i = 0; i < m_NumLandmarks; ++i)
+	{
+		source_centroid[0] += source[i].x;
+		source_centroid[1] += source[i].y;
+		source_centroid[2] += source[i].z;
+		target_centroid[0] += target[i].x;
+		target_centroid[1] += target[i].y;
+		target_centroid[2] += target[i].z;
+	}
+	source_centroid[0] /= m_NumLandmarks;
+	source_centroid[1] /= m_NumLandmarks;
+	source_centroid[2] /= m_NumLandmarks;
+	target_centroid[0] /= m_NumLandmarks;
+	target_centroid[1] /= m_NumLandmarks;
+	target_centroid[2] /= m_NumLandmarks;
+
+	// -- build the 3x3 matrix M --
+	double M[3][3];
+	double AAT[3][3];
+	for(i = 0; i < 3; ++i) 
+	{
+		AAT[i][0] = M[i][0]=0.0F; // fill M with zeros
+		AAT[i][1] = M[i][1]=0.0F; 
+		AAT[i][2] = M[i][2]=0.0F; 
+	}
+
+	
+	int pt;
+	double a[3], b[3];
+	double sa = 0.0F, sb = 0.0F;
+	for(pt = 0; pt < m_NumLandmarks; ++pt)
+	{
+		// get the origin-centred point (a) in the source set
+		a[0] = source[pt].x;
+		a[1] = source[pt].y;
+		a[2] = source[pt].z;
+		a[0] -= source_centroid[0];
+		a[1] -= source_centroid[1];
+		a[2] -= source_centroid[2];
+		// get the origin-centred point (b) in the target set
+		b[0] = target[pt].x;
+		b[1] = target[pt].y;
+		b[2] = target[pt].z;
+		b[0] -= target_centroid[0];
+		b[1] -= target_centroid[1];;
+		b[2] -= target_centroid[2];;
+		// accumulate the products a*T(b) into the matrix M
+		for(i = 0; i < 3; ++i) 
+		{
+			M[i][0] += a[i]*b[0];
+			M[i][1] += a[i]*b[1];
+			M[i][2] += a[i]*b[2];
+		}
+		// accumulate scale factors (if desired)
+		sa += a[0]*a[0]+a[1]*a[1]+a[2]*a[2];
+		sb += b[0]*b[0]+b[1]*b[1]+b[2]*b[2];
+	}
+
+	// compute required scaling factor (if desired)
+	double scale = (double)sqrt(sb/sa);
+
+	// -- build the 4x4 matrix N --
+	double Ndata[4][4];
+	double *N[4];
+	for(i=0;i<4;i++)
+	{
+		N[i] = Ndata[i];
+		N[i][0]=0.0F; // fill N with zeros
+		N[i][1]=0.0F;
+		N[i][2]=0.0F;
+		N[i][3]=0.0F;
+	}
+	// on-diagonal elements
+	N[0][0] = M[0][0]+M[1][1]+M[2][2];
+	N[1][1] = M[0][0]-M[1][1]-M[2][2];
+	N[2][2] = -M[0][0]+M[1][1]-M[2][2];
+	N[3][3] = -M[0][0]-M[1][1]+M[2][2];
+	// off-diagonal elements
+	N[0][1] = N[1][0] = M[1][2]-M[2][1];
+	N[0][2] = N[2][0] = M[2][0]-M[0][2];
+	N[0][3] = N[3][0] = M[0][1]-M[1][0];
+
+	N[1][2] = N[2][1] = M[0][1]+M[1][0];
+	N[1][3] = N[3][1] = M[2][0]+M[0][2];
+	N[2][3] = N[3][2] = M[1][2]+M[2][1];
+
+	// -- eigen-decompose N (is symmetric) --
+	double eigenvectorData[4][4];
+	double *eigenvectors[4],eigenvalues[4];
+
+	eigenvectors[0] = eigenvectorData[0];
+	eigenvectors[1] = eigenvectorData[1];
+	eigenvectors[2] = eigenvectorData[2];
+	eigenvectors[3] = eigenvectorData[3];
+
+	vtkMath::JacobiN(N,4,eigenvalues,eigenvectors);
+
+	// the eigenvector with the largest eigenvalue is the quaternion we want
+	// (they are sorted in decreasing order for us by JacobiN)
+	double w,x,y,z;
+
+	// points are not collinear
+	w = eigenvectors[0][0];
+	x = eigenvectors[1][0];
+	y = eigenvectors[2][0];
+	z = eigenvectors[3][0];
+
+	// convert quaternion to a rotation matrix
+	double ww = w*w;
+	double wx = w*x;
+	double wy = w*y;
+	double wz = w*z;
+
+	double xx = x*x;
+	double yy = y*y;
+	double zz = z*z;
+
+	double xy = x*y;
+	double xz = x*z;
+	double yz = y*z;
+
+	mat->Element[0][0] = ww + xx - yy - zz; 
+	mat->Element[1][0] = 2.0*(wz + xy);
+	mat->Element[2][0] = 2.0*(-wy + xz);
+
+	mat->Element[0][1] = 2.0*(-wz + xy);  
+	mat->Element[1][1] = ww - xx + yy - zz;
+	mat->Element[2][1] = 2.0*(wx + yz);
+
+	mat->Element[0][2] = 2.0*(wy + xz);
+	mat->Element[1][2] = 2.0*(-wx + yz);
+	mat->Element[2][2] = ww - xx - yy + zz;
+
+	// the translation is given by the difference in the transformed source
+	// centroid and the target centroid
+	double sx, sy, sz;
+
+	sx = mat->Element[0][0] * source_centroid[0] +
+		mat->Element[0][1] * source_centroid[1] +
+		mat->Element[0][2] * source_centroid[2];
+	sy = mat->Element[1][0] * source_centroid[0] +
+		mat->Element[1][1] * source_centroid[1] +
+		mat->Element[1][2] * source_centroid[2];
+	sz = mat->Element[2][0] * source_centroid[0] +
+		mat->Element[2][1] * source_centroid[1] +
+		mat->Element[2][2] * source_centroid[2];
+
+	mat->Element[0][3] = target_centroid[0] - sx;
+	mat->Element[1][3] = target_centroid[1] - sy;
+	mat->Element[2][3] = target_centroid[2] - sz;
+
+	// fill the bottom row of the 4x4 matrix
+	mat->Element[3][0] = 0.0;
+	mat->Element[3][1] = 0.0;
+	mat->Element[3][2] = 0.0;
+	mat->Element[3][3] = 1.0;
+
+	mat->Modified();
+
+	return mat;
 }

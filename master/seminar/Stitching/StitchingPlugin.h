@@ -92,6 +92,7 @@ protected slots:
 	void UpdateZRange();
 	void SetThreshold(double thresh) { m_HistogramDifferenceThreshold = thresh; }
 	void ComputeStatistics();
+	void RunTest();
 
 
 protected:
@@ -102,6 +103,7 @@ protected:
 	void LoadFrame();
 	bool FrameDifferenceAboveThreshold();
 	void CleanFrame();
+	void Reset();
 	void Stitch(vtkPolyData* toBeStitched, vtkPolyData* previousFrame,
 						vtkMatrix4x4* previousTransformationMatrix,
 						vtkPolyData* outputStitchedPolyData,

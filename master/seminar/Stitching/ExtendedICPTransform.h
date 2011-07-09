@@ -53,22 +53,14 @@ public:
 		m_TargetCoords = new PointCoords[m_NumLandmarks];
 		m_TargetColors = new PointColors[m_NumLandmarks];
 
+		m_ClosestP = new PointCoords[m_NumLandmarks];
+
 		// for gpu based distance computation
 		m_Distances = new float[m_NumLandmarks];
-		
-		m_Points1 = vtkSmartPointer<vtkPoints>::New();
-		m_Points1->SetNumberOfPoints(m_NumLandmarks);
-		m_Points2 = vtkSmartPointer<vtkPoints>::New();
-		m_Points2->SetNumberOfPoints(m_NumLandmarks);
-		m_Closestp = vtkSmartPointer<vtkPoints>::New();
-		m_Closestp->SetNumberOfPoints(m_NumLandmarks);
-
 	}
 	inline int GetNumLandmarks() { return m_MaxIter; }
 	inline void SetMaxMeanDist(float dist) { m_MaxMeanDist = dist; }
 	inline int GetMaxMeanDist() { return m_MaxMeanDist; }
-	inline void SetOutlierRate(float percentage) { m_OutlierRate = percentage; }
-	inline void SetRemoveOutliers(bool remove) { m_RemoveOutliers = remove; }
 	inline void SetClosestPointFinder(ClosestPointFinder* cpf) { m_ClosestPointFinder = cpf; }
 	inline void SetNormalizeRGBToDistanceValuesFactor(float factor) { m_NormalizeRGBToDistanceValuesFactor = factor; }
 	inline void SetPreviousTransformMatrix(vtkMatrix4x4* m) { m_PreviousTransformationMatrix = m; }
@@ -77,7 +69,6 @@ public:
 	inline int GetNumIter() { return m_NumIter; }
 	inline float GetMeanDist() { return m_MeanDist; }
 	inline float GetMeanTargetDistance() { return m_MeanTargetDistance; }
-	inline vtkLandmarkTransform* GetLandmarkTransform() { return m_LandmarkTransform; }
 
 protected:
 	ExtendedICPTransform();
@@ -87,6 +78,8 @@ protected:
 	unsigned long int GetMTime();
 	void vtkPolyDataToPointCoords(vtkSmartPointer<vtkPoints> poly, PointCoords* coords);
 
+	vtkMatrix4x4* EstimateTransformationMatrix(PointCoords* source, PointCoords* target);
+
 	vtkSmartPointer<vtkPolyData> m_Source;
 	vtkSmartPointer<vtkPolyData> m_Target;
 
@@ -94,10 +87,7 @@ protected:
 	PointCoords* m_TargetCoords;
 	PointColors* m_SourceColors;
 	PointColors* m_TargetColors;
-
-	vtkSmartPointer<vtkPoints> m_Points1;
-	vtkSmartPointer<vtkPoints> m_Points2;
-	vtkSmartPointer<vtkPoints> m_Closestp;
+	PointCoords* m_ClosestP;
 
 	ClosestPointFinder* m_ClosestPointFinder;
 	float* m_Distances;
@@ -105,8 +95,6 @@ protected:
 	int m_MaxIter;
 	int m_NumLandmarks;
 	float m_MaxMeanDist;
-	float m_OutlierRate;
-	bool m_RemoveOutliers;
 	vtkSmartPointer<vtkMatrix4x4> m_PreviousTransformationMatrix;
 	bool m_ApplyPreviousTransform;
 
@@ -114,7 +102,6 @@ protected:
 	float m_MeanDist;
 	float m_MeanTargetDistance;
 	float m_NormalizeRGBToDistanceValuesFactor;
-	vtkSmartPointer<vtkLandmarkTransform> m_LandmarkTransform;
 	vtkSmartPointer<vtkTransform> m_Accumulate;
 
 private:

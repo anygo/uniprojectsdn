@@ -38,6 +38,10 @@ ClosestPointFinderRBCGPU::ClosestPointFinderRBCGPU(int NrOfPoints, float nrOfRep
 {
 	m_NrOfReps = std::min( MAX_REPRESENTATIVES, static_cast<int>(m_NrOfRepsFactor * sqrt(static_cast<float>(m_NrOfPoints))) );
 
+	// CAUTION!!!
+	//m_NrOfReps = m_NrOfRepsFactor;
+	// CAUTION!!!
+
 	// initialize GPU RBC struct and other data structures
 	m_Reps = new unsigned short[m_NrOfReps];
 	m_RepsGPU = new RepGPU[m_NrOfReps];	

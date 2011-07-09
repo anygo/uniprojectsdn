@@ -70,6 +70,7 @@ StitchingPlugin::StitchingPlugin()
 	connect(m_Widget->m_SpinBoxLandmarks,					SIGNAL(valueChanged(int)),						this, SLOT(ResetICPandCPF()));
 	connect(m_Widget->m_DoubleSpinBoxRGBWeight,				SIGNAL(valueChanged(double)),					this, SLOT(ResetICPandCPF()));
 	connect(m_Widget->m_ComboBoxMetric,						SIGNAL(currentIndexChanged(int)),				this, SLOT(ResetICPandCPF()));
+	connect(m_Widget->m_DoubleSpinBoxNrOfRepsFactor,		SIGNAL(valueChanged(double)),					this, SLOT(ResetICPandCPF()));
 	connect(m_Widget->m_SpinBoxBufferSize,					SIGNAL(valueChanged(int)),						this, SLOT(ClearBuffer()));
 	connect(this,											SIGNAL(RecordFrameAvailable()),					this, SLOT(RecordFrame()));
 	connect(this,											SIGNAL(LiveStitchingFrameAvailable()),			this, SLOT(LiveStitching()));
@@ -77,6 +78,7 @@ StitchingPlugin::StitchingPlugin()
 	connect(m_Widget->m_HorizontalSliderMaxZ,				SIGNAL(valueChanged(int)),						this, SLOT(UpdateZRange()));
 	connect(m_Widget->m_DoubleSpinBoxHistDiffThresh,		SIGNAL(valueChanged(double)),					this, SLOT(SetThreshold(double)));
 	connect(m_Widget->m_PushButtonComputeStatistics,		SIGNAL(clicked()),								this, SLOT(ComputeStatistics()));
+	connect(m_Widget->m_PushButtonRunTest,					SIGNAL(clicked()),								this, SLOT(RunTest()));
 
 
 	// progress bar signals
@@ -156,13 +158,57 @@ StitchingPlugin::GetPluginGUI()
 }
 //----------------------------------------------------------------------------
 void
+StitchingPlugin::RunTest()
+{
+	int numLandmarks[18] = {100, 200, 500, 750, 1000, 1250, 1500, 2000, 2500, 3000, 4000, 5000, 7500, 10000, 12500, 15000, 17500, 20000};
+	for (int i = 1; i < 18; ++i)
+	{
+		m_Widget->m_SpinBoxLandmarks->setValue(numLandmarks[i]);
+		Reset();
+		UndoTransformForSelectedActors();
+		StitchSelectedActors();
+	}
+}
+void
+StitchingPlugin::Reset()
+{
+	switch (m_Widget->m_ComboBoxClosestPointFinder->currentIndex())
+	{
+	case 0: m_cpf = new ClosestPointFinderBruteForceGPU(m_Widget->m_SpinBoxLandmarks->value()); break;
+	case 1: m_cpf = new ClosestPointFinderBruteForceCPU(m_Widget->m_SpinBoxLandmarks->value(), false); break;
+	case 2: m_cpf = new ClosestPointFinderBruteForceCPU(m_Widget->m_SpinBoxLandmarks->value(), true); break;
+	case 3: m_cpf = new ClosestPointFinderRBCCPU(m_Widget->m_SpinBoxLandmarks->value(), static_cast<float>(m_Widget->m_DoubleSpinBoxNrOfRepsFactor->value())); break;
+	case 4: m_cpf = new ClosestPointFinderRBCGPU(m_Widget->m_SpinBoxLandmarks->value(), static_cast<float>(m_Widget->m_DoubleSpinBoxNrOfRepsFactor->value())); break;
+	case 5: m_cpf = new ClosestPointFinderRBCCayton(m_Widget->m_SpinBoxLandmarks->value(), static_cast<float>(m_Widget->m_DoubleSpinBoxNrOfRepsFactor->value())); break;
+	}
+
+	int metric;
+	switch (m_Widget->m_ComboBoxMetric->currentIndex())
+	{
+	case 0: metric = LOG_ABSOLUTE_DISTANCE; break;
+	case 1: metric = ABSOLUTE_DISTANCE; break;
+	case 2: metric = SQUARED_DISTANCE; break;
+	}
+
+	m_cpf->SetMetric(metric);
+	m_cpf->SetWeightRGB(m_Widget->m_DoubleSpinBoxRGBWeight->value());
+
+	m_icp = vtkSmartPointer<ExtendedICPTransform>::New();
+	m_icp->SetClosestPointFinder(m_cpf);
+	m_icp->SetNumLandmarks(m_Widget->m_SpinBoxLandmarks->value());
+
+	m_BufferSize = m_Widget->m_SpinBoxBufferSize->value();
+
+	m_ResetICPandCPFRequired = false;
+}
+void
 StitchingPlugin::ComputeStatistics()
 {
 	std::cout << "computing statistics... please wait." << std::endl;
 	QTime t;
 	t.start();
 
-	const int numIter = 10;
+	const int numIter = 100;
 	const int numPoints = 1000;
 
 	if (m_Widget->m_ListWidgetHistory->selectedItems().size() != 1)
@@ -182,98 +228,121 @@ StitchingPlugin::ComputeStatistics()
 
 	int stepSize = hli->m_actor->GetData()->GetNumberOfPoints() / numPoints;
 
-	vtkPolyData* ptr = hli->m_actor->GetData();
+	vtkSmartPointer<vtkPolyData> origState =
+		vtkSmartPointer<vtkPolyData>::New();
+	origState->DeepCopy(hli->m_actor->GetData());
 
-	// collect data
-	for (int i = 0; i < numIter; ++i)
+	std::ofstream file("blubb.txt");
+
+	for (int numReps = 1; numReps <= 256; numReps += (numReps < 10) ? 1 : (numReps < 32) ? 2 : (numReps < 128) ? 4 : 8)
 	{
-		StitchSelectedActors();
-		for (int k = 0, j = 0; k < numPoints; ++k, j += stepSize)
+		//int numReps = ceil(repsPercentage * m_Widget->m_SpinBoxLandmarks->value());
+		numReps = std::max(1, numReps);
+		numReps = std::min(m_Widget->m_SpinBoxLandmarks->value(), numReps);
+		std::cout << "numReps: " << numReps << std::endl;
+		m_Widget->m_DoubleSpinBoxNrOfRepsFactor->setValue(numReps);
+		Reset();
+
+		int stitchTimeElapsed = 0;
+
+		// collect data
+		for (int i = 0; i < numIter; ++i)
 		{
-			coords[i][k].x = ptr->GetPoint(j)[0];
-			coords[i][k].y = ptr->GetPoint(j)[1];
-			coords[i][k].z = ptr->GetPoint(j)[2];
+			StitchSelectedActors();
+			stitchTimeElapsed += ICP_TIME;
+			vtkPolyData* ptr = hli->m_actor->GetData();
+			for (int k = 0, j = 0; k < numPoints; ++k, j += stepSize)
+			{
+				coords[i][k].x = ptr->GetPoint(j)[0];
+				coords[i][k].y = ptr->GetPoint(j)[1];
+				coords[i][k].z = ptr->GetPoint(j)[2];
+			}
+			hli->m_actor->SetData(origState, true);
 		}
-		UndoTransformForSelectedActors();
-	}
 
-	// initialize mean
-	for (int i = 0; i < numPoints; ++i)
-		mean[i].x = mean[i].y = mean[i].z = 0.f;
+		stitchTimeElapsed /= numIter;
 
-	// compute mean
-	for (int i = 0; i < numIter; ++i)
-	{
-		for (int j = 0; j < numPoints; ++j)
+		// initialize mean
+		for (int i = 0; i < numPoints; ++i)
+			mean[i].x = mean[i].y = mean[i].z = 0.f;
+
+		// compute mean
+		for (int i = 0; i < numIter; ++i)
 		{
-			mean[j].x += coords[i][j].x;
-			mean[j].y += coords[i][j].y;
-			mean[j].z += coords[i][j].z;
+			for (int j = 0; j < numPoints; ++j)
+			{
+				mean[j].x += coords[i][j].x;
+				mean[j].y += coords[i][j].y;
+				mean[j].z += coords[i][j].z;
+			}
 		}
-	}
 
-	// normalize mean
-	for (int i = 0; i < numPoints; ++i)
-	{
-		mean[i].x /= numIter;
-		mean[i].y /= numIter;
-		mean[i].z /= numIter;
-	}
-
-	// compute distances (euclidean) between points and mean
-	for (int i = 0; i < numIter; ++i)
-	{
-		for (int j = 0; j < numPoints; ++j)
+		// normalize mean
+		for (int i = 0; i < numPoints; ++i)
 		{
-			distToMean[i][j] = std::sqrt(
-				(mean[j].x - coords[i][j].x) * (mean[j].x - coords[i][j].x) +
-				(mean[j].y - coords[i][j].y) * (mean[j].y - coords[i][j].y) +
-				(mean[j].z - coords[i][j].z) * (mean[j].z - coords[i][j].z)
-				);
+			mean[i].x /= numIter;
+			mean[i].y /= numIter;
+			mean[i].z /= numIter;
 		}
-	}
 
-	// compute mean of distances
-	for (int i = 0; i < numIter; ++i)
-	{
-		distMean[i] = 0.f;
-		for (int j = 0; j < numPoints; ++j)
+		// compute distances (euclidean) between points and mean
+		for (int i = 0; i < numIter; ++i)
 		{
-			distMean[i] += distToMean[i][j];
+			for (int j = 0; j < numPoints; ++j)
+			{
+				distToMean[i][j] = std::sqrt(
+					(mean[j].x - coords[i][j].x) * (mean[j].x - coords[i][j].x) +
+					(mean[j].y - coords[i][j].y) * (mean[j].y - coords[i][j].y) +
+					(mean[j].z - coords[i][j].z) * (mean[j].z - coords[i][j].z)
+					);
+			}
 		}
-		distMean[i] /= numIter;
-	}
 
-	float overallDistMean = 0.f;
-
-	for (int i = 0; i < numPoints; ++i)
-		overallDistMean += distMean[i];
-	overallDistMean /= numPoints;
-
-
-	for (int i = 0; i < numPoints; ++i)
-		stddev[i] = 0.f;
-
-	// compute stddev
-	for (int i = 0; i < numIter; ++i)
-	{
-		for (int j = 0; j < numPoints; ++j)
+		// compute mean of distances
+		for (int i = 0; i < numIter; ++i)
 		{
-			stddev[i] += (distToMean[i][j] - distMean[j]) * (distToMean[i][j] - distMean[j]) / static_cast<float>(numIter);
+			distMean[i] = 0.f;
+			for (int j = 0; j < numPoints; ++j)
+			{
+				distMean[i] += distToMean[i][j];
+			}
+			distMean[i] /= numIter;
 		}
+
+		float overallDistMean = 0.f;
+
+		for (int i = 0; i < numPoints; ++i)
+			overallDistMean += distMean[i];
+		overallDistMean /= numPoints;
+
+
+		for (int i = 0; i < numPoints; ++i)
+			stddev[i] = 0.f;
+
+		// compute stddev
+		for (int i = 0; i < numIter; ++i)
+		{
+			for (int j = 0; j < numPoints; ++j)
+			{
+				stddev[i] += (distToMean[i][j] - distMean[j]) * (distToMean[i][j] - distMean[j]) / static_cast<float>(numIter);
+			}
+		}
+
+		for (int i = 0; i < numPoints; ++i)
+			stddev[i] = std::sqrt(stddev[i]);
+
+		float overallStddev = 0.f;
+
+		for (int i = 0; i < numPoints; ++i)
+			overallStddev += stddev[i];
+		overallStddev /= numPoints;
+
+
+		std::cout << numReps << " " << overallDistMean << " " << overallStddev << " " << stitchTimeElapsed << std::endl;
+		file << numReps << " " << overallDistMean << " " << overallStddev << " " << stitchTimeElapsed << std::endl;
 	}
 
-	for (int i = 0; i < numPoints; ++i)
-		stddev[i] = std::sqrt(stddev[i]);
-
-	float overallStddev = 0.f;
-
-	for (int i = 0; i < numPoints; ++i)
-		overallStddev += stddev[i];
-	overallStddev /= numPoints;
-	
-
-	std::cout << overallDistMean << " +- " << overallStddev << std::endl;
+	file.close();
 
 	std::cout << t.elapsed() << " ms" << std::endl;
 }
@@ -642,7 +711,7 @@ StitchingPlugin::StitchSelectedActors()
 		}
 	}
 
-	std::cout << overallTime << " ms for Stitching " << m_Widget->m_ListWidgetHistory->selectedItems().count() << " frames (time to update GUI excluded)" << std::endl;
+	//std::cout << overallTime << " ms for Stitching " << m_Widget->m_ListWidgetHistory->selectedItems().count() << " frames (time to update GUI excluded)" << std::endl;
 
 	emit UpdateGUI();
 }
@@ -1074,43 +1143,13 @@ StitchingPlugin::Stitch(vtkPolyData* toBeStitched, vtkPolyData* previousFrame,
 {
 	if (m_ResetICPandCPFRequired)
 	{
-		switch (m_Widget->m_ComboBoxClosestPointFinder->currentIndex())
-		{
-		case 0: m_cpf = new ClosestPointFinderBruteForceGPU(m_Widget->m_SpinBoxLandmarks->value()); break;
-		case 1: m_cpf = new ClosestPointFinderBruteForceCPU(m_Widget->m_SpinBoxLandmarks->value(), false); break;
-		case 2: m_cpf = new ClosestPointFinderBruteForceCPU(m_Widget->m_SpinBoxLandmarks->value(), true); break;
-		case 3: m_cpf = new ClosestPointFinderRBCCPU(m_Widget->m_SpinBoxLandmarks->value(), static_cast<float>(m_Widget->m_DoubleSpinBoxNrOfRepsFactor->value())); break;
-		case 4: m_cpf = new ClosestPointFinderRBCGPU(m_Widget->m_SpinBoxLandmarks->value(), static_cast<float>(m_Widget->m_DoubleSpinBoxNrOfRepsFactor->value())); break;
-		case 5: m_cpf = new ClosestPointFinderRBCCayton(m_Widget->m_SpinBoxLandmarks->value(), static_cast<float>(m_Widget->m_DoubleSpinBoxNrOfRepsFactor->value())); break;
-		}
-
-		int metric;
-		switch (m_Widget->m_ComboBoxMetric->currentIndex())
-		{
-		case 0: metric = LOG_ABSOLUTE_DISTANCE; break;
-		case 1: metric = ABSOLUTE_DISTANCE; break;
-		case 2: metric = SQUARED_DISTANCE; break;
-		}
-
-		m_cpf->SetMetric(metric);
-		m_cpf->SetWeightRGB(m_Widget->m_DoubleSpinBoxRGBWeight->value());
-
-		m_icp = vtkSmartPointer<ExtendedICPTransform>::New();
-		m_icp->SetClosestPointFinder(m_cpf);
-		m_icp->GetLandmarkTransform()->SetModeToRigidBody();
-		m_icp->SetNumLandmarks(m_Widget->m_SpinBoxLandmarks->value());
-
-		m_BufferSize = m_Widget->m_SpinBoxBufferSize->value();
-
-		m_ResetICPandCPFRequired = false;
+		Reset();
 	}
 
 	m_icp->SetSource(toBeStitched);
 	m_icp->SetTarget(previousFrame);
 	m_icp->SetMaxMeanDist(static_cast<float>(m_Widget->m_DoubleSpinBoxMaxRMS->value()));
 	m_icp->SetMaxIter(m_Widget->m_SpinBoxMaxIterations->value());
-	m_icp->SetRemoveOutliers(m_Widget->m_CheckBoxRemoveOutliers->isChecked());
-	m_icp->SetOutlierRate(static_cast<float>(m_Widget->m_DoubleSpinBoxOutlierRate->value()));
 	m_icp->SetApplyPreviousTransform(m_Widget->m_CheckBoxUsePreviousTransformation->isChecked());
 	m_icp->SetPreviousTransformMatrix(previousTransformationMatrix);
 

@@ -106,29 +106,12 @@ SET(SRCS
 
 SET(CUDA_HDRS
 	StitchingPluginKernel.h
-	rbc/defsRBC.h
-	rbc/brute.h
-	rbc/kernels.h
-	rbc/kernelWrap.h
-	rbc/rbc.h
-	rbc/sKernel.h
-	rbc/sKernelWrap.h
-	rbc/utils.h
-	rbc/utilsGPU.h
 )
 
 
 SET(CUDA_SRCS
 	StitchingPlugin.cu
-	rbc/brute.cu
-	rbc/kernels.cu
-	rbc/kernelWrap.cu
-	rbc/rbc.cu
-	rbc/sKernel.cu
-	rbc/sKernelWrap.cu
-	rbc/utils.cu
-	rbc/utilsGPU.cu
-)
+	)
 
 #-----------------------------------------------------------------------------
 

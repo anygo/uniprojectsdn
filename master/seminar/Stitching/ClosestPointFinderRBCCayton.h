@@ -57,6 +57,4 @@ protected:
 
 };
 
-
-
 #endif // ClosestPointFinderRBCCAYTON_H__

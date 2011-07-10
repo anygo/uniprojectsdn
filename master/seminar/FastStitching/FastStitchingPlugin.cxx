@@ -439,11 +439,37 @@ FastStitchingPlugin::CopyToCPUAndVisualizeFrame()
 	float4 p;
 	it.GoToBegin();
 
+	//std::ofstream invalidPixels("invalidPixelsNew.pgm");
+	//invalidPixels << "P2" << std::endl;
+	//invalidPixels << FRAME_SIZE_X << " " << FRAME_SIZE_Y << std::endl;
+	//invalidPixels << "1" << std::endl;
+
+	//for (int i = 0; i < FRAME_SIZE_Y; ++i)
+	//{
+	//	for (int j = 0; j < FRAME_SIZE_X; ++j)
+	//	{
+	//		p = m_WCs[i*FRAME_SIZE_X + j];
+
+	//		if (p.x == p.x) // i.e. not QNAN
+	//		{
+	//			invalidPixels << "1" << " ";
+	//		}
+	//		else
+	//		{
+	//			invalidPixels << "0" << " ";
+	//		}
+	//	}
+	//	invalidPixels << std::endl;
+	//}
+
+	//invalidPixels.close();
+
+
 	for (int i = 0; i < FRAME_SIZE_X*FRAME_SIZE_Y; ++i, ++it)
 	//for (int i = 0; i < m_NumLandmarks; ++i, ++it)
 	{
 		p = m_WCs[i];
-
+		
 		if (p.x == p.x) // i.e. not QNAN
 		{
 			points->InsertNextPoint(p.x, p.y, p.z);

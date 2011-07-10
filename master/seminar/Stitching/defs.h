@@ -23,6 +23,10 @@ static int ICP_TIME;
 static int TRANSFORM_TIME;
 
 
+//
+static char *EVAL_FILENAME = "notInitialized";
+
+
 // GPU stuff
 // Division. If division remainder is neq zero then the result is ceiled
 //----------------------------------------------------------------------------

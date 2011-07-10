@@ -160,8 +160,9 @@ StitchingPlugin::GetPluginGUI()
 void
 StitchingPlugin::RunTest()
 {
-	int numLandmarks[18] = {100, 200, 500, 750, 1000, 1250, 1500, 2000, 2500, 3000, 4000, 5000, 7500, 10000, 12500, 15000, 17500, 20000};
-	for (int i = 1; i < 18; ++i)
+	int numLandmarks[20] = {50, 100, 250, 500, 750, 1000, 1250, 1500, 2000, 2500, 3000, 4000, 5000, 6000, 8000, 10000, 12500, 15000, 17500, 20000};
+
+	for (int i = 0; i < 20; ++i)
 	{
 		m_Widget->m_SpinBoxLandmarks->setValue(numLandmarks[i]);
 		Reset();

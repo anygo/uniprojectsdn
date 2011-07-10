@@ -226,7 +226,7 @@ ExtendedICPTransform::InternalUpdate()
 
 //#define RUNTIME_EVALUATION
 #ifdef RUNTIME_EVALUATION
-	const int RUNTIME_ITER = 50;
+	const int RUNTIME_ITER = 75;
 	double RUNTIMES_ELAPSED[3] = {0,0,0};
 	QTime T_RUNTIME;
 #endif
@@ -307,8 +307,6 @@ ExtendedICPTransform::InternalUpdate()
 	// now recover accumulated result
 	this->Matrix->DeepCopy(m_Accumulate->GetMatrix());
 
-	std::ofstream file("icpRuntimeSeparation.txt", ios::app);
-
 #ifdef RUNTIME_EVALUATION
 	std::cout << "Runtime Evaluation:" << std::endl;
 	double RUNTIME_OVERALL = RUNTIMES_ELAPSED[0] + RUNTIMES_ELAPSED[1] + RUNTIMES_ELAPSED[2];
@@ -316,6 +314,9 @@ ExtendedICPTransform::InternalUpdate()
 	std::cout << "step1: " << (double)RUNTIMES_ELAPSED[1] / (double)(RUNTIME_ITER*m_NumIter) << " | " << (RUNTIMES_ELAPSED[1]*100) / RUNTIME_OVERALL << " %" << std::endl;
 	std::cout << "step2: " << (double)RUNTIMES_ELAPSED[2] / (double)(RUNTIME_ITER*m_NumIter) << " | " << (RUNTIMES_ELAPSED[2]*100) / RUNTIME_OVERALL << " %" << std::endl;
 	std::cout << std::endl;
+
+	std::cout << EVAL_FILENAME << std::endl;
+	std::ofstream file(EVAL_FILENAME, ios::app);
 
 	file << m_NumLandmarks << " " << (RUNTIMES_ELAPSED[0]*100) / RUNTIME_OVERALL << " " << (RUNTIMES_ELAPSED[1]*100) / RUNTIME_OVERALL << " " << (RUNTIMES_ELAPSED[2]*100) / RUNTIME_OVERALL << " " <<
 		(double)RUNTIMES_ELAPSED[0] / (double)(RUNTIME_ITER*m_NumIter) << " " << (double)RUNTIMES_ELAPSED[1] / (double)(RUNTIME_ITER*m_NumIter) << " " << (double)RUNTIMES_ELAPSED[2] / (double)(RUNTIME_ITER*m_NumIter) << std::endl;

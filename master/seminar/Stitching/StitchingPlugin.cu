@@ -220,6 +220,33 @@ void FindClosestPointsRBC(int nrOfReps, unsigned short* indices, float* distance
 }
 
 extern "C"
+void FindClosestPointsRBCExact(int nrOfReps, unsigned short* indices, float* distances)
+{
+	///// TIME INITS /////
+	//float elapsed;
+	//cudaEvent_t start, stop;
+	//CUDA_SAFE_CALL(cudaEventCreate(&start));
+	//CUDA_SAFE_CALL(cudaEventCreate(&stop));
+	//CUDA_SAFE_CALL(cudaEventRecord(start, 0));
+	///// TIME START /////
+
+	// find the closest point for each pixel
+	kernelRBCExact<<<DivUp(host_conf->nrOfPoints, CUDA_THREADS_PER_BLOCK), CUDA_THREADS_PER_BLOCK>>>(nrOfReps, dev_repsGPU);
+	
+	CUT_CHECK_ERROR("Kernel execution failed (while trying to find closest points)");
+			
+	// copy data from gpu to host
+	CUDA_SAFE_CALL(cudaMemcpy(indices, host_conf->indices, host_conf->nrOfPoints*sizeof(unsigned short), cudaMemcpyDeviceToHost));
+	CUDA_SAFE_CALL(cudaMemcpy(distances, host_conf->distances, host_conf->nrOfPoints*sizeof(float), cudaMemcpyDeviceToHost));
+	
+	///// TIME END /////
+	//CUDA_SAFE_CALL(cudaEventRecord(stop, 0));
+	//CUDA_SAFE_CALL(cudaEventSynchronize(stop));
+	//CUDA_SAFE_CALL(cudaEventElapsedTime(&elapsed, start, stop));
+	//printf("Time for FindClosestPoints RBC: %3.3f ms\n", elapsed);
+}
+
+extern "C"
 void PointsToReps(int nrOfReps, unsigned short* pointToRep, unsigned short* reps)
 {
 	CUDA_SAFE_CALL(cudaMemcpy(dev_reps, reps, nrOfReps*sizeof(unsigned short), cudaMemcpyHostToDevice));
@@ -227,4 +254,16 @@ void PointsToReps(int nrOfReps, unsigned short* pointToRep, unsigned short* reps
 	kernelPointsToReps<<<DivUp(host_conf->nrOfPoints, CUDA_THREADS_PER_BLOCK), CUDA_THREADS_PER_BLOCK>>>(nrOfReps, dev_pointToRep, dev_reps);
 	
 	CUDA_SAFE_CALL(cudaMemcpy(pointToRep, dev_pointToRep, host_conf->nrOfPoints*sizeof(unsigned short), cudaMemcpyDeviceToHost));
+}
+
+
+extern "C"
+void PointsToRepsExact(int nrOfReps, unsigned short* pointToRep, unsigned short* reps, float* distances)
+{
+	CUDA_SAFE_CALL(cudaMemcpy(dev_reps, reps, nrOfReps*sizeof(unsigned short), cudaMemcpyHostToDevice));
+	
+	kernelPointsToRepsExact<<<DivUp(host_conf->nrOfPoints, CUDA_THREADS_PER_BLOCK), CUDA_THREADS_PER_BLOCK>>>(nrOfReps, dev_pointToRep, dev_reps);
+	
+	CUDA_SAFE_CALL(cudaMemcpy(pointToRep, dev_pointToRep, host_conf->nrOfPoints*sizeof(unsigned short), cudaMemcpyDeviceToHost));
+	CUDA_SAFE_CALL(cudaMemcpy(distances, host_conf->distances, host_conf->nrOfPoints*sizeof(float), cudaMemcpyDeviceToHost));
 }

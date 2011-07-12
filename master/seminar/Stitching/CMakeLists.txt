@@ -88,7 +88,7 @@ SET(HDRS
 	ClosestPointFinderBruteForceGPU.h
 	ClosestPointFinderRBCCPU.h
 	ClosestPointFinderRBCGPU.h
-	ClosestPointFinderRBCCayton.h
+	ClosestPointFinderRBCExactGPU.h
 )
 
 SET(SRCS
@@ -100,7 +100,7 @@ SET(SRCS
 	ClosestPointFinderBruteForceGPU.cxx
 	ClosestPointFinderRBCCPU.cxx
 	ClosestPointFinderRBCGPU.cxx
-	ClosestPointFinderRBCCayton.cxx
+	ClosestPointFinderRBCExactGPU.cxx
 )
 
 
@@ -111,7 +111,7 @@ SET(CUDA_HDRS
 
 SET(CUDA_SRCS
 	StitchingPlugin.cu
-	)
+)
 
 #-----------------------------------------------------------------------------
 

@@ -65,6 +65,7 @@ typedef struct RepGPU
 {
 	PointCoords coords;
 	PointColors colors;
+	float radius;
 	unsigned short nrOfPoints;
 	unsigned short* dev_points;
 } RepGPU;

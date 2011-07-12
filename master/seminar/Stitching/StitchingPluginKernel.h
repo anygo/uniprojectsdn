@@ -300,4 +300,119 @@ void kernelPointsToReps(int nrOfReps, unsigned short* pointToRep, unsigned short
 	pointToRep[tid] = nearestRepresentative;
 }
 
+__global__
+void kernelPointsToRepsExact(int nrOfReps, unsigned short* pointToRep, unsigned short* reps)
+{
+	// get source[tid] for this thread
+	int tid = blockIdx.x*blockDim.x + threadIdx.x;
+
+	if (tid >= dev_conf->nrOfPoints)
+		return;
+
+	PointCoords coords = dev_conf->targetCoords[tid];
+	PointColors colors = dev_conf->targetColors[tid];
+
+	__shared__ PointCoords repCoordsBuffer[CUDA_BUFFER_SIZE];
+	__shared__ PointColors repColorsBuffer[CUDA_BUFFER_SIZE];
+
+	float minDist = FLT_MAX;
+	int nearestRepresentative;
+
+	// step 1: search nearest representative
+	for (int i = 0; i < nrOfReps; ++i)
+	{
+		if (i % CUDA_BUFFER_SIZE == 0)
+		{
+			__syncthreads();
+			if (i % CUDA_BUFFER_SIZE == 0 && threadIdx.x < CUDA_BUFFER_SIZE && i + threadIdx.x < nrOfReps) 
+			{
+				repCoordsBuffer[threadIdx.x] = dev_conf->targetCoords[reps[i + threadIdx.x]];
+				repColorsBuffer[threadIdx.x] = dev_conf->targetColors[reps[i + threadIdx.x]];
+			}
+			__syncthreads();
+		}
+
+		float dist = kernelComputeDistanceSourceTarget(&coords, &colors, &(repCoordsBuffer[i % CUDA_BUFFER_SIZE]), &(repColorsBuffer[i % CUDA_BUFFER_SIZE]));
+
+		if (dist < minDist)
+		{
+			minDist = dist;
+			nearestRepresentative = i;
+		}
+	}
+
+	pointToRep[tid] = nearestRepresentative;
+	dev_conf->distances[tid] = minDist;
+}
+
+__global__
+void kernelRBCExact(int nrOfReps, RepGPU* dev_repsGPU) 
+{
+	// get source[tid] for this thread
+	int tid = blockIdx.x*blockDim.x + threadIdx.x;
+
+	if (tid >= dev_conf->nrOfPoints)
+		return;
+
+	PointCoords coords = dev_conf->sourceCoords[tid];
+	PointColors colors = dev_conf->sourceColors[tid];
+
+	__shared__ PointCoords repCoordsBuffer[CUDA_BUFFER_SIZE];
+	__shared__ PointColors repColorsBuffer[CUDA_BUFFER_SIZE];
+
+	float minDist = FLT_MAX;
+	int nearestRepresentative;
+
+	// step 1: search nearest representative
+	for (int i = 0; i < nrOfReps; ++i)
+	{
+		if (i % CUDA_BUFFER_SIZE == 0)
+		{
+			__syncthreads();
+
+			if (i % CUDA_BUFFER_SIZE == 0 && threadIdx.x < CUDA_BUFFER_SIZE && i + threadIdx.x < nrOfReps) 
+			{
+				repCoordsBuffer[threadIdx.x] = dev_repsGPU[i + threadIdx.x].coords;
+				repColorsBuffer[threadIdx.x] = dev_repsGPU[i + threadIdx.x].colors;
+			}
+			__syncthreads();
+		}
+
+		float dist = kernelComputeDistanceSourceTarget(&coords, &colors, &(repCoordsBuffer[i % CUDA_BUFFER_SIZE]), &(repColorsBuffer[i % CUDA_BUFFER_SIZE]));
+
+		if (dist < minDist)
+		{
+			minDist = dist;
+			nearestRepresentative = i;
+		}
+	}
+
+	float nearestRepDist = minDist;
+
+	// step 2: search nearest neighbor in list of representatives
+	minDist = FLT_MAX;
+	int nearestNeighborIndex = 0;
+
+	for (int rep = 0; rep < nrOfReps; ++rep)
+	{
+		float distToRep = kernelComputeDistanceSourceTarget(&coords, &colors, &(dev_repsGPU[rep].coords), &(dev_repsGPU[rep].colors));
+		if ((distToRep > 3.f * nearestRepDist) /*|| 
+			(dev_repsGPU[rep].radius + nearestRepDist <= distToRep)*/)
+			continue;
+
+		for (int i = 0; i < dev_repsGPU[rep].nrOfPoints; ++i)
+		{
+			float dist = kernelComputeDistanceSourceTarget(&coords, &colors, dev_repsGPU[rep].dev_points[i]);
+			if (dist < minDist)
+			{
+				minDist = dist;
+				nearestNeighborIndex = dev_repsGPU[rep].dev_points[i];
+			}
+		}
+	}
+
+	dev_conf->distances[tid] = minDist;
+	dev_conf->indices[tid] = nearestNeighborIndex;
+}
+
 #endif // StitchingPluginKernel_H__

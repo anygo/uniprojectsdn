@@ -96,8 +96,6 @@ void transferToGPU(PointCoords* targetCoords, PointColors* targetColors, PointCo
 	CUDA_SAFE_CALL(cudaMemcpy(host_conf->targetColors, targetColors, host_conf->nrOfPoints*sizeof(PointColors), cudaMemcpyHostToDevice));
 	CUDA_SAFE_CALL(cudaMemcpy(host_conf->sourceColors, sourceColors, host_conf->nrOfPoints*sizeof(PointColors), cudaMemcpyHostToDevice));
 	CUDA_SAFE_CALL(cudaMemcpy(host_conf->sourceCoords, sourceCoords, host_conf->nrOfPoints*sizeof(PointCoords), cudaMemcpyHostToDevice));
-	
-
 }
 
 extern "C"
@@ -170,6 +168,10 @@ void initGPURBC(int nrOfReps, RepGPU* repsGPU, unsigned short* repsIndices)
 	CUDA_SAFE_CALL(cudaMalloc((void**)&dev_points, host_conf->nrOfPoints*sizeof(unsigned short)));
 	unsigned short* dev_pointsPtr = dev_points;
 	
+	CUDA_SAFE_CALL(cudaMalloc((void**)&dev_repsGPU, nrOfReps*sizeof(RepGPU)));
+	
+	
+	
 	// plus RBC-specific stuff
 	for(int i = 0; i < nrOfReps; ++i)
 	{
@@ -178,13 +180,16 @@ void initGPURBC(int nrOfReps, RepGPU* repsGPU, unsigned short* repsIndices)
 	}
 	
 	CUDA_SAFE_CALL(cudaMemcpy(dev_points, repsIndices, host_conf->nrOfPoints*sizeof(unsigned short), cudaMemcpyHostToDevice));
-	CUDA_SAFE_CALL(cudaMemcpyToSymbol(dev_repsGPU, repsGPU, nrOfReps*sizeof(RepGPU), 0));
+	
+	CUDA_SAFE_CALL(cudaMemcpy(dev_repsGPU, repsGPU, nrOfReps*sizeof(RepGPU), cudaMemcpyHostToDevice));
+	//CUDA_SAFE_CALL(cudaMemcpyToSymbol(dev_repsGPU, repsGPU, nrOfReps*sizeof(RepGPU), 0));
 }
 
 extern "C"
 void cleanupGPURBC() 
 {	
 	CUDA_SAFE_CALL(cudaFree(dev_repsGPU[0].dev_points)); 
+	CUDA_SAFE_CALL(cudaFree(dev_repsGPU)); 
 }
 
 extern "C"
@@ -199,9 +204,7 @@ void FindClosestPointsRBC(int nrOfReps, unsigned short* indices, float* distance
 	///// TIME START /////
 
 	// find the closest point for each pixel
-	//kernelRBC<<<host_conf->nrOfPoints,1>>>(nrOfReps);
-	//kernelRBC<<<host_conf->nrOfPoints / CUDA_THREADS_PER_BLOCK, CUDA_THREADS_PER_BLOCK>>>(nrOfReps);
-	kernelRBC<<<DivUp(host_conf->nrOfPoints, CUDA_THREADS_PER_BLOCK), CUDA_THREADS_PER_BLOCK>>>(nrOfReps);
+	kernelRBC<<<DivUp(host_conf->nrOfPoints, CUDA_THREADS_PER_BLOCK), CUDA_THREADS_PER_BLOCK>>>(nrOfReps, dev_repsGPU);
 	
 	CUT_CHECK_ERROR("Kernel execution failed (while trying to find closest points)");
 			

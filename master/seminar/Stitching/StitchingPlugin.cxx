@@ -160,11 +160,11 @@ StitchingPlugin::GetPluginGUI()
 void
 StitchingPlugin::RunTest()
 {
-	int numLandmarks[20] = {50, 100, 250, 500, 750, 1000, 1250, 1500, 2000, 2500, 3000, 4000, 5000, 6000, 8000, 10000, 12500, 15000, 17500, 20000};
+	//int numLandmarks[20] = {50, 100, 250, 500, 750, 1000, 1250, 1500, 2000, 2500, 3000, 4000, 5000, 6000, 8000, 10000, 12500, 15000, 17500, 20000};
 
-	for (int i = 0; i < 20; ++i)
+	for (int i = 256; i <= 10240; i += 256)
 	{
-		m_Widget->m_SpinBoxLandmarks->setValue(numLandmarks[i]);
+		m_Widget->m_SpinBoxLandmarks->setValue(i);
 		Reset();
 		UndoTransformForSelectedActors();
 		StitchSelectedActors();
@@ -209,141 +209,123 @@ StitchingPlugin::ComputeStatistics()
 	QTime t;
 	t.start();
 
-	const int numIter = 100;
-	const int numPoints = 1000;
-
 	if (m_Widget->m_ListWidgetHistory->selectedItems().size() != 1)
 	{
 		std::cout << "only one selection allowed!" << std::endl;
 		return;
 	}
 
-	PointCoords coords[numIter][numPoints];
-	PointCoords mean[numPoints];
-	float distToMean[numIter][numPoints];
-	float distMean[numPoints];
-	float stddev[numPoints];
+	m_Widget->m_DoubleSpinBoxMaxRMS->setValue(0.0);
+	m_Widget->m_SpinBoxMaxIterations->setValue(250);
 
-	HistoryListItem* hli = static_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->selectedItems()[0]);
-	UndoTransformForSelectedActors();
+	const int numIter = 15;
+	const int numPoints = 256;
 
-	int stepSize = hli->m_actor->GetData()->GetNumberOfPoints() / numPoints;
-
-	vtkSmartPointer<vtkPolyData> origState =
-		vtkSmartPointer<vtkPolyData>::New();
-	origState->DeepCopy(hli->m_actor->GetData());
-
-	std::ofstream file("blubb.txt");
-
-	for (int numReps = 1; numReps <= 256; numReps += (numReps < 10) ? 1 : (numReps < 32) ? 2 : (numReps < 128) ? 4 : 8)
+	int landmarks[5] = {512, 1024, 2048, 4096, 8192};
+	for (int lm = 0; lm < 5; ++lm)
 	{
-		//int numReps = ceil(repsPercentage * m_Widget->m_SpinBoxLandmarks->value());
-		numReps = std::max(1, numReps);
-		numReps = std::min(m_Widget->m_SpinBoxLandmarks->value(), numReps);
-		std::cout << "numReps: " << numReps << std::endl;
-		m_Widget->m_DoubleSpinBoxNrOfRepsFactor->setValue(numReps);
+		m_Widget->m_SpinBoxLandmarks->setValue(landmarks[lm]);
+		std::stringstream ss;
+		ss << landmarks[lm] << ".txt";
+		std::ofstream file(ss.str().c_str());
+
+
+		PointCoords coords[numIter][numPoints];
+		PointCoords mean[numPoints];
+		float distToMean[numIter][numPoints];
+		float distMean[numPoints];
+
+		HistoryListItem* hli = static_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->selectedItems()[0]);
+		UndoTransformForSelectedActors();
+
+		int stepSize = hli->m_actor->GetData()->GetNumberOfPoints() / numPoints;
+
+		vtkSmartPointer<vtkPolyData> origState =
+			vtkSmartPointer<vtkPolyData>::New();
+		origState->DeepCopy(hli->m_actor->GetData());
+
+		/////////////////////////////////////////////////////////////////////////
+		// get reference data (use bruteForce or RBC with numReps = 1)
+		m_Widget->m_DoubleSpinBoxNrOfRepsFactor->setValue(1);
 		Reset();
-
-		int stitchTimeElapsed = 0;
-
-		// collect data
-		for (int i = 0; i < numIter; ++i)
+		StitchSelectedActors();
+		vtkPolyData* ptr = hli->m_actor->GetData();
+		for (int k = 0, j = 0; k < numPoints; ++k, j += stepSize)
 		{
-			StitchSelectedActors();
-			stitchTimeElapsed += ICP_TIME;
-			vtkPolyData* ptr = hli->m_actor->GetData();
-			for (int k = 0, j = 0; k < numPoints; ++k, j += stepSize)
+			mean[k].x = ptr->GetPoint(j)[0];
+			mean[k].y = ptr->GetPoint(j)[1];
+			mean[k].z = ptr->GetPoint(j)[2];
+		}
+		hli->m_actor->SetData(origState, true);
+		/////////////////////////////////////////////////////////////////////////
+
+		for (int numReps = 1; numReps <= landmarks[lm]; numReps += (numReps == 1) ? 1 : (numReps < 8) ? 2 : (numReps < 32) ? 4 : (numReps < 64) ? 8 : (numReps < 128) ? 16 : (numReps < 256) ? 32 : (numReps < 512) ? 64 : (numReps < 1024) ? 128 : (numReps < 2048) ? 256 : (numReps < 4096) ? 512 : 1024)
+		{
+			//int numReps = ceil(repsPercentage * m_Widget->m_SpinBoxLandmarks->value());
+			numReps = std::max(1, numReps);
+			numReps = std::min(m_Widget->m_SpinBoxLandmarks->value(), numReps);
+			std::cout << "numReps: " << numReps << std::endl;
+			m_Widget->m_DoubleSpinBoxNrOfRepsFactor->setValue(numReps);
+			Reset();
+
+			int icpIterations = 0;
+			int stitchTimeElapsed = 0;
+
+			// collect data
+			for (int i = 0; i < numIter; ++i)
 			{
-				coords[i][k].x = ptr->GetPoint(j)[0];
-				coords[i][k].y = ptr->GetPoint(j)[1];
-				coords[i][k].z = ptr->GetPoint(j)[2];
+				StitchSelectedActors();
+				stitchTimeElapsed += ICP_TIME;
+				ICP_TIME = 0;
+				icpIterations += m_icp->GetNumIter();
+
+				vtkPolyData* ptr = hli->m_actor->GetData();
+				for (int k = 0, j = 0; k < numPoints; ++k, j += stepSize)
+				{
+					coords[i][k].x = ptr->GetPoint(j)[0];
+					coords[i][k].y = ptr->GetPoint(j)[1];
+					coords[i][k].z = ptr->GetPoint(j)[2];
+				}
+				hli->m_actor->SetData(origState, true);
 			}
-			hli->m_actor->SetData(origState, true);
-		}
 
-		stitchTimeElapsed /= numIter;
-
-		// initialize mean
-		for (int i = 0; i < numPoints; ++i)
-			mean[i].x = mean[i].y = mean[i].z = 0.f;
-
-		// compute mean
-		for (int i = 0; i < numIter; ++i)
-		{
-			for (int j = 0; j < numPoints; ++j)
+			// compute distances (euclidean) between points and mean (reference)
+			for (int i = 0; i < numIter; ++i)
 			{
-				mean[j].x += coords[i][j].x;
-				mean[j].y += coords[i][j].y;
-				mean[j].z += coords[i][j].z;
+				for (int j = 0; j < numPoints; ++j)
+				{
+					distToMean[i][j] = std::sqrt(
+						(mean[j].x - coords[i][j].x) * (mean[j].x - coords[i][j].x) +
+						(mean[j].y - coords[i][j].y) * (mean[j].y - coords[i][j].y) +
+						(mean[j].z - coords[i][j].z) * (mean[j].z - coords[i][j].z)
+						);
+				}
 			}
-		}
 
-		// normalize mean
-		for (int i = 0; i < numPoints; ++i)
-		{
-			mean[i].x /= numIter;
-			mean[i].y /= numIter;
-			mean[i].z /= numIter;
-		}
-
-		// compute distances (euclidean) between points and mean
-		for (int i = 0; i < numIter; ++i)
-		{
-			for (int j = 0; j < numPoints; ++j)
+			// compute mean of distances
+			for (int i = 0; i < numIter; ++i)
 			{
-				distToMean[i][j] = std::sqrt(
-					(mean[j].x - coords[i][j].x) * (mean[j].x - coords[i][j].x) +
-					(mean[j].y - coords[i][j].y) * (mean[j].y - coords[i][j].y) +
-					(mean[j].z - coords[i][j].z) * (mean[j].z - coords[i][j].z)
-					);
+				distMean[i] = 0.f;
+				for (int j = 0; j < numPoints; ++j)
+				{
+					distMean[i] += distToMean[i][j];
+				}
+				distMean[i] /= numIter;
 			}
+
+			float overallDistMean = 0.f;
+
+			for (int i = 0; i < numPoints; ++i)
+				overallDistMean += distMean[i];
+			overallDistMean /= numPoints;
+
+
+			std::cout << numReps << " " << overallDistMean <<  " " << stitchTimeElapsed << " " << icpIterations <<  std::endl;
+			file << numReps << " " << overallDistMean << " " << stitchTimeElapsed << " " << icpIterations << std::endl;
 		}
 
-		// compute mean of distances
-		for (int i = 0; i < numIter; ++i)
-		{
-			distMean[i] = 0.f;
-			for (int j = 0; j < numPoints; ++j)
-			{
-				distMean[i] += distToMean[i][j];
-			}
-			distMean[i] /= numIter;
-		}
-
-		float overallDistMean = 0.f;
-
-		for (int i = 0; i < numPoints; ++i)
-			overallDistMean += distMean[i];
-		overallDistMean /= numPoints;
-
-
-		for (int i = 0; i < numPoints; ++i)
-			stddev[i] = 0.f;
-
-		// compute stddev
-		for (int i = 0; i < numIter; ++i)
-		{
-			for (int j = 0; j < numPoints; ++j)
-			{
-				stddev[i] += (distToMean[i][j] - distMean[j]) * (distToMean[i][j] - distMean[j]) / static_cast<float>(numIter);
-			}
-		}
-
-		for (int i = 0; i < numPoints; ++i)
-			stddev[i] = std::sqrt(stddev[i]);
-
-		float overallStddev = 0.f;
-
-		for (int i = 0; i < numPoints; ++i)
-			overallStddev += stddev[i];
-		overallStddev /= numPoints;
-
-
-		std::cout << numReps << " " << overallDistMean << " " << overallStddev << " " << stitchTimeElapsed << std::endl;
-		file << numReps << " " << overallDistMean << " " << overallStddev << " " << stitchTimeElapsed << std::endl;
+		file.close();
 	}
-
-	file.close();
 
 	std::cout << t.elapsed() << " ms" << std::endl;
 }

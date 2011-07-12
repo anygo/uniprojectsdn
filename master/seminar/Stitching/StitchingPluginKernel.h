@@ -20,7 +20,7 @@ GPUConfig host_conf[1];
 __constant__ unsigned short* dev_representatives;
 __constant__ unsigned short* dev_pointToRep;
 __constant__ unsigned short* dev_reps;
-__constant__ RepGPU dev_repsGPU[MAX_REPRESENTATIVES];
+__constant__ RepGPU* dev_repsGPU;//[MAX_REPRESENTATIVES];
 
 // Texture that holds the input range in order to convert to world coordinates
 texture<float, 2, cudaReadModeElementType> InputImageTexture;
@@ -198,7 +198,7 @@ void kernelBruteForce()
 // Random Ball Cover
 ///////////////////////////////////////////////////////////////////////////////
 __global__
-void kernelRBC(int nrOfReps) 
+void kernelRBC(int nrOfReps, RepGPU* dev_repsGPU) 
 {
 	// get source[tid] for this thread
 	int tid = blockIdx.x*blockDim.x + threadIdx.x;

@@ -396,8 +396,9 @@ void kernelRBCExact(int nrOfReps, RepGPU* dev_repsGPU)
 	for (int rep = 0; rep < nrOfReps; ++rep)
 	{
 		float distToRep = kernelComputeDistanceSourceTarget(&coords, &colors, &(dev_repsGPU[rep].coords), &(dev_repsGPU[rep].colors));
-		if ((distToRep > 3.f * nearestRepDist) /*|| 
-			(dev_repsGPU[rep].radius + nearestRepDist <= distToRep)*/)
+		if (rep != nearestRepresentative && 
+			((distToRep > 3.f * nearestRepDist) || 
+			(dev_repsGPU[rep].radius + nearestRepDist <= distToRep)))
 			continue;
 
 		for (int i = 0; i < dev_repsGPU[rep].nrOfPoints; ++i)

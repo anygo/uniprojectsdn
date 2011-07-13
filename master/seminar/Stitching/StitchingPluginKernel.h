@@ -20,6 +20,7 @@ GPUConfig host_conf[1];
 __constant__ unsigned short* dev_representatives;
 __constant__ unsigned short* dev_pointToRep;
 __constant__ unsigned short* dev_reps;
+__constant__ unsigned short* dev_points;	
 __constant__ RepGPU* dev_repsGPU;//[MAX_REPRESENTATIVES];
 
 // Texture that holds the input range in order to convert to world coordinates

@@ -158,8 +158,8 @@ ExtendedICPTransform::vtkPolyDataToPointCoordsAndColors(double percentage)
 		curCoords->z = curPoint[2];
 
 		if (!(  curCoords->x >= bounds[0] && curCoords->x <= bounds[1] &&
-				curCoords->y >= bounds[2] && curCoords->y <= bounds[3] &&
-				curCoords->z >= bounds[4] && curCoords->z <= bounds[5]
+				curCoords->y >= bounds[2] && curCoords->y <= bounds[3]/* &&
+				curCoords->z >= bounds[4] && curCoords->z <= bounds[5]*/
 			))
 		{
 			--i;
@@ -293,7 +293,7 @@ ExtendedICPTransform::InternalUpdate()
 		RUNTIMES_ELAPSED[2] += T_RUNTIME.elapsed();
 #endif
 
-		/*for(int i = 0; i < m_NumLandmarks; i++)
+		for(int i = 0; i < m_NumLandmarks; i++)
 		{
 			totaldist += m_Distances[i];
 		}	
@@ -301,7 +301,7 @@ ExtendedICPTransform::InternalUpdate()
 		m_MeanDist = totaldist / (float)m_NumLandmarks;
 
 		if (m_MeanDist <= m_MaxMeanDist)
-			break;*/
+			break;
 	} 
 
 	// now recover accumulated result
@@ -315,7 +315,6 @@ ExtendedICPTransform::InternalUpdate()
 	std::cout << "step2: " << (double)RUNTIMES_ELAPSED[2] / (double)(RUNTIME_ITER*m_NumIter) << " | " << (RUNTIMES_ELAPSED[2]*100) / RUNTIME_OVERALL << " %" << std::endl;
 	std::cout << std::endl;
 
-	std::cout << EVAL_FILENAME << std::endl;
 	std::ofstream file(EVAL_FILENAME, ios::app);
 
 	file << m_NumLandmarks << " " << (RUNTIMES_ELAPSED[0]*100) / RUNTIME_OVERALL << " " << (RUNTIMES_ELAPSED[1]*100) / RUNTIME_OVERALL << " " << (RUNTIMES_ELAPSED[2]*100) / RUNTIME_OVERALL << " " <<

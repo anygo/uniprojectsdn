@@ -8,30 +8,22 @@
 
 
 extern "C"
-void initGPUMemory(int nrOfPoints, float weightRGB, int metric);
+void initGPUMemory(int nrOfPoints, int nrOfReps, float weightRGB, int metric);
 
 extern "C"
 void transferToGPU(PointCoords* targetCoords, PointColors* targetColors, PointCoords* sourceCoords, PointColors* sourceColors);
 
 extern "C"
-void cleanupGPUCommon();
-
-/////////////////////
-
-extern "C"
-void initGPUCommon(PointCoords* targetCoords, PointColors* targetColors, PointCoords* sourceCoords, PointColors* sourceColors, float weightRGB, int metric, int nrOfPoints);
-
-extern "C"
-void initGPURBC(int nrOfReps, RepGPU* repsGPU, unsigned short* repsIndices);
-
-extern "C"
-void cleanupGPURBC(); 
+void transferRBCData(int nrOfReps, RepGPU* repsGPU, unsigned short* repsIndices);
 
 extern "C"
 void PointsToReps(int nrOfReps, unsigned short* pointToRep, unsigned short* reps);
 
 extern "C"
 void FindClosestPointsRBC(int nrOfReps, unsigned short* indices, float* distances);
+
+extern "C"
+void cleanupGPUCommon();
 
 
 ClosestPointFinderRBCGPU::ClosestPointFinderRBCGPU(int NrOfPoints, float nrOfRepsFactor) : ClosestPointFinder(NrOfPoints), m_NrOfRepsFactor(nrOfRepsFactor) 
@@ -59,7 +51,6 @@ ClosestPointFinderRBCGPU::~ClosestPointFinderRBCGPU()
 	delete[] m_RepsIndices;
 
 	// Delete GPU Device Memory
-	cleanupGPURBC();
 	cleanupGPUCommon();
 }
 
@@ -67,7 +58,7 @@ void ClosestPointFinderRBCGPU::SetTarget(PointCoords* targetCoords, PointColors*
 {
 	if (!m_Initialized)
 	{
-		initGPUMemory(m_NrOfPoints, m_WeightRGB, m_Metric);
+		initGPUMemory(m_NrOfPoints, m_NrOfReps, m_WeightRGB, m_Metric);
 		m_Initialized = true;
 	}
 	ClosestPointFinder::SetTarget(targetCoords, targetColors, sourceCoords, sourceColors);
@@ -131,6 +122,6 @@ ClosestPointFinderRBCGPU::initRBC()
 		offsetPtr += m_RepsGPU[i].nrOfPoints;
 	}
 
-	initGPURBC(m_NrOfReps, m_RepsGPU, m_RepsIndices);
+	transferRBCData(m_NrOfReps, m_RepsGPU, m_RepsIndices);
 
 }

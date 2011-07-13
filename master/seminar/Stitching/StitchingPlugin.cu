@@ -66,7 +66,7 @@ void TransformPointsDirectlyOnGPU(double transformationMatrix[4][4], PointCoords
 }
 
 extern "C"
-void initGPUMemory(int nrOfPoints, float weightRGB, int metric)
+void initGPUMemory(int nrOfPoints, int nrOfReps, float weightRGB, int metric)
 {	
 	// set up config struct
 	host_conf->nrOfPoints = nrOfPoints;
@@ -81,7 +81,11 @@ void initGPUMemory(int nrOfPoints, float weightRGB, int metric)
 	CUDA_SAFE_CALL(cudaMalloc((void**)&(host_conf->targetColors), host_conf->nrOfPoints*sizeof(PointColors)));
 	CUDA_SAFE_CALL(cudaMalloc((void**)&(host_conf->distances), host_conf->nrOfPoints*sizeof(float)));
 	CUDA_SAFE_CALL(cudaMalloc((void**)&dev_pointToRep, host_conf->nrOfPoints*sizeof(unsigned short)));
-	CUDA_SAFE_CALL(cudaMalloc((void**)&dev_reps, host_conf->nrOfPoints*sizeof(unsigned short)));
+	CUDA_SAFE_CALL(cudaMalloc((void**)&dev_reps, nrOfReps*sizeof(unsigned short)));
+	// for RBC PointsToRep
+	CUDA_SAFE_CALL(cudaMalloc((void**)&dev_points, host_conf->nrOfPoints*sizeof(unsigned short)));
+	
+	CUDA_SAFE_CALL(cudaMalloc((void**)&dev_repsGPU, nrOfReps*sizeof(RepGPU)));
 	
 	// copy the config struct to gpu
 	CUDA_SAFE_CALL(cudaMemcpyToSymbol(dev_conf, host_conf, sizeof(GPUConfig), 0));
@@ -136,6 +140,8 @@ void cleanupGPUCommon()
 	CUDA_SAFE_CALL(cudaFree(host_conf->targetColors));
 	CUDA_SAFE_CALL(cudaFree(dev_pointToRep));
 	CUDA_SAFE_CALL(cudaFree(dev_reps));
+	CUDA_SAFE_CALL(cudaFree(dev_points));
+	CUDA_SAFE_CALL(cudaFree(dev_repsGPU)); 
 }
 
 
@@ -161,17 +167,11 @@ void FindClosestPointsGPUBruteForce(unsigned short* indices, float* distances)
 // Random Ball Cover
 ///////////////////////////////////////////////////////////////////////////////
 
+
 extern "C"
-void initGPURBC(int nrOfReps, RepGPU* repsGPU, unsigned short* repsIndices)
+void transferRBCData(int nrOfReps, RepGPU* repsGPU, unsigned short* repsIndices)
 {
-	unsigned short* dev_points;	
-	CUDA_SAFE_CALL(cudaMalloc((void**)&dev_points, host_conf->nrOfPoints*sizeof(unsigned short)));
 	unsigned short* dev_pointsPtr = dev_points;
-	
-	CUDA_SAFE_CALL(cudaMalloc((void**)&dev_repsGPU, nrOfReps*sizeof(RepGPU)));
-	
-	
-	
 	// plus RBC-specific stuff
 	for(int i = 0; i < nrOfReps; ++i)
 	{
@@ -180,17 +180,9 @@ void initGPURBC(int nrOfReps, RepGPU* repsGPU, unsigned short* repsIndices)
 	}
 	
 	CUDA_SAFE_CALL(cudaMemcpy(dev_points, repsIndices, host_conf->nrOfPoints*sizeof(unsigned short), cudaMemcpyHostToDevice));
-	
 	CUDA_SAFE_CALL(cudaMemcpy(dev_repsGPU, repsGPU, nrOfReps*sizeof(RepGPU), cudaMemcpyHostToDevice));
-	//CUDA_SAFE_CALL(cudaMemcpyToSymbol(dev_repsGPU, repsGPU, nrOfReps*sizeof(RepGPU), 0));
 }
 
-extern "C"
-void cleanupGPURBC() 
-{	
-	CUDA_SAFE_CALL(cudaFree(dev_repsGPU[0].dev_points)); 
-	CUDA_SAFE_CALL(cudaFree(dev_repsGPU)); 
-}
 
 extern "C"
 void FindClosestPointsRBC(int nrOfReps, unsigned short* indices, float* distances)

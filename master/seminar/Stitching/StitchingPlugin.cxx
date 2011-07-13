@@ -165,6 +165,7 @@ StitchingPlugin::RunTest()
 	for (int i = 256; i <= 10240; i += 256)
 	{
 		m_Widget->m_SpinBoxLandmarks->setValue(i);
+		m_Widget->m_DoubleSpinBoxNrOfRepsFactor->setValue((int)std::sqrt(static_cast<double>(i)));
 		Reset();
 		UndoTransformForSelectedActors();
 		StitchSelectedActors();
@@ -173,6 +174,9 @@ StitchingPlugin::RunTest()
 void
 StitchingPlugin::Reset()
 {
+	// HACK!
+	m_Widget->m_DoubleSpinBoxNrOfRepsFactor->setValue(sqrt(static_cast<double>(m_Widget->m_SpinBoxLandmarks->value())));
+
 	switch (m_Widget->m_ComboBoxClosestPointFinder->currentIndex())
 	{
 	case 0: m_cpf = new ClosestPointFinderBruteForceGPU(m_Widget->m_SpinBoxLandmarks->value()); break;
@@ -1004,7 +1008,7 @@ StitchingPlugin::LoadFrame()
 	float4 p;
 	it.GoToBegin();
 
-	for (int i = 0; i < FRAME_SIZE_X*FRAME_SIZE_Y; ++i, ++it)
+	for (int i = 0; i < FRAME_SIZE_X*FRAME_SIZE_Y; ++i, ++i, ++it, ++it)
 	{
 		p = m_WCs[i];
 
@@ -1017,6 +1021,11 @@ StitchingPlugin::LoadFrame()
 			float r = it.Value()[0];
 			float g = it.Value()[1];
 			float b = it.Value()[2];
+			float rgb = r + g + b;
+			/*if (rgb > FLT_EPSILON)
+				colors->InsertNextTuple4(255.f*(r/rgb), 255.f*(g/rgb), 255.f*(b/rgb), 255);
+			else
+				colors->InsertNextTuple4(0, 0, 0, 255);*/
 			colors->InsertNextTuple4(r, g, b, 255);
 		}
 	}

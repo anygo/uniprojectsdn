@@ -1,5 +1,5 @@
 #include "ClosestPointFinderBruteForceGPU.h"
-
+#include "cutil_inline.h"
 #include <iostream>
 
 extern "C"
@@ -20,5 +20,9 @@ ClosestPointFinderBruteForceGPU::FindClosestPoints(PointCoords* sourceCoords, Po
 void ClosestPointFinderBruteForceGPU::SetTarget(PointCoords* targetCoords, PointColors* targetColors, PointCoords* sourceCoords, PointColors* sourceColors) 
 { 
 	ClosestPointFinder::SetTarget(targetCoords, targetColors, sourceCoords, sourceColors);
+	if(m_Initialized) 
+		cleanupGPUCommon();
+
 	initGPUCommon(m_TargetCoords, m_TargetColors, m_SourceCoords, m_SourceColors, m_WeightRGB, m_Metric, m_NrOfPoints);
+	m_Initialized = true;
 }

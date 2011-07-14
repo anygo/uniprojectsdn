@@ -162,20 +162,29 @@ StitchingPlugin::RunTest()
 {
 	//int numLandmarks[20] = {50, 100, 250, 500, 750, 1000, 1250, 1500, 2000, 2500, 3000, 4000, 5000, 6000, 8000, 10000, 12500, 15000, 17500, 20000};
 
-	for (int i = 256; i <= 10240; i += 256)
+	for (int cpf = 2; cpf < 3; ++cpf)
 	{
-		m_Widget->m_SpinBoxLandmarks->setValue(i);
-		m_Widget->m_DoubleSpinBoxNrOfRepsFactor->setValue((int)std::sqrt(static_cast<double>(i)));
-		Reset();
-		UndoTransformForSelectedActors();
-		StitchSelectedActors();
+		switch (cpf)
+		{
+		case 0: m_Widget->m_ComboBoxClosestPointFinder->setCurrentIndex(0); break; // BF
+		case 1: m_Widget->m_ComboBoxClosestPointFinder->setCurrentIndex(4); break; // RBC
+		case 2: m_Widget->m_ComboBoxClosestPointFinder->setCurrentIndex(5); break; // RBC exact
+		}
+		for (int i = 256; i <= 10240; i += 256)
+		{
+			m_Widget->m_SpinBoxLandmarks->setValue(i);
+			m_Widget->m_DoubleSpinBoxNrOfRepsFactor->setValue((int)std::sqrt(static_cast<double>(i)));
+			Reset();
+			UndoTransformForSelectedActors();
+			StitchSelectedActors();
+		}
 	}
 }
 void
 StitchingPlugin::Reset()
 {
 	// HACK!
-	m_Widget->m_DoubleSpinBoxNrOfRepsFactor->setValue(sqrt(static_cast<double>(m_Widget->m_SpinBoxLandmarks->value())));
+	//m_Widget->m_DoubleSpinBoxNrOfRepsFactor->setValue(sqrt(static_cast<double>(m_Widget->m_SpinBoxLandmarks->value())));
 
 	switch (m_Widget->m_ComboBoxClosestPointFinder->currentIndex())
 	{
@@ -222,11 +231,11 @@ StitchingPlugin::ComputeStatistics()
 	m_Widget->m_DoubleSpinBoxMaxRMS->setValue(0.0);
 	m_Widget->m_SpinBoxMaxIterations->setValue(250);
 
-	const int numIter = 15;
-	const int numPoints = 256;
+	const int numIter = 500;
+	const int numPoints = 512;
 
 	int landmarks[5] = {512, 1024, 2048, 4096, 8192};
-	for (int lm = 0; lm < 5; ++lm)
+	for (int lm = 4 /* CAUTION!!! */; lm < 5; ++lm)
 	{
 		m_Widget->m_SpinBoxLandmarks->setValue(landmarks[lm]);
 		std::stringstream ss;

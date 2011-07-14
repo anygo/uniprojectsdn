@@ -18,12 +18,14 @@ void cleanupGPUCommon();
 class ClosestPointFinderBruteForceGPU : public ClosestPointFinder
 {
 public:
-	ClosestPointFinderBruteForceGPU(int NrOfPoints) : ClosestPointFinder(NrOfPoints) { }
+	ClosestPointFinderBruteForceGPU(int NrOfPoints) : ClosestPointFinder(NrOfPoints), m_Initialized(false) { }
 	~ClosestPointFinderBruteForceGPU() { cleanupGPUCommon(); }
 
 	void SetTarget(PointCoords* targetCoords, PointColors* targetColors, PointCoords* sourceCoords, PointColors* sourceColors); 
 	unsigned short* FindClosestPoints(PointCoords* sourceCoords, PointColors* sourceColors);
 	inline bool usesGPU() { return true; }
+	
+	bool m_Initialized;
 
 };
 

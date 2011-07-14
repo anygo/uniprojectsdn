@@ -226,7 +226,7 @@ ExtendedICPTransform::InternalUpdate()
 
 //#define RUNTIME_EVALUATION
 #ifdef RUNTIME_EVALUATION
-	const int RUNTIME_ITER = 100;
+	const int RUNTIME_ITER = 500;
 	double RUNTIMES_ELAPSED[3] = {0,0,0};
 	QTime T_RUNTIME;
 #endif
@@ -293,7 +293,7 @@ ExtendedICPTransform::InternalUpdate()
 		RUNTIMES_ELAPSED[2] += T_RUNTIME.elapsed();
 #endif
 
-		for(int i = 0; i < m_NumLandmarks; i++)
+		/*for(int i = 0; i < m_NumLandmarks; i++)
 		{
 			totaldist += m_Distances[i];
 		}	
@@ -301,7 +301,7 @@ ExtendedICPTransform::InternalUpdate()
 		m_MeanDist = totaldist / (float)m_NumLandmarks;
 
 		if (m_MeanDist <= m_MaxMeanDist)
-			break;
+			break;*/
 	} 
 
 	// now recover accumulated result

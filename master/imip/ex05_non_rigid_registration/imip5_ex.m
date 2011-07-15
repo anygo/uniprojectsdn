@@ -23,7 +23,7 @@ maxIterations = 150;
 threshold = 5.0;
 
 % define the image grid omega
-% [X1, X2] = ??? 
+[X1, X2] = meshgrid(1:is, 1:is);
 
 % initialize displacement field U with zero!
 U1 = zeros(is,is);            
@@ -38,13 +38,13 @@ tmp = zeros(is, is);
 
 % create the main diagonal vectors of the tridiagonal (I - 2*tau*A) matrix for the
 % thomas algorithm
-aav = ones(is*is,1 );
-bbv = ones(is*is - 1,1 );
+aav = ones(is*is,1);
+bbv = ones(is*is-1,1);
 
 % create tridiagonal matrix (I - 2*tau*A) represented by three vectors
-% aav = ??? % main diagonal
-% bbv = ??? % upper diagonal
-% ccv = ??? % lower diagonal
+aav = aav * (1+4*tau);  % main diagonal
+bbv = bbv * (-2*tau);   % upper diagonal
+ccv = bbv;              % lower diagonal
 
 % images to register
 R  = zeros(is);  % reference image
@@ -87,12 +87,12 @@ for k = 1:maxIterations
   %   -------------------------------------------------------
   fprintf('%d. iteration ...\n', k);
   
-  % Tk = interp2(???)
+  Tk = interp2(X1, X2, T, X1-U1, X2-U2);
   
   % Values outside of T cannot be interpolated and are set to NaN by
   % interp2. They must be replaced with 0 for further computations.
   
-  % ???
+  Tk(isnan(Tk)) = 0;
   
   oldU1 = U1;
   oldU2 = U2;
@@ -100,9 +100,9 @@ for k = 1:maxIterations
   Dk = Tk - R;
 
   % compute force in X1 direction
-  % F1   = ???;
+  F1 = Dk .* (Tk(:,[2:end,end]) - Tk(:,[1,1:end-1]));
   % smooth forces
-  % F1 = ???  
+  F1 = conv2(F1, [1 2 1; 2 4 2; 1 2 1]/16,'same');  
  
   dd1 = U1 + tau * F1 * alpha;
   

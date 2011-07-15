@@ -60,12 +60,13 @@ ExtendedICPTransform::SetTarget(float4 *target, float4* targetColors)
 vtkMatrix4x4*
 ExtendedICPTransform::StartICP() 
 {
-	//std::cout << "StartICP" << std::endl;
-
 	// configure ClosestPointFinder
 	m_ClosestPointFinder->Initialize( m_devTarget, m_devTargetColors, m_devSource, m_devSourceColors);
 
 	m_Accumulate->Identity();
+
+	// reuseable matrix
+	vtkSmartPointer<vtkMatrix4x4> mat = vtkSmartPointer<vtkMatrix4x4>::New();
 
 	float totaldist;
 	m_NumIter = 0;
@@ -88,7 +89,6 @@ ExtendedICPTransform::StartICP()
 			m_ClosestP[i] = m_Target[index];
 		}
 
-		vtkSmartPointer<vtkMatrix4x4> mat = vtkSmartPointer<vtkMatrix4x4>::New();
 		mat->DeepCopy(EstimateTransformationMatrix(m_Source, m_ClosestP));
 
 		// concatenate transformation matrices

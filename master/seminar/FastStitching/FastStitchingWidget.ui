@@ -325,6 +325,13 @@
               </property>
              </widget>
             </item>
+            <item>
+             <widget class="QCheckBox" name="m_CheckBoxUseLandmarks">
+              <property name="text">
+               <string>Use Landmarks</string>
+              </property>
+             </widget>
+            </item>
            </layout>
           </widget>
          </item>

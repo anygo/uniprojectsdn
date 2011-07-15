@@ -230,12 +230,14 @@ FastStitchingPlugin::Reset()
 	int validYEnd = 478;
 
 	int nrOfValidPoints = (validXEnd - validXStart) * (validYEnd - validYStart);
-	int stepSize = nrOfValidPoints / m_NumLandmarks;
 
-	for (int i = 0, j = validXStart*FRAME_SIZE_Y + validYStart; i < m_NumLandmarks; ++i, j += stepSize)
+	int stepSizeX = static_cast<float>(validXEnd - validXStart) / sqrt(static_cast<float>(m_NumLandmarks));
+	int stepSizeY = static_cast<float>(validYEnd - validYStart) / sqrt(static_cast<float>(m_NumLandmarks));
+
+	for (int i = 0, j = validYStart*FRAME_SIZE_X + validXStart; i < m_NumLandmarks; ++i, j += stepSizeX)
 	{
-		if(j % FRAME_SIZE_Y > validYEnd)
-			j += FRAME_SIZE_Y - validYEnd + validYStart;
+		if (j % FRAME_SIZE_X > validXEnd)
+			j += (FRAME_SIZE_X - validXEnd + validXStart + (stepSizeY-1) * FRAME_SIZE_X);
 
 		m_TargetIndices[i] = j;
 	}
@@ -247,48 +249,19 @@ FastStitchingPlugin::Reset()
 	validYStart += (validYEnd-validYStart)*clipPercentage;
 	validYEnd -= (validYEnd-validYStart)*clipPercentage;
 
-	std::cout << "xStart " <<validXStart << " xEnd " << validXEnd << " yStart " << validYStart << " yEnd " << validYEnd << std::endl;
 
 	nrOfValidPoints = (validXEnd - validXStart) * (validYEnd - validYStart);
-	stepSize = nrOfValidPoints / m_NumLandmarks;
 
-	for (int i = 0, j = validXStart*FRAME_SIZE_Y + validYStart; i < m_NumLandmarks; ++i, j += stepSize)
+	stepSizeX = static_cast<float>(validXEnd - validXStart) / sqrt(static_cast<float>(m_NumLandmarks));
+	stepSizeY = static_cast<float>(validYEnd - validYStart) / sqrt(static_cast<float>(m_NumLandmarks));
+
+	for (int i = 0, j = validYStart*FRAME_SIZE_X + validXStart; i < m_NumLandmarks; ++i, j += stepSizeX)
 	{
-		if(j % FRAME_SIZE_Y > validXEnd)
-			j += FRAME_SIZE_Y - validYEnd + validYStart;
+		if (j % FRAME_SIZE_X > validXEnd)
+			j += (FRAME_SIZE_X - validXEnd + validXStart + (stepSizeY-1) * FRAME_SIZE_X);
 
 		m_SrcIndices[i] = j;
 	}
-
-	//std::ofstream lmSource("landmarkSamplingSource.txt");
-	//std::ofstream lmTarget("landmarkSamplingTarget.txt");
-
-	//for(int k = 0; k < m_NumLandmarks; ++k)
-	//{
-	//	int rowT = m_TargetIndices[k] / FRAME_SIZE_X;
-	//	int colT = m_TargetIndices[k] % FRAME_SIZE_X;
-	//	int rowS = m_SrcIndices[k] / FRAME_SIZE_X;
-	//	int colS = m_SrcIndices[k] % FRAME_SIZE_X;
-
-	//	lmTarget << "(" << rowT << "," << colT << ")" << std::endl;
-	//	lmSource << "(" << rowS << "," << colS << ")" << std::endl;
-	//}
-
-	//
-	//lmSource.close();
-	//lmTarget.close();
-
-	////for (int i = 0; i < FRAME_SIZE_Y; ++i)
-	////{
-	////	for (int j = 0; j < FRAME_SIZE_X; ++j)
-	////	{
-	////			lmSource << "o";
-	////			lmTarget << "o";
-	////		
-	////	}
-	////	lmSource << std::endl;
-	////	lmTarget << std::endl;
-	////}
 
 	cutilSafeCall(cudaMemcpy(m_devSourceIndices, m_SrcIndices, m_NumLandmarks*sizeof(unsigned int), cudaMemcpyHostToDevice));
 	cutilSafeCall(cudaMemcpy(m_devTargetIndices, m_TargetIndices, m_NumLandmarks*sizeof(unsigned int), cudaMemcpyHostToDevice));
@@ -302,9 +275,9 @@ FastStitchingPlugin::Reset()
 void
 FastStitchingPlugin::LoadStitch()
 {
-	size_t freeMemory, totalMemory;
+	/*size_t freeMemory, totalMemory;
 	cudaMemGetInfo(&freeMemory, &totalMemory);
-	std::cout << (unsigned long) freeMemory / 1024 / 1024 << " MB / " << (unsigned long) totalMemory / 1024 / 1024 << " MB" << std::endl;
+	std::cout << (unsigned long) freeMemory / 1024 / 1024 << " MB / " << (unsigned long) totalMemory / 1024 / 1024 << " MB" << std::endl;*/
 
 	//QTime tOverall;
 	//tOverall.start();
@@ -371,9 +344,26 @@ FastStitchingPlugin::LoadFrame()
 void
 FastStitchingPlugin::ExtractLandmarks()
 {
-	// Extract Landmarks Points and Color Information
-	CUDAExtractLandmarks(m_NumLandmarks, m_devWCs, m_devColors, m_devSourceIndices, m_devSourceLandmarks, m_devCurLandmarksColor);
-	CUDAExtractLandmarks(m_NumLandmarks, m_devPrevWCs, m_devPrevColors, m_devTargetIndices, m_devTargetLandmarks, m_devPrevLandmarksColor);
+
+//#define RUNTIME_EVALUATION_EXTRACT
+#ifdef RUNTIME_EVALUATION_EXTRACT
+	const int RUNTIME_EVALUATION_ITER = 1000;
+	QTime RUNTIME_EVALUATION_TIMER;
+	RUNTIME_EVALUATION_TIMER.start();
+	for (int i = 0; i < RUNTIME_EVALUATION_ITER; ++i)
+	{
+#endif
+
+		// Extract Landmarks Points and Color Information
+		CUDAExtractLandmarks(m_NumLandmarks, m_devWCs, m_devColors, m_devSourceIndices, m_devSourceLandmarks, m_devCurLandmarksColor);
+		CUDAExtractLandmarks(m_NumLandmarks, m_devPrevWCs, m_devPrevColors, m_devTargetIndices, m_devTargetLandmarks, m_devPrevLandmarksColor);
+
+#ifdef RUNTIME_EVALUATION_EXTRACT
+		cudaThreadSynchronize();
+	}
+	int elapsed = RUNTIME_EVALUATION_TIMER.elapsed();
+	std::cout << (double)elapsed / (double)RUNTIME_EVALUATION_ITER << " ms for Extract Landmarks()" << std::endl;
+#endif
 }
 //----------------------------------------------------------------------------
 void
@@ -388,11 +378,6 @@ FastStitchingPlugin::Stitch()
 	// transform the landmarks with previous transformation matrix
 	CUDATransformPoints(m_PreviousTransform->Element, m_devSourceLandmarks, m_NumLandmarks, NULL);
 
-	// new stuff... strange
-	//double* bounds = toBeStitched->GetBounds();
-	//double boundDiagonal = sqrt((bounds[1] - bounds[0])*(bounds[1] - bounds[0]) + (bounds[3] - bounds[2])*(bounds[3] - bounds[2]) + (bounds[5] - bounds[4])*(bounds[5] - bounds[4]));
-	//m_icp->SetNormalizeRGBToDistanceValuesFactor(static_cast<float>(boundDiagonal / sqrt(3.0)));
-
 	// Start ICP and yield final transformation matrix
 	vtkMatrix4x4* icpMatrix = m_icp->StartICP();
 
@@ -404,8 +389,25 @@ FastStitchingPlugin::Stitch()
 	vtkMatrix4x4::Multiply4x4(icpMatrix, m_PreviousTransform, m_PreviousTransform);
 	// THIS ORDER OF MULTIPLICATION SHOULD BE THE RIGHT ONE!
 
-	// perform the transform on GPU (m_PreviousTransform is now the current transform)
-	CUDATransformPoints(m_PreviousTransform->Element, m_devWCs, FRAME_SIZE_X * FRAME_SIZE_Y, NULL);
+
+//#define RUNTIME_EVALUATION_TRANSFORM
+#ifdef RUNTIME_EVALUATION_TRANSFORM
+	const int RUNTIME_EVALUATION_ITER = 1000;
+	QTime RUNTIME_EVALUATION_TIMER;
+	RUNTIME_EVALUATION_TIMER.start();
+	for (int i = 0; i < RUNTIME_EVALUATION_ITER; ++i)
+	{
+#endif
+
+		// perform the transform on GPU (m_PreviousTransform is now the current transform)
+		CUDATransformPoints(m_PreviousTransform->Element, m_devWCs, FRAME_SIZE_X * FRAME_SIZE_Y, NULL);
+
+#ifdef RUNTIME_EVALUATION_TRANSFORM
+		cudaThreadSynchronize();
+	}
+	int elapsed = RUNTIME_EVALUATION_TIMER.elapsed();
+	std::cout << (double)elapsed / (double)RUNTIME_EVALUATION_ITER << " ms for Extract transforming all points)" << std::endl;
+#endif
 
 	// update debug information in GUI
 	m_Widget->m_LabelICPIterations->setText(QString::number(m_icp->GetNumIter()));
@@ -415,13 +417,26 @@ FastStitchingPlugin::Stitch()
 void
 FastStitchingPlugin::CopyToCPUAndVisualizeFrame()
 {
+	bool useLandmarks = m_Widget->m_CheckBoxUseLandmarks->isChecked();
+
 	// copy transformed WC data from GPU to CPU
-	cutilSafeCall(cudaMemcpy(m_WCs, m_devWCs, FRAME_SIZE_X*FRAME_SIZE_Y*sizeof(float4), cudaMemcpyDeviceToHost));
-	//cutilSafeCall(cudaMemcpy(m_WCs, m_devTargetLandmarks, m_NumLandmarks*sizeof(float4), cudaMemcpyDeviceToHost));
+	if (useLandmarks)
+	{
+		cutilSafeCall(cudaMemcpy(m_WCs, m_devTargetLandmarks, m_NumLandmarks*sizeof(float4), cudaMemcpyDeviceToHost));
+		cutilSafeCall(cudaMemcpy(m_WCs+m_NumLandmarks, m_devSourceLandmarks, m_NumLandmarks*sizeof(float4), cudaMemcpyDeviceToHost));
+	}
+	else
+	{
+		cutilSafeCall(cudaMemcpy(m_WCs, m_devWCs, FRAME_SIZE_X*FRAME_SIZE_Y*sizeof(float4), cudaMemcpyDeviceToHost));
+	}
 
 
 	if (!m_Widget->m_CheckBoxShowFrames->isChecked())
+	{
+		cudaThreadSynchronize();
 		return;
+	}
+
 
 	vtkSmartPointer<vtkPoints> points =
 		vtkSmartPointer<vtkPoints>::New();
@@ -439,35 +454,13 @@ FastStitchingPlugin::CopyToCPUAndVisualizeFrame()
 	float4 p;
 	it.GoToBegin();
 
-	//std::ofstream invalidPixels("invalidPixelsNew.pgm");
-	//invalidPixels << "P2" << std::endl;
-	//invalidPixels << FRAME_SIZE_X << " " << FRAME_SIZE_Y << std::endl;
-	//invalidPixels << "1" << std::endl;
 
-	//for (int i = 0; i < FRAME_SIZE_Y; ++i)
-	//{
-	//	for (int j = 0; j < FRAME_SIZE_X; ++j)
-	//	{
-	//		p = m_WCs[i*FRAME_SIZE_X + j];
-
-	//		if (p.x == p.x) // i.e. not QNAN
-	//		{
-	//			invalidPixels << "1" << " ";
-	//		}
-	//		else
-	//		{
-	//			invalidPixels << "0" << " ";
-	//		}
-	//	}
-	//	invalidPixels << std::endl;
-	//}
-
-	//invalidPixels.close();
-
-
-	for (int i = 0; i < FRAME_SIZE_X*FRAME_SIZE_Y; ++i, ++it)
-	//for (int i = 0; i < m_NumLandmarks; ++i, ++it)
+	int limit = useLandmarks ? m_NumLandmarks*2 : FRAME_SIZE_X*FRAME_SIZE_Y;
+	for (int i = 0; i < limit; ++i, ++it)
 	{
+		if (!useLandmarks && rand() % 8)
+			continue;
+
 		p = m_WCs[i];
 		
 		if (p.x == p.x) // i.e. not QNAN
@@ -476,8 +469,18 @@ FastStitchingPlugin::CopyToCPUAndVisualizeFrame()
 			float r = it.Value()[0];
 			float g = it.Value()[1];
 			float b = it.Value()[2];
-			colors->InsertNextTuple4(r, g, b, 255);
-			//colors->InsertNextTuple4(0, 0, 0, 255);
+
+			if (useLandmarks)
+			{
+				if (i >= m_NumLandmarks)
+					colors->InsertNextTuple4(255, 0, 0, 255);
+				else
+					colors->InsertNextTuple4(0, 0, 255, 255);
+			}
+			else
+			{
+				colors->InsertNextTuple4(r, g, b, 255);
+			}
 		}
 	}
 
@@ -496,12 +499,25 @@ FastStitchingPlugin::CopyToCPUAndVisualizeFrame()
 	polyData->Update();
 
 
+	
 	// VISUALIZATION BUFFER
-	const int bufSize = 30;
+	const int bufSize = 100;
 
 	static int bufCtr = 0;
 	static vtkSmartPointer<ritk::RImageActorPipeline> actors[bufSize];
 	
+	if (useLandmarks)
+	{
+		for (int i = 0; i < std::min(bufSize, bufCtr); ++i)
+			m_Widget->m_VisualizationWidget3D->RemoveActor(actors[i]);
+
+		actors[0] = vtkSmartPointer<ritk::RImageActorPipeline>::New();
+		actors[0]->SetData(polyData, true);
+		m_Widget->m_VisualizationWidget3D->AddActor(actors[0]);
+		bufCtr = 1;
+		return;
+	}
+
 	if (bufCtr < bufSize)
 	{
 		actors[bufCtr] = vtkSmartPointer<ritk::RImageActorPipeline>::New();

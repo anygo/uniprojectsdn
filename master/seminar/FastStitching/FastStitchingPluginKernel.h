@@ -118,7 +118,7 @@ void kernelExtractLandmarks(int numLandmarks, float4* devWCsIn, uchar3* devColor
 
 	int idx = devIndicesIn[tid];
 	while (devWCsIn[idx].x != devWCsIn[idx].x)
-		idx = (idx + 1) % (FRAME_SIZE_X * FRAME_SIZE_Y);
+		idx = (idx + 32) % (FRAME_SIZE_X * FRAME_SIZE_Y);
 		
 	// normalize color
 	float r = devColorsIn[idx].x;

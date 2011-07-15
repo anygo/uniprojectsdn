@@ -70,8 +70,6 @@ protected:
 	// our members
 	bool m_FirstFrame;
 	ritk::NewFrameEvent::RImageConstPointer		m_CurrentFrame;
-	float*										m_CurrentHist;
-	float*										m_PreviousHist;
 	ExtendedICPTransform*						m_icp;
 	ClosestPointFinder*							m_cpf; 
 	float4*										m_devWCs;
@@ -85,7 +83,6 @@ protected:
 	unsigned int*								m_ClippedLMIndices;
 	unsigned int*								m_LMIndices;
 
-
 	unsigned int*								m_SrcIndices;
 	unsigned int*								m_TargetIndices;
 
@@ -97,10 +94,10 @@ protected:
 	float4*										m_devCurLandmarksColor;
 	float4*										m_devPrevLandmarksColor;
 
-	int m_FramesProcessed;
-	QMutex m_Mutex;
-	bool m_ResetICPandCPFRequired;
-	int m_NumLandmarks;
+	int											m_FramesProcessed;
+	QMutex										m_Mutex;
+	bool										m_ResetICPandCPFRequired;
+	int											m_NumLandmarks;
 
 	vtkSmartPointer<vtkMatrix4x4>				m_PreviousTransform;
 };

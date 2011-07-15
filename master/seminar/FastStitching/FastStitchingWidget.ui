@@ -131,7 +131,7 @@
                  <number>1000</number>
                 </property>
                 <property name="singleStep">
-                 <number>5</number>
+                 <number>1</number>
                 </property>
                 <property name="value">
                  <number>10</number>
@@ -305,7 +305,7 @@
                  <number>500</number>
                 </property>
                 <property name="value">
-                 <number>2000</number>
+                 <number>4096</number>
                 </property>
                </widget>
               </item>

@@ -230,14 +230,12 @@ FastStitchingPlugin::Reset()
 	int validYEnd = 478;
 
 	int nrOfValidPoints = (validXEnd - validXStart) * (validYEnd - validYStart);
+	int stepSize = nrOfValidPoints / m_NumLandmarks;
 
-	int stepSizeX = static_cast<float>(validXEnd - validXStart) / sqrt(static_cast<float>(m_NumLandmarks));
-	int stepSizeY = static_cast<float>(validYEnd - validYStart) / sqrt(static_cast<float>(m_NumLandmarks));
-
-	for (int i = 0, j = validYStart*FRAME_SIZE_X + validXStart; i < m_NumLandmarks; ++i, j += stepSizeX)
+	for (int i = 0, j = validYStart*FRAME_SIZE_X + validXStart; i < m_NumLandmarks; ++i, j += stepSize)
 	{
 		if (j % FRAME_SIZE_X > validXEnd)
-			j += (FRAME_SIZE_X - validXEnd + validXStart + (stepSizeY-1) * FRAME_SIZE_X);
+			j += (FRAME_SIZE_X - validXEnd + validXStart);
 
 		m_TargetIndices[i] = j;
 	}
@@ -251,14 +249,14 @@ FastStitchingPlugin::Reset()
 
 
 	nrOfValidPoints = (validXEnd - validXStart) * (validYEnd - validYStart);
+	stepSize = nrOfValidPoints / m_NumLandmarks;
 
-	stepSizeX = static_cast<float>(validXEnd - validXStart) / sqrt(static_cast<float>(m_NumLandmarks));
-	stepSizeY = static_cast<float>(validYEnd - validYStart) / sqrt(static_cast<float>(m_NumLandmarks));
 
-	for (int i = 0, j = validYStart*FRAME_SIZE_X + validXStart; i < m_NumLandmarks; ++i, j += stepSizeX)
+
+	for (int i = 0, j = validYStart*FRAME_SIZE_X + validXStart; i < m_NumLandmarks; ++i, j += stepSize)
 	{
 		if (j % FRAME_SIZE_X > validXEnd)
-			j += (FRAME_SIZE_X - validXEnd + validXStart + (stepSizeY-1) * FRAME_SIZE_X);
+			j += (FRAME_SIZE_X - validXEnd + validXStart);
 
 		m_SrcIndices[i] = j;
 	}
@@ -458,7 +456,7 @@ FastStitchingPlugin::CopyToCPUAndVisualizeFrame()
 	int limit = useLandmarks ? m_NumLandmarks*2 : FRAME_SIZE_X*FRAME_SIZE_Y;
 	for (int i = 0; i < limit; ++i, ++it)
 	{
-		if (!useLandmarks && rand() % 8)
+		if (!useLandmarks && rand() % 5)
 			continue;
 
 		p = m_WCs[i];

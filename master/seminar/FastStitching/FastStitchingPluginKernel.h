@@ -125,9 +125,11 @@ void kernelExtractLandmarks(int numLandmarks, float4* devWCsIn, uchar3* devColor
 	float g = devColorsIn[idx].y;
 	float b = devColorsIn[idx].z;
 
-	devColorsOut[tid].x = r/(r+g+b);
-	devColorsOut[tid].y = g/(r+g+b);
-	devColorsOut[tid].z = b/(r+g+b);
+	float rgb = r+g+b;
+
+	devColorsOut[tid].x = r/(rgb);
+	devColorsOut[tid].y = g/(rgb);
+	devColorsOut[tid].z = b/(rgb);
 	devColorsOut[tid].w = 1.f;
 
 	devLandmarksOut[tid] = devWCsIn[idx];

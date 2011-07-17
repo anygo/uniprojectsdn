@@ -57,7 +57,7 @@ FastStitchingPlugin::FastStitchingPlugin()
 	connect(m_Widget->m_PushButtonStitchFrame,				SIGNAL(clicked()),								this, SLOT(LoadStitch()));
 	connect(m_Widget->m_SpinBoxLandmarks,					SIGNAL(valueChanged(int)),						this, SLOT(ResetICPandCPF()));
 	connect(m_Widget->m_DoubleSpinBoxRGBWeight,				SIGNAL(valueChanged(double)),					this, SLOT(ResetICPandCPF()));
-	connect(m_Widget->m_DoubleSpinBoxClipPercentage,		SIGNAL(valueChanged(double)),					this, SLOT(ResetICPandCPF()));
+	connect(m_Widget->m_HorizontalSliderClipPercentage,		SIGNAL(valueChanged(int)),						this, SLOT(ResetICPandCPF()));
 	connect(this,											SIGNAL(NewFrameAvailable()),					this, SLOT(LoadStitch()));
 
 	m_NumLandmarks = m_Widget->m_SpinBoxLandmarks->value();
@@ -101,6 +101,10 @@ FastStitchingPlugin::FastStitchingPlugin()
 	// dirty hack - we just initialized m_icp and m_cpf, but the plugin crashes if we don't do it again (Qt contexts?!)
 	m_ResetICPandCPFRequired = true;
 	m_FirstFrame = true;
+
+	// make preview window black
+	m_Widget->m_VisualizationWidget3D->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->SetBackground(0, 0, 0);
+	m_Widget->m_VisualizationWidget3D->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->SetBackground2(0, 0, 0);
 }
 
 FastStitchingPlugin::~FastStitchingPlugin()
@@ -232,15 +236,31 @@ FastStitchingPlugin::Reset()
 	int nrOfValidPoints = (validXEnd - validXStart) * (validYEnd - validYStart);
 	int stepSize = nrOfValidPoints / m_NumLandmarks;
 
-	for (int i = 0, j = validYStart*FRAME_SIZE_X + validXStart; i < m_NumLandmarks; ++i, j += stepSize)
+	int stepX = (double)(validXEnd - validXStart) / sqrt((double)m_NumLandmarks);
+	int stepY = (double)(validYEnd - validYStart) / sqrt((double)m_NumLandmarks);
+
+	int count = 0;
+	for (int i = validYStart; i < validYEnd; i += stepY)
+	{
+		for (int j = validXStart; j < validXEnd; j += stepX)
+		{
+			m_TargetIndices[count++] = i * FRAME_SIZE_X + j;
+			if (count >= m_NumLandmarks)
+				break;
+		}
+		if (count >= m_NumLandmarks)
+			break;
+	}
+
+	/*for (int i = 0, j = validYStart*FRAME_SIZE_X + validXStart; i < m_NumLandmarks; ++i, j += stepSize)
 	{
 		if (j % FRAME_SIZE_X > validXEnd)
 			j += (FRAME_SIZE_X - validXEnd + validXStart);
 
 		m_TargetIndices[i] = j;
-	}
+	}*/
 
-	double clipPercentage = m_Widget->m_DoubleSpinBoxClipPercentage->value();
+	double clipPercentage = static_cast<double>(m_Widget->m_HorizontalSliderClipPercentage->value()) / 100.;
 
 	validXStart += (validXEnd-validXStart)*clipPercentage; 
 	validXEnd -= (validXEnd-validXStart)*clipPercentage;
@@ -251,15 +271,30 @@ FastStitchingPlugin::Reset()
 	nrOfValidPoints = (validXEnd - validXStart) * (validYEnd - validYStart);
 	stepSize = nrOfValidPoints / m_NumLandmarks;
 
+	stepX = (double)(validXEnd - validXStart) / sqrt((double)m_NumLandmarks);
+	stepY = (double)(validYEnd - validYStart) / sqrt((double)m_NumLandmarks);
+
+	count = 0;
+	for (int i = validYStart; i < validYEnd; i += stepY)
+	{
+		for (int j = validXStart; j < validXEnd; j += stepX)
+		{
+			m_SrcIndices[count++] = i * FRAME_SIZE_X + j;
+			if (count >= m_NumLandmarks)
+				break;
+		}
+		if (count >= m_NumLandmarks)
+			break;
+	}
 
 
-	for (int i = 0, j = validYStart*FRAME_SIZE_X + validXStart; i < m_NumLandmarks; ++i, j += stepSize)
+	/*for (int i = 0, j = validYStart*FRAME_SIZE_X + validXStart; i < m_NumLandmarks; ++i, j += stepSize)
 	{
 		if (j % FRAME_SIZE_X > validXEnd)
 			j += (FRAME_SIZE_X - validXEnd + validXStart);
 
 		m_SrcIndices[i] = j;
-	}
+	}*/
 
 	cutilSafeCall(cudaMemcpy(m_devSourceIndices, m_SrcIndices, m_NumLandmarks*sizeof(unsigned int), cudaMemcpyHostToDevice));
 	cutilSafeCall(cudaMemcpy(m_devTargetIndices, m_TargetIndices, m_NumLandmarks*sizeof(unsigned int), cudaMemcpyHostToDevice));
@@ -277,8 +312,17 @@ FastStitchingPlugin::LoadStitch()
 	cudaMemGetInfo(&freeMemory, &totalMemory);
 	std::cout << (unsigned long) freeMemory / 1024 / 1024 << " MB / " << (unsigned long) totalMemory / 1024 / 1024 << " MB" << std::endl;*/
 
-	//QTime tOverall;
-	//tOverall.start();
+	QTime tOverall;
+	tOverall.start();
+
+//#define RUNTIME_EVALUATION_OVERALL
+#ifdef RUNTIME_EVALUATION_OVERALL
+	const int RUNTIME_EVALUATION_ITER = 100;
+	QTime RUNTIME_EVALUATION_TIMER;
+	RUNTIME_EVALUATION_TIMER.start();
+	for (int i = 0; i < RUNTIME_EVALUATION_ITER; ++i)
+	{
+#endif
 
 	//QTime t;
 
@@ -288,6 +332,7 @@ FastStitchingPlugin::LoadStitch()
 	// load the new frame
 	//t.start();
 	LoadFrame();
+	//cudaThreadSynchronize();
 	//std::cout << "LoadFrame in " << t.elapsed() << " ms" << std::endl;
 
 	if (!m_FirstFrame)
@@ -295,17 +340,20 @@ FastStitchingPlugin::LoadStitch()
 		// now we have to extract the landmarks
 		//t.start();
 		ExtractLandmarks();
+		//cudaThreadSynchronize();
 		//std::cout << "ExtractLandmarks in " << t.elapsed() << " ms" << std::endl;
 
 		// stitch to just loaded frame to the previous frame (given by last history entry)
 		//t.start();
 		Stitch();
+		//cudaThreadSynchronize();
 		//std::cout << "Stitch in " << t.elapsed() << " ms" << std::endl;
 	}
 
 	// Visualize frame
 	//t.start();
 	CopyToCPUAndVisualizeFrame();
+	//cudaThreadSynchronize();
 	//std::cout << "CopyToCPUAndVisualizeFrame in " << t.elapsed() << " ms" << std::endl;
 
 	// swap buffers
@@ -322,12 +370,30 @@ FastStitchingPlugin::LoadStitch()
 
 	m_FirstFrame = false;
 
-	//std::cout << "overall time: " << tOverall.elapsed() << " ms" << std::endl;
+#ifdef RUNTIME_EVALUATION_OVERALL
+		cudaThreadSynchronize();
+	}
+	int elapsed = RUNTIME_EVALUATION_TIMER.elapsed();
+	std::cout << (double)elapsed / (double)RUNTIME_EVALUATION_ITER << " ms for Overall()" << std::endl;
+#endif
+
+
+	std::cout << "overall time: " << tOverall.elapsed() << " ms" << std::endl;
 }
 //----------------------------------------------------------------------------
 void
 FastStitchingPlugin::LoadFrame()
 {
+
+//#define RUNTIME_EVALUATION_LOAD_FRAME
+#ifdef RUNTIME_EVALUATION_LOAD_FRAME
+	const int RUNTIME_EVALUATION_ITER = 100;
+	QTime RUNTIME_EVALUATION_TIMER;
+	RUNTIME_EVALUATION_TIMER.start();
+	for (int i = 0; i < RUNTIME_EVALUATION_ITER; ++i)
+	{
+#endif
+
 	// Copy the input data to the device
 	cutilSafeCall(cudaMemcpyToArray(m_InputImgArr, 0, 0, m_CurrentFrame->GetRangeImage()->GetBufferPointer(), FRAME_SIZE_X*FRAME_SIZE_Y*sizeof(float), cudaMemcpyHostToDevice));
 
@@ -337,6 +403,13 @@ FastStitchingPlugin::LoadFrame()
 	// Compute the world coordinates
 	CUDARangeToWorld(m_devWCs, m_InputImgArr);
 
+#ifdef RUNTIME_EVALUATION_LOAD_FRAME
+		cudaThreadSynchronize();
+	}
+	int elapsed = RUNTIME_EVALUATION_TIMER.elapsed();
+	std::cout << (double)elapsed / (double)RUNTIME_EVALUATION_ITER << " ms for LoadFrame()" << std::endl;
+#endif
+
 }
 //----------------------------------------------------------------------------
 void
@@ -345,7 +418,7 @@ FastStitchingPlugin::ExtractLandmarks()
 
 //#define RUNTIME_EVALUATION_EXTRACT
 #ifdef RUNTIME_EVALUATION_EXTRACT
-	const int RUNTIME_EVALUATION_ITER = 1000;
+	const int RUNTIME_EVALUATION_ITER = 100;
 	QTime RUNTIME_EVALUATION_TIMER;
 	RUNTIME_EVALUATION_TIMER.start();
 	for (int i = 0; i < RUNTIME_EVALUATION_ITER; ++i)
@@ -390,7 +463,7 @@ FastStitchingPlugin::Stitch()
 
 //#define RUNTIME_EVALUATION_TRANSFORM
 #ifdef RUNTIME_EVALUATION_TRANSFORM
-	const int RUNTIME_EVALUATION_ITER = 1000;
+	const int RUNTIME_EVALUATION_ITER = 100;
 	QTime RUNTIME_EVALUATION_TIMER;
 	RUNTIME_EVALUATION_TIMER.start();
 	for (int i = 0; i < RUNTIME_EVALUATION_ITER; ++i)
@@ -404,7 +477,7 @@ FastStitchingPlugin::Stitch()
 		cudaThreadSynchronize();
 	}
 	int elapsed = RUNTIME_EVALUATION_TIMER.elapsed();
-	std::cout << (double)elapsed / (double)RUNTIME_EVALUATION_ITER << " ms for Extract transforming all points)" << std::endl;
+	std::cout << (double)elapsed / (double)RUNTIME_EVALUATION_ITER << " ms for transforming all points)" << std::endl;
 #endif
 
 	// update debug information in GUI
@@ -425,7 +498,23 @@ FastStitchingPlugin::CopyToCPUAndVisualizeFrame()
 	}
 	else
 	{
-		cutilSafeCall(cudaMemcpy(m_WCs, m_devWCs, FRAME_SIZE_X*FRAME_SIZE_Y*sizeof(float4), cudaMemcpyDeviceToHost));
+
+//#define RUNTIME_EVALUATION_MEMCPY_BACK_TO_CPU
+#ifdef RUNTIME_EVALUATION_MEMCPY_BACK_TO_CPU
+		const int RUNTIME_EVALUATION_ITER = 100;
+		QTime RUNTIME_EVALUATION_TIMER;
+		RUNTIME_EVALUATION_TIMER.start();
+		for (int i = 0; i < RUNTIME_EVALUATION_ITER; ++i)
+		{
+#endif
+			cutilSafeCall(cudaMemcpy(m_WCs, m_devWCs, FRAME_SIZE_X*FRAME_SIZE_Y*sizeof(float4), cudaMemcpyDeviceToHost));
+
+#ifdef RUNTIME_EVALUATION_MEMCPY_BACK_TO_CPU
+			cudaThreadSynchronize();
+		}
+		int elapsed = RUNTIME_EVALUATION_TIMER.elapsed();
+		std::cout << (double)elapsed / (double)RUNTIME_EVALUATION_ITER << " ms for transfering pointcloud to cpu)" << std::endl;
+#endif
 	}
 
 
@@ -499,10 +588,19 @@ FastStitchingPlugin::CopyToCPUAndVisualizeFrame()
 
 	
 	// VISUALIZATION BUFFER
-	const int bufSize = 100;
+	const int bufSize = 250;
 
 	static int bufCtr = 0;
 	static vtkSmartPointer<ritk::RImageActorPipeline> actors[bufSize];
+
+	if (m_Widget->m_CheckBoxClearBuffer->isChecked())
+	{
+		for (int i = 0; i < std::min(bufSize, bufCtr); ++i)
+			m_Widget->m_VisualizationWidget3D->RemoveActor(actors[i]);
+
+		bufCtr = 0;
+		return;
+	}
 	
 	if (useLandmarks)
 	{

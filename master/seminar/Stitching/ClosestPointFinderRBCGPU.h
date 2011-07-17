@@ -8,7 +8,7 @@
 #include <limits>
 
 
-/**	@class		ClosestPointFinderRBCCPU
+/**	@class		ClosestPointFinderRBCGPU
  *	@brief		RandomBallCover ClosestPointFinder on GPU (CUDA)
  *	@author		Felix Lugauer and Dominik Neumann
  *

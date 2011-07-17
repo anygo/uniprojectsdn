@@ -224,8 +224,8 @@ ExtendedICPTransform::InternalUpdate()
 	float totaldist;
 	m_NumIter = 0;
 
-//#define RUNTIME_EVALUATION
-#ifdef RUNTIME_EVALUATION
+//#define RUNTIME_EVALUATION_ICP
+#ifdef RUNTIME_EVALUATION_ICP
 	const int RUNTIME_ITER = 500;
 	double RUNTIMES_ELAPSED[3] = {0,0,0};
 	QTime T_RUNTIME;
@@ -234,14 +234,14 @@ ExtendedICPTransform::InternalUpdate()
 	while (true)
 	{
 		// Set locators source points and perfom nearest neighbor search
-#ifdef RUNTIME_EVALUATION
+#ifdef RUNTIME_EVALUATION_ICP
 		T_RUNTIME.start();
 		for (int runtimeIteration = 0; runtimeIteration < RUNTIME_ITER; ++runtimeIteration)
 		{
 #endif
 			indices = m_ClosestPointFinder->FindClosestPoints(m_SourceCoords, m_SourceColors);
 
-#ifdef RUNTIME_EVALUATION
+#ifdef RUNTIME_EVALUATION_ICP
 		}
 		RUNTIMES_ELAPSED[0] += T_RUNTIME.elapsed();
 #endif
@@ -254,14 +254,14 @@ ExtendedICPTransform::InternalUpdate()
 			m_ClosestP[i].z = m_TargetCoords[index].z;
 		}
 
-#ifdef RUNTIME_EVALUATION
+#ifdef RUNTIME_EVALUATION_ICP
 		T_RUNTIME.start();
 		for (int runtimeIteration = 0; runtimeIteration < RUNTIME_ITER; ++runtimeIteration)
 		{
 #endif
 			mat->DeepCopy(EstimateTransformationMatrix(m_SourceCoords, m_ClosestP));
 
-#ifdef RUNTIME_EVALUATION
+#ifdef RUNTIME_EVALUATION_ICP
 		}
 		RUNTIMES_ELAPSED[1] += T_RUNTIME.elapsed();
 #endif		
@@ -277,7 +277,7 @@ ExtendedICPTransform::InternalUpdate()
 		totaldist = 0.f;
 
 		// transform on gpu
-#ifdef RUNTIME_EVALUATION
+#ifdef RUNTIME_EVALUATION_ICP
 		vtkMatrix4x4* matInv = vtkMatrix4x4::New();
 		vtkMatrix4x4::Invert(mat, matInv);
 		T_RUNTIME.start();		
@@ -286,14 +286,14 @@ ExtendedICPTransform::InternalUpdate()
 #endif
 			TransformPointsDirectlyOnGPU(mat->Element, m_SourceCoords, m_Distances);
 			
-#ifdef RUNTIME_EVALUATION
+#ifdef RUNTIME_EVALUATION_ICP
 			TransformPointsDirectlyOnGPU(matInv->Element, m_SourceCoords, m_Distances);	
 		}
 		TransformPointsDirectlyOnGPU(mat->Element, m_SourceCoords, m_Distances);
 		RUNTIMES_ELAPSED[2] += T_RUNTIME.elapsed();
 #endif
 
-		/*for(int i = 0; i < m_NumLandmarks; i++)
+		for(int i = 0; i < m_NumLandmarks; i++)
 		{
 			totaldist += m_Distances[i];
 		}	
@@ -301,13 +301,13 @@ ExtendedICPTransform::InternalUpdate()
 		m_MeanDist = totaldist / (float)m_NumLandmarks;
 
 		if (m_MeanDist <= m_MaxMeanDist)
-			break;*/
+			break;
 	} 
 
 	// now recover accumulated result
 	this->Matrix->DeepCopy(m_Accumulate->GetMatrix());
 
-#ifdef RUNTIME_EVALUATION
+#ifdef RUNTIME_EVALUATION_ICP
 	std::cout << "Runtime Evaluation:" << std::endl;
 	double RUNTIME_OVERALL = RUNTIMES_ELAPSED[0] + RUNTIMES_ELAPSED[1] + RUNTIMES_ELAPSED[2];
 	std::cout << "step0: " << (double)RUNTIMES_ELAPSED[0] / (double)(RUNTIME_ITER*m_NumIter) << " | " << (RUNTIMES_ELAPSED[0]*100) / RUNTIME_OVERALL << " %" << std::endl;

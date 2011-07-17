@@ -28,10 +28,10 @@ void cleanupGPUCommon();
 
 ClosestPointFinderRBCGPU::ClosestPointFinderRBCGPU(int NrOfPoints, float nrOfRepsFactor) : ClosestPointFinder(NrOfPoints), m_NrOfRepsFactor(nrOfRepsFactor) 
 {
-	//m_NrOfReps = std::min( MAX_REPRESENTATIVES, static_cast<int>(m_NrOfRepsFactor * sqrt(static_cast<float>(m_NrOfPoints))) );
+	m_NrOfReps = static_cast<int>(m_NrOfRepsFactor * sqrt(static_cast<float>(m_NrOfPoints)));
 
 	// CAUTION!!!
-	m_NrOfReps = m_NrOfRepsFactor;
+	//m_NrOfReps = m_NrOfRepsFactor;
 	// CAUTION!!!
 
 	// initialize GPU RBC struct and other data structures
@@ -63,21 +63,8 @@ void ClosestPointFinderRBCGPU::SetTarget(PointCoords* targetCoords, PointColors*
 	}
 	ClosestPointFinder::SetTarget(targetCoords, targetColors, sourceCoords, sourceColors);
 	transferToGPU(m_TargetCoords, m_TargetColors, m_SourceCoords, m_SourceColors); // <- we actually dont need our own data struct pointer...
-	initRBC();
-}
 
-unsigned short*
-ClosestPointFinderRBCGPU::FindClosestPoints(PointCoords* sourceCoords, PointColors* sourceColors)
-{
-	FindClosestPointsRBC(m_NrOfReps, m_Indices, m_Distances);
-
-	// return the indices which will then be used in the icp algorithm
-	return m_Indices;
-}
-//----------------------------------------------------------------------------
-void
-ClosestPointFinderRBCGPU::initRBC()
-{
+	// build new list of distinct reps
 	m_Representatives.clear();
 
 	for (int i = 0; i < m_NrOfReps; ++i)
@@ -101,6 +88,36 @@ ClosestPointFinderRBCGPU::initRBC()
 
 		m_Reps[i] = rep;
 	}
+
+//#define RUNTIME_EVALUATION_INIT_RBC
+#ifdef RUNTIME_EVALUATION_INIT_RBC
+	const int RUNTIME_EVALUATION_ITER = 1000;
+	QTime RUNTIME_EVALUATION_TIMER;
+	RUNTIME_EVALUATION_TIMER.start();
+	for (int i = 0; i < RUNTIME_EVALUATION_ITER; ++i)
+	{
+#endif
+		initRBC();
+
+#ifdef RUNTIME_EVALUATION_INIT_RBC
+	}
+	int elapsed = RUNTIME_EVALUATION_TIMER.elapsed();
+	std::cout << (double)elapsed / (double)RUNTIME_EVALUATION_ITER << " ms for initRBC()" << std::endl;
+#endif
+}
+
+unsigned short*
+ClosestPointFinderRBCGPU::FindClosestPoints(PointCoords* sourceCoords, PointColors* sourceColors)
+{
+	FindClosestPointsRBC(m_NrOfReps, m_Indices, m_Distances);
+
+	// return the indices which will then be used in the icp algorithm
+	return m_Indices;
+}
+//----------------------------------------------------------------------------
+void
+ClosestPointFinderRBCGPU::initRBC()
+{
 
 	// find closest representative to each point on gpu
 	PointsToReps(m_NrOfReps, m_PointToRep, m_Reps);

@@ -25,7 +25,7 @@ CUDARangeToWorld(float4* duplicate, const cudaArray *InputImageArray, int w, int
 	// Unbind texture
 	cutilSafeCall(cudaUnbindTexture(InputImageTexture));
 
-	CUT_CHECK_ERROR("Kernel execution failed");
+	//CUT_CHECK_ERROR("Kernel execution failed");
 }
 
 extern "C"
@@ -53,7 +53,7 @@ void TransformPointsDirectlyOnGPU(double transformationMatrix[4][4], PointCoords
 	CUDA_SAFE_CALL(cudaMemcpyToSymbol(dev_transformationMatrix, tmp, 16*sizeof(float), 0));
 	
 	kernelTransformPointsAndComputeDistance<<<DivUp(host_conf->nrOfPoints, CUDA_THREADS_PER_BLOCK), CUDA_THREADS_PER_BLOCK>>>();
-	CUT_CHECK_ERROR("Kernel execution failed (while transforming points)");
+	//CUT_CHECK_ERROR("Kernel execution failed (while transforming points)");
 	
 	// copy distance array to host
 	if (distances)
@@ -155,7 +155,7 @@ void FindClosestPointsGPUBruteForce(unsigned short* indices, float* distances)
 	// find the closest point for each pixel
 	kernelBruteForce<<<DivUp(host_conf->nrOfPoints, CUDA_THREADS_PER_BLOCK), CUDA_THREADS_PER_BLOCK>>>();
 	
-	CUT_CHECK_ERROR("Kernel execution failed (while trying to find closest points)");
+	//CUT_CHECK_ERROR("Kernel execution failed (while trying to find closest points)");
 			
 	// copy data from gpu to host
 	CUDA_SAFE_CALL(cudaMemcpy(indices, host_conf->indices, host_conf->nrOfPoints*sizeof(unsigned short), cudaMemcpyDeviceToHost));
@@ -198,7 +198,7 @@ void FindClosestPointsRBC(int nrOfReps, unsigned short* indices, float* distance
 	// find the closest point for each pixel
 	kernelRBC<<<DivUp(host_conf->nrOfPoints, CUDA_THREADS_PER_BLOCK), CUDA_THREADS_PER_BLOCK>>>(nrOfReps, dev_repsGPU);
 	
-	CUT_CHECK_ERROR("Kernel execution failed (while trying to find closest points)");
+	//CUT_CHECK_ERROR("Kernel execution failed (while trying to find closest points)");
 			
 	// copy data from gpu to host
 	CUDA_SAFE_CALL(cudaMemcpy(indices, host_conf->indices, host_conf->nrOfPoints*sizeof(unsigned short), cudaMemcpyDeviceToHost));
@@ -225,7 +225,7 @@ void FindClosestPointsRBCExact(int nrOfReps, unsigned short* indices, float* dis
 	// find the closest point for each pixel
 	kernelRBCExact<<<DivUp(host_conf->nrOfPoints, CUDA_THREADS_PER_BLOCK), CUDA_THREADS_PER_BLOCK>>>(nrOfReps, dev_repsGPU);
 	
-	CUT_CHECK_ERROR("Kernel execution failed (while trying to find closest points)");
+	//CUT_CHECK_ERROR("Kernel execution failed (while trying to find closest points)");
 			
 	// copy data from gpu to host
 	CUDA_SAFE_CALL(cudaMemcpy(indices, host_conf->indices, host_conf->nrOfPoints*sizeof(unsigned short), cudaMemcpyDeviceToHost));

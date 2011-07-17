@@ -129,6 +129,10 @@ StitchingPlugin::StitchingPlugin()
 	m_CurrentHist = NULL;
 	m_PreviousHist = NULL;
 	m_HistogramDifferenceThreshold = m_Widget->m_DoubleSpinBoxHistDiffThresh->value();
+
+	// make preview window black
+	m_Widget->m_VisualizationWidget3D->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->SetBackground(0, 0, 0);
+	m_Widget->m_VisualizationWidget3D->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->SetBackground2(0, 0, 0);
 }
 
 StitchingPlugin::~StitchingPlugin()
@@ -162,15 +166,15 @@ StitchingPlugin::RunTest()
 {
 	//int numLandmarks[20] = {50, 100, 250, 500, 750, 1000, 1250, 1500, 2000, 2500, 3000, 4000, 5000, 6000, 8000, 10000, 12500, 15000, 17500, 20000};
 
-	for (int cpf = 2; cpf < 3; ++cpf)
-	{
-		switch (cpf)
-		{
-		case 0: m_Widget->m_ComboBoxClosestPointFinder->setCurrentIndex(0); break; // BF
-		case 1: m_Widget->m_ComboBoxClosestPointFinder->setCurrentIndex(4); break; // RBC
-		case 2: m_Widget->m_ComboBoxClosestPointFinder->setCurrentIndex(5); break; // RBC exact
-		}
-		for (int i = 256; i <= 10240; i += 256)
+	//for (int cpf = 2; cpf < 3; ++cpf)
+	//{
+	//	switch (cpf)
+	//	{
+	//	case 0: m_Widget->m_ComboBoxClosestPointFinder->setCurrentIndex(0); break; // BF
+	//	case 1: m_Widget->m_ComboBoxClosestPointFinder->setCurrentIndex(4); break; // RBC
+	//	case 2: m_Widget->m_ComboBoxClosestPointFinder->setCurrentIndex(5); break; // RBC exact
+	//	}
+		for (int i = 256; i <= 8192; i += 256)
 		{
 			m_Widget->m_SpinBoxLandmarks->setValue(i);
 			m_Widget->m_DoubleSpinBoxNrOfRepsFactor->setValue((int)std::sqrt(static_cast<double>(i)));
@@ -178,7 +182,7 @@ StitchingPlugin::RunTest()
 			UndoTransformForSelectedActors();
 			StitchSelectedActors();
 		}
-	}
+	//}
 }
 void
 StitchingPlugin::Reset()
@@ -231,11 +235,11 @@ StitchingPlugin::ComputeStatistics()
 	m_Widget->m_DoubleSpinBoxMaxRMS->setValue(0.0);
 	m_Widget->m_SpinBoxMaxIterations->setValue(250);
 
-	const int numIter = 500;
+	const int numIter = 200;
 	const int numPoints = 512;
 
 	int landmarks[5] = {512, 1024, 2048, 4096, 8192};
-	for (int lm = 4 /* CAUTION!!! */; lm < 5; ++lm)
+	for (int lm = 0; lm < 5; ++lm)
 	{
 		m_Widget->m_SpinBoxLandmarks->setValue(landmarks[lm]);
 		std::stringstream ss;
@@ -674,9 +678,11 @@ StitchingPlugin::StitchSelectedActors()
 
 	QTime t;
 	int overallTime = 0;
+	int ICPiterations = 0;
+	int ICPtime = 0;
+	int TransformTime = 0;
 
 	// stitch all selected actors to previous actor in list
-	// ignore the first one, because it can not be stitched to anything
 	for (int i = 1; i < m_Widget->m_ListWidgetHistory->count(); ++i)
 	{
 		HistoryListItem* hli = static_cast<HistoryListItem*>(m_Widget->m_ListWidgetHistory->item(i));
@@ -693,12 +699,16 @@ StitchingPlugin::StitchSelectedActors()
 				Stitch(hli->m_actor->GetData(), hli_prev->m_actor->GetData(), hli_prev->m_transform, hli->m_actor->GetData(), hli->m_transform);
 				OVERALL_TIME = timeOverall.elapsed();
 				LOAD_TIME = 0; // because frames are already loaded
+				ICPtime += ICP_TIME;
+				TransformTime += TRANSFORM_TIME;
 			} catch (std::exception &e)
 			{
 				std::cout << "Exception: \"" << e.what() << "\"" << std::endl;
 				continue;
 			}
 			overallTime += t.elapsed();
+
+			ICPiterations += m_icp->GetNumIter();
 
 			emit UpdateStats();
 			emit UpdateProgressBar(++counterProgressBar);
@@ -707,7 +717,8 @@ StitchingPlugin::StitchSelectedActors()
 		}
 	}
 
-	//std::cout << overallTime << " ms for Stitching " << m_Widget->m_ListWidgetHistory->selectedItems().count() << " frames (time to update GUI excluded)" << std::endl;
+	std::cout << overallTime << " ms for Stitching " << m_Widget->m_ListWidgetHistory->selectedItems().count() << " frames | ICP iterations: " << ICPiterations << " " << ICPtime << " ms" << std::endl;
+	std::cout << TransformTime << " ms for Transform" << std::endl;
 
 	emit UpdateGUI();
 }
@@ -966,15 +977,19 @@ StitchingPlugin::FrameDifferenceAboveThreshold()
 	const ritk::RImageF2::RangeType* ptr = m_CurrentFrame->GetRangeImage()->GetBufferPointer();
 	for (int i = 0; i < FRAME_SIZE_X*FRAME_SIZE_Y; i += STEP_SIZE_HIST)
 	{
-		m_CurrentHist[(NUM_BINS_HIST*static_cast<int>(ptr[i]))/MAX_RANGE_VAL]++;
+		m_CurrentHist[std::min(NUM_BINS_HIST-1, (NUM_BINS_HIST*static_cast<int>(ptr[i]))/MAX_RANGE_VAL)]++;
 	}
+
+	/*for (int i = 0; i < NUM_BINS_HIST; ++i)
+		std::cout << m_CurrentHist[i] << " ";
+	std::cout << std::endl;*/
 
 	// normalize histogram
 	for (int i = 0; i < NUM_BINS_HIST; ++i)
 		m_CurrentHist[i] /= (FRAME_SIZE_X*FRAME_SIZE_Y / STEP_SIZE_HIST);
 
 	float diff = 0;
-	for (int i = 0; i < NUM_BINS_HIST; i += STEP_SIZE_HIST)
+	for (int i = 0; i < NUM_BINS_HIST; ++i)
 		diff += std::abs(m_CurrentHist[i] - m_PreviousHist[i]);
 
 	std::cout << "hist diff: " << diff << " in " << t.elapsed() << " ms" << std::endl;
@@ -993,13 +1008,29 @@ StitchingPlugin::FrameDifferenceAboveThreshold()
 void
 StitchingPlugin::LoadFrame()
 {
+//#define RUNTIME_EVALUATION_LOAD_FRAME
+#ifdef RUNTIME_EVALUATION_LOAD_FRAME
+	const int RUNTIME_EVALUATION_ITER = 1000;
+	QTime RUNTIME_EVALUATION_TIMER;
+	RUNTIME_EVALUATION_TIMER.start();
+	for (int i = 0; i < RUNTIME_EVALUATION_ITER; ++i)
+	{
+#endif
 	// Copy the input data to the device
 	cutilSafeCall(cudaMemcpyToArray(m_InputImgArr, 0, 0, m_CurrentFrame->GetRangeImage()->GetBufferPointer(), FRAME_SIZE_X*FRAME_SIZE_Y*sizeof(float), cudaMemcpyHostToDevice));
 
 	// Compute the world coordinates
 	CUDARangeToWorld(m_devWCs, m_InputImgArr, FRAME_SIZE_X, FRAME_SIZE_Y);
+	cudaThreadSynchronize();
 
+#ifdef RUNTIME_EVALUATION_LOAD_FRAME
+	}
+	int elapsed = RUNTIME_EVALUATION_TIMER.elapsed();
+	std::cout << (double)elapsed / (double)RUNTIME_EVALUATION_ITER << " ms for CudaRANGETOWORLD" << std::endl;
+#endif
+	
 	cutilSafeCall(cudaMemcpy(m_WCs, m_devWCs, FRAME_SIZE_X*FRAME_SIZE_Y*sizeof(float4), cudaMemcpyDeviceToHost));
+	
 
 	vtkSmartPointer<vtkPoints> points =
 		vtkSmartPointer<vtkPoints>::New();
@@ -1019,6 +1050,7 @@ StitchingPlugin::LoadFrame()
 
 	for (int i = 0; i < FRAME_SIZE_X*FRAME_SIZE_Y; ++i, ++i, ++it, ++it)
 	{
+
 		p = m_WCs[i];
 
 		if (!(p.z >= m_MinZ && p.z < m_MaxZ))

@@ -11,7 +11,7 @@
 #define FRAME_SIZE_Y 480
 
 // global values for histogram difference computation
-#define MAX_RANGE_VAL 65536
+#define MAX_RANGE_VAL 8192
 #define NUM_BINS_HIST 128
 #define STEP_SIZE_HIST 16 // not every pixel is used to compute the histogram
 

@@ -609,6 +609,7 @@ FastStitchingPlugin::CopyToCPUAndVisualizeFrame()
 
 		actors[0] = vtkSmartPointer<ritk::RImageActorPipeline>::New();
 		actors[0]->SetData(polyData, true);
+		actors[0]->GetProperty()->SetPointSize(2);
 		m_Widget->m_VisualizationWidget3D->AddActor(actors[0]);
 		bufCtr = 1;
 		return;

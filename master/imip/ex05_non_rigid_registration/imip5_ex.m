@@ -91,7 +91,6 @@ for k = 1:maxIterations
   
   % Values outside of T cannot be interpolated and are set to NaN by
   % interp2. They must be replaced with 0 for further computations.
-  
   Tk(isnan(Tk)) = 0;
   
   oldU1 = U1;
@@ -112,21 +111,21 @@ for k = 1:maxIterations
   dd1v = dd1(:);
   
   % solve for V1 and V2
-  % V1j1 = thomas(???);
-  % V1j2 = thomas(???);
+  V1j1 = thomas(aav,bbv,ccv,dd1rv);
+  V1j2 = thomas(aav,bbv,ccv,dd1v);
   
   tmp(:) = V1j1(:);
   tmp = tmp';
   V1j1(:) = tmp(:);
    
   % compute sum of inverse
-  % U1j12 = ???
+  U1j12 = 1/2 * (V1j1 + V1j2);
   U1(:) = U1j12(:);
 
   % compute force in X2 direction
-  % F2 = ???;
+  F2 = Dk.*(Tk([2:end,end],:) - Tk([1,1:end-1],:));
   % smooth forces
-  % F2 = ???
+  F2 = conv2(F2, [1 2 1; 2 4 2; 1 2 1]/16,'same');  
 
   dd2  = U2 + tau * F2 * alpha;
   
@@ -136,15 +135,15 @@ for k = 1:maxIterations
   dd2v = dd2(:);
   
   % solve for V1 and V2
-  % V2j1 = thomas(???);
-  % V2j2 = thomas(???);
+  V2j1 = thomas(aav,bbv,ccv,dd2rv);
+  V2j2 = thomas(aav,bbv,ccv,dd2v);
   
   tmp(:) = V2j1(:);
   tmp = tmp';
   V2j1(:) = tmp(:);
   
   % compute sum of inverse
-  % U2j12 = ???;
+  U2j12 = 1/2 * (V2j1 + V2j2); %%%%%%%%%%%%%%%%%%%%%%%%%%%%
   U2(:) = U2j12(:);
   
   change = 0.5 * (norm(U1-oldU1, 'fro') + norm(U2-oldU2, 'fro'));

@@ -151,7 +151,7 @@ f = V(:, 9);
 % ||f|| = 1; f is only defined up to scale; f = 0 should be not the
 % solution!
 disp('norm(f)')
-nf = norm(f);
+nf = norm(f)
 
 % if f has not length 1
 for i=1:9

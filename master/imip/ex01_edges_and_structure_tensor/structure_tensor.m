@@ -17,7 +17,7 @@ clc;
 % 3: Fingerprint3
 % 4: straight line for testing gradient, edge orientation, ...
 
-fall = 1;
+fall = 2;
 
 if(fall == 0)
     %im = zeros(200,200);

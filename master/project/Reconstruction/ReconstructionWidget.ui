@@ -25,7 +25,15 @@
      <property name="lineWidth">
       <number>5</number>
      </property>
-     <layout class="QGridLayout" name="gridLayout_2"/>
+     <layout class="QGridLayout" name="gridLayout_2">
+      <item row="0" column="0">
+       <widget class="QPushButton" name="m_PushButton">
+        <property name="text">
+         <string>PushButton</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
     </widget>
    </item>
   </layout>

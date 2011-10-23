@@ -3,13 +3,14 @@
 #include "ritkManager.h"
 #include "ritkRGBRImage.h"
 
+#include "cutil_inline.h"
+
 
 ReconstructionPlugin::ReconstructionPlugin()
 {
 	// Create the widget
 	m_Widget = new ReconstructionWidget();
 	connect(this, SIGNAL(UpdateGUI()), m_Widget, SLOT(UpdateGUI()));
-	//connect(this->m_Widget->m_PushButton, SIGNAL(clicked()), this, SLOT(GetName()));
 }
 
 ReconstructionPlugin::~ReconstructionPlugin()
@@ -53,7 +54,11 @@ ReconstructionPlugin::ProcessEvent(ritk::Event::Pointer EventP)
 		// Here comes your code. Access range data with CurrentFrame.
 		// ...
 
-		std::cout << ".";
+		size_t freeMemory, totalMemory;
+		cudaMemGetInfo(&freeMemory, &totalMemory);
+		std::cout << (unsigned long) freeMemory / 1024 / 1024 << " MB / " << (unsigned long) totalMemory / 1024 / 1024 << " MB" << std::endl;
+
+		/*std::cout << ".";
 		ritk::NewFrameEvent::RImagePointer m_ReferenceFrame =
 			ritk::NewFrameEvent::RImageType::New();
 		std::cout << ".";
@@ -61,9 +66,9 @@ ReconstructionPlugin::ProcessEvent(ritk::Event::Pointer EventP)
 		std::cout << ".";
 		ritk::RGBRImageUCF2::Pointer x = dynamic_cast<ritk::RGBRImageUCF2*>((ritk::RImageF2*) m_ReferenceFrame);
 		std::cout << ".";
-		std::cout << x->GetRGBImage()->GetBufferPointer()[5][0] << std::endl;
+		std::cout << x->GetRGBImage()->GetBufferPointer()[1][0] << std::endl;
 		std::cout << ".";
-		emit UpdateGUI();
+		emit UpdateGUI();*/
 	}
 	else
 	{

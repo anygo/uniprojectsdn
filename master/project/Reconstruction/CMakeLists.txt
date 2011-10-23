@@ -41,9 +41,36 @@ ELSE()
 	MESSAGE("RITK not found, but needed.")
 ENDIF(RITK_FOUND)
 
+# CUDA
+FIND_PACKAGE(CUDA)
+IF(CUDA_FOUND)
+	FIND_PATH(CUDA_CUT_INCLUDE_DIR
+		cutil.h
+		PATHS ${CUDA_SDK_SEARCH_PATH}
+		PATH_SUFFIXES "common/inc"
+		DOC "Location of cutil.h"
+		NO_DEFAULT_PATH
+    	)
+	mark_as_advanced(CUDA_CUT_INCLUDE_DIR)
+	INCLUDE_DIRECTORIES(${CUDA_INCLUDE_DIRS} ${CUDA_CUT_INCLUDE_DIR})
+	
+	FIND_LIBRARY(CUDA_CUT_LIBRARY
+		NAMES cutil ${cuda_cutil_name}
+		PATHS ${CUDA_SDK_SEARCH_PATH}
+		PATH_SUFFIXES "common/lib" "lib"
+		DOC "Location of cutil library"
+		NO_DEFAULT_PATH
+	)
+	#find_library(CUDA_CUT_LIBRARY NAMES cutil ${cuda_cutil_name} DOC "Location of cutil library")
+	mark_as_advanced(CUDA_CUT_LIBRARY)
+	set(CUDA_CUT_LIBRARIES ${CUDA_CUT_LIBRARY})
+ELSE()
+	MESSAGE(FATAL_ERROR "CUDA not found, but needed.")
+ENDIF(CUDA_FOUND)
 
 # The headers, sources and Qt related stuff in this plugin
 # ========================================================
+
 SET(Reconstruction_HDRS
 	ReconstructionPluginFactory.h
 	ReconstructionPlugin.h
@@ -88,12 +115,17 @@ TARGET_LINK_LIBRARIES(${Reconstruction_LIBRARY}
 	debug ${RITK_COMMON_LIBRARY_DEBUG}
 	debug ${RITK_CORE_LIBRARY_DEBUG}
 	debug ${RITK_VTK_LIBRARY_DEBUG}
+	debug ${RITK_CUDA_LIBRARY_DEBUG}
 	optimized ${RITK_COMMON_LIBRARY}
 	optimized ${RITK_CORE_LIBRARY}
 	optimized ${RITK_VTK_LIBRARY}
+	optimized ${RITK_CUDA_LIBRARY}
 	${ITK_LIBRARIES}
 	${VTK_LIBRARIES} 
 	${QT_LIBRARIES}
+	${CUDA_CUDA_LIBRARY} 
+	${CUDA_CUDART_LIBRARY} 
+	${CUDA_CUT_LIBRARIES}
 )
 SET_TARGET_PROPERTIES(${Reconstruction_LIBRARY} PROPERTIES DEBUG_POSTFIX "d")
 

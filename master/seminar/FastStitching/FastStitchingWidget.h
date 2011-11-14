@@ -4,7 +4,7 @@
 #include <QWidget>
 #include "Ui_FastStitchingWidget.h"
 
-#include "RImage.h"
+#include "ritkRImage.h"
 
 class FastStitchingWidget : public QWidget, public Ui_FastStitchingWidget
 {

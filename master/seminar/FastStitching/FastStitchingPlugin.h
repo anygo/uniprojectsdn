@@ -1,12 +1,12 @@
 #ifndef FastStitchingPLUGIN_H__
 #define	FastStitchingPLUGIN_H__
 
-#include "ApplicationPlugin.h"
+#include "ritkApplicationPlugin.h"
 #include "FastStitchingPlugin.h"
 #include "FastStitchingWidget.h"
 
-#include "RImage.h"
-#include "RImageActorPipeline.h"
+#include "ritkRImage.h"
+#include "ritkRImageActorPipeline.h"
 #include <ClosestPointFinder.h>
 #include <ExtendedICPTransform.h>
 #include <cutil_inline.h>

@@ -1,7 +1,7 @@
 // standard includes
 #include "FastStitchingPlugin.h"
-#include "DebugManager.h"
-#include "Manager.h"
+#include "ritkDebugManager.h"
+#include "ritkManager.h"
 
 // cpp std
 #include <vector>

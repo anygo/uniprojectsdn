@@ -1,16 +1,32 @@
 cmake_minimum_required(VERSION 2.6)
 
-#-----------------------------------------------------------------------------
-# Required libraries
-
 # ITK
 FIND_PACKAGE(ITK REQUIRED)
 IF(ITK_FOUND)
 	INCLUDE_DIRECTORIES(${ITK_INCLUDE_DIRS})
 	INCLUDE(${ITK_USE_FILE})
 ELSE()
-	MESSAGE(FATAL_ERROR "ITK not found, but needed.")
+	MESSAGE("ITK not found, but needed.")
 ENDIF(ITK_FOUND)
+
+# Qt4
+FIND_PACKAGE(Qt4 REQUIRED)
+IF(QT4_FOUND)
+	INCLUDE_DIRECTORIES(${QT_INCLUDE_DIR})
+	INCLUDE(${QT_USE_FILE})	
+ELSE()
+	MESSAGE("QT4 not found, but needed.")
+ENDIF(QT4_FOUND)
+
+# RITK
+FIND_PACKAGE(RITK REQUIRED)
+IF(RITK_FOUND)
+	INCLUDE_DIRECTORIES(${RITK_INCLUDE_DIR})
+	INCLUDE(${RITK_USE_FILE})	
+ELSE()
+	MESSAGE("RITK not found, but needed.")
+ENDIF(RITK_FOUND)
+
 
 # VTK
 FIND_PACKAGE(VTK REQUIRED)
@@ -28,23 +44,6 @@ SET(VTK_LIBRARIES
 )
 
 
-# Qt4
-FIND_PACKAGE(Qt4 REQUIRED)
-IF(QT4_FOUND)
-	INCLUDE_DIRECTORIES(${QT_INCLUDE_DIR})
-	INCLUDE(${QT_USE_FILE})	
-ELSE()
-	MESSAGE(FATAL_ERROR "QT4 not found, but needed.")
-ENDIF(QT4_FOUND)
-
-# RITK
-FIND_PACKAGE(RITK REQUIRED)
-IF(RITK_FOUND)
-	INCLUDE_DIRECTORIES(${RITK_INCLUDE_DIR})
-	INCLUDE(${RITK_USE_FILE})	
-ELSE()
-	MESSAGE(FATAL_ERROR "RITK not found, but needed.")
-ENDIF(RITK_FOUND)
 
 # CUDA
 FIND_PACKAGE(CUDA)
@@ -77,7 +76,7 @@ ENDIF(CUDA_FOUND)
 #-----------------------------------------------------------------------------
 # Set headers (HDRS), sources (SRCS), childs of QObject (MOC_HDRS), and Qt ui-files (UIS)
 
-SET(HDRS
+SET(FastStitching_HDRS
 	FastStitchingPluginFactory.h
 	FastStitchingPlugin.h
 	FastStitchingWidget.h
@@ -87,7 +86,7 @@ SET(HDRS
 	ClosestPointFinderRBCGPU.h
 )
 
-SET(SRCS
+SET(FastStitching_SRCS
 	FastStitchingPluginFactory.cxx
 	FastStitchingPlugin.cxx
 	FastStitchingWidget.cxx
@@ -95,91 +94,91 @@ SET(SRCS
 	ClosestPointFinderRBCGPU.cxx
 )
 
-
-SET(CUDA_HDRS
+SET(FastStitching_CUDA_HDRS
 	FastStitchingPluginKernel.h
 )
 
-
-SET(CUDA_SRCS
+SET(FastStitching_CUDA_SRCS
 	FastStitchingPlugin.cu
 )
 
-#-----------------------------------------------------------------------------
-
-# Qt
-# all childs of qobject have to be put here
-SET(MOC_HDRS 	
+SET(FastStitching_MOC_HDRS 	
 	FastStitchingPluginFactory.h
 	FastStitchingPlugin.h
 	FastStitchingWidget.h
 )
 
-SET(UIS
+SET(FastStitching_UIS
 	FastStitchingWidget.ui
 )
 
-QT4_WRAP_UI(UI_HDRS ${UIS})	
-QT4_WRAP_CPP(MOC_SRCS ${MOC_HDRS})
-
-#-----------------------------------------------------------------------------
-
-# Set the name for the library
-SET(LIBRARY_NAME 
-	FastStitchingPlugin
-)
-
-SET(INCLUDE_DIRS
-	${CMAKE_CURRENT_SOURCE_DIR}
-	${CMAKE_CURRENT_BINARY_DIR}	
-)
+QT4_WRAP_UI(UI_HDRS ${FastStitching_UIS})	
+QT4_WRAP_CPP(MOC_SRCS ${FastStitching_MOC_HDRS})
 
 
-#-----------------------------------------------------------------------------
-# Set include directories, definitions and libs for this plugin
+# Set the library name for this plugin
+# ====================================
+SET(FastStitching_LIBRARY FastStitchingPlugin CACHE INTERNAL "")
+SET(LIBRARY_OUTPUT_PATH "${CMAKE_BINARY_DIR}")
+SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
-INCLUDE_DIRECTORIES(
-	${INCLUDE_DIRS} 
-	${RITK_INCLUDE_DIRS}
-	${QT_QTOPENGL_INCLUDE_DIR}
-)
-CUDA_ADD_LIBRARY(
-	${LIBRARY_NAME} SHARED 
-	${SRCS} 
-	${HDRS} 
-	${CUDA_HDRS} 
-	${CUDA_SRCS}
-	${MOC_SRCS} 
-	${UI_HDRS}
-)
-TARGET_LINK_LIBRARIES(
-	${LIBRARY_NAME} 
-	debug ${RITK_Common_LIBRARY_DEBUG}
-	debug ${RITK_Core_LIBRARY_DEBUG}
-	debug ${RITK_Visualization_LIBRARY_DEBUG}
-	debug ${RITK_Cuda_LIBRARY_DEBUG}
-	optimized ${RITK_Common_LIBRARY}
-	optimized ${RITK_Core_LIBRARY}
-	optimized ${RITK_Visualization_LIBRARY}
-	optimized ${RITK_Cuda_LIBRARY}
-	optimized ${RITK_Tools_LIBRARY}
+#CUDA_ADD_LIBRARY(${FastStitching_LIBRARY} SHARED
+#	${FastStitching_CUDA_HDRS} 
+#	${FastStitching_CUDA_SRCS}
+#)
+
+# Project settings
+# ================
+SET(FastStitching_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR} CACHE INTERNAL "")
+INCLUDE_DIRECTORIES(${FastStitching_INCLUDE_DIRS} ${RITK_INCLUDE_DIRS})
+ADD_DEFINITIONS(-DQT_PLUGIN)
+ADD_DEFINITIONS(-DQT_SHARED)
+ADD_LIBRARY(${FastStitching_LIBRARY} SHARED ${FastStitching_SRCS} ${FastStitching_HDRS} ${FastStitching_CUDA_HDRS} ${FastStitching_CUDA_SRCS} ${MOC_SRCS} ${UI_HDRS})
+TARGET_LINK_LIBRARIES(${FastStitching_LIBRARY}
+	debug ${RITK_COMMON_LIBRARY_DEBUG}
+	debug ${RITK_CORE_LIBRARY_DEBUG}
+	debug ${RITK_VISUALIZATION_LIBRARY_DEBUG}
+	debug ${RITK_CUDA_LIBRARY_DEBUG}
+	debug ${RITK_TOOLS_LIBRARY_DEBUG}
+	optimized ${RITK_COMMON_LIBRARY}
+	optimized ${RITK_CORE_LIBRARY}
+	optimized ${RITK_VISUALIZATION_LIBRARY}
+	optimized ${RITK_CUDA_LIBRARY}
+	optimized ${RITK_TOOLS_LIBRARY}
 	${ITK_LIBRARIES} 
 	${QT_LIBRARIES}
 	${VTK_LIBRARIES}
-	${QT_QTOPENGL_LIBRARY}
 	${CUDA_CUDA_LIBRARY} 
 	${CUDA_CUDART_LIBRARY} 
 	${CUDA_CUT_LIBRARIES}
 )
-SET_TARGET_PROPERTIES(
-	${LIBRARY_NAME} 
-	PROPERTIES  DEBUG_POSTFIX "d"
+SET_TARGET_PROPERTIES(${FastStitching_LIBRARY} PROPERTIES DEBUG_POSTFIX "d")
+
+
+#TARGET_LINK_LIBRARIES(
+#	${LIBRARY_NAME} 
+#	debug ${RITK_Common_LIBRARY_DEBUG}
+#	debug ${RITK_Core_LIBRARY_DEBUG}
+#	debug ${RITK_Visualization_LIBRARY_DEBUG}
+#	debug ${RITK_Cuda_LIBRARY_DEBUG}
+#	optimized ${RITK_Common_LIBRARY}
+#	optimized ${RITK_Core_LIBRARY}
+#	optimized ${RITK_Visualization_LIBRARY}
+#	optimized ${RITK_Cuda_LIBRARY}
+#	optimized ${RITK_Tools_LIBRARY}
+#	${ITK_LIBRARIES} 
+#	${QT_LIBRARIES}	
+#	${QT_QTOPENGL_LIBRARY}	
+#)
+
+
+# Module installation
+# ===================
+INSTALL(TARGETS ${FastStitching_LIBRARY} CONFIGURATIONS RELEASE
+	RUNTIME DESTINATION ${RITK_BINARY_DIR}/release/plugins
+	LIBRARY DESTINATION ${RITK_BINARY_DIR}/release/plugins
 )
-ADD_DEFINITIONS(-DQT_PLUGIN)
-ADD_DEFINITIONS(-DQT_SHARED)
-
-
-#-----------------------------------------------------------------------------
-# Installation
-INSTALL(TARGETS ${LIBRARY_NAME} RUNTIME DESTINATION ${RITK_BINARY_DIR}/release/plugins CONFIGURATIONS RELEASE)
-INSTALL(TARGETS ${LIBRARY_NAME} RUNTIME DESTINATION ${RITK_BINARY_DIR}/debug/plugins CONFIGURATIONS DEBUG)
+INSTALL(TARGETS ${FastStitching_LIBRARY} CONFIGURATIONS DEBUG
+	RUNTIME DESTINATION ${RITK_BINARY_DIR}/debug/plugins 
+	LIBRARY DESTINATION ${RITK_BINARY_DIR}/debug/plugins 
+)

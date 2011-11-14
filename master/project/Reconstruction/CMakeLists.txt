@@ -76,7 +76,7 @@ SET(Reconstruction_HDRS
 	ReconstructionPlugin.h
 	ReconstructionWidget.h
 	ICP.h
-	RBCOneShot.h
+	RBC.h
 )
 
 SET(Reconstruction_SRCS

@@ -1,5 +1,5 @@
-#ifndef ReconstructionWIDGET_H__
-#define ReconstructionWIDGET_H__
+#ifndef RECONSTRUCTIONWIDGET_H__
+#define RECONSTRUCTIONWIDGET_H__
 
 #include <QWidget>
 #include "Ui_ReconstructionWidget.h"
@@ -28,4 +28,4 @@ public slots:
 	void UpdateGUI();
 };
 
-#endif // ReconstructionWIDGET_H__
+#endif // RECONSTRUCTIONWIDGET_H__

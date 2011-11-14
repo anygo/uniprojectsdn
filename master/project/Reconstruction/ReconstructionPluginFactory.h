@@ -1,5 +1,5 @@
-#ifndef ReconstructionPLUGINFACTORY_H__
-#define ReconstructionPLUGINFACTORY_H__
+#ifndef RECONSTRUCTIONPLUGINFACTORY_H__
+#define RECONSTRUCTIONPLUGINFACTORY_H__
 
 #include <QObject>
 #include "ritkPluginFactories.h"
@@ -22,4 +22,4 @@ public:
 	QString GetDescription();
 };
 
-#endif // ReconstructionPLUGINFACTORY_H__
+#endif // RECONSTRUCTIONPLUGINFACTORY_H__

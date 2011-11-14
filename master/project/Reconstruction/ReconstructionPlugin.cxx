@@ -3,7 +3,7 @@
 #include "ritkManager.h"
 #include "ritkRGBRImage.h"
 
-#include "RBCOneShot.h"
+#include "ICP.h"
 #include "cutil_inline.h"
 
 
@@ -16,8 +16,11 @@ ReconstructionPlugin::ReconstructionPlugin()
 	// DELETE ME ////////////////////////
 	// DELETE ME ////////////////////////
 	// DELETE ME ////////////////////////
-	RBCOneShot<3, 2048> rbc;
-	rbc.Query(NULL, true);
+	ICP<4, 2048> icp;
+	icp.GetRBC()->BuildRBC(NULL, false);
+	float weights[] = { 1.f, 1.f, 1.f, 0.5f };
+	icp.GetRBC()->SetWeights(weights);
+	icp
 	// DELETE ME ////////////////////////
 	// DELETE ME ////////////////////////
 	// DELETE ME ////////////////////////

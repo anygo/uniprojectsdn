@@ -1,5 +1,5 @@
 #include "FastStitchingWidget.h"
-#include "DebugManager.h"
+#include "ritkDebugManager.h"
 
 #include <windows.h> 
 

@@ -2,7 +2,7 @@
 #define FastStitchingPLUGINFACTORY_H__
 
 #include <QObject>
-#include "PluginFactories.h"
+#include "ritkPluginFactories.h"
 
 class FastStitchingPluginFactory : public QObject, public ritk::ApplicationPluginFactory
 {

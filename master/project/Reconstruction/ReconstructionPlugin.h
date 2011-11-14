@@ -1,5 +1,5 @@
-#ifndef ReconstructionPLUGIN_H__
-#define	ReconstructionPLUGIN_H__
+#ifndef RECONSTRUCTIONPLUGIN_H__
+#define	RECONSTRUCTIONPLUGIN_H__
 
 #include "ritkApplicationPlugin.h"
 #include "ReconstructionPlugin.h"
@@ -32,4 +32,4 @@ protected:
 };
 
 
-#endif // ReconstructionPLUGIN_H__
+#endif // RECONSTRUCTIONPLUGIN_H__

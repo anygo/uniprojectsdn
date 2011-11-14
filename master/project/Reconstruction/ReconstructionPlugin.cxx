@@ -3,6 +3,7 @@
 #include "ritkManager.h"
 #include "ritkRGBRImage.h"
 
+#include "RBCOneShot.h"
 #include "cutil_inline.h"
 
 
@@ -11,6 +12,15 @@ ReconstructionPlugin::ReconstructionPlugin()
 	// Create the widget
 	m_Widget = new ReconstructionWidget();
 	connect(this, SIGNAL(UpdateGUI()), m_Widget, SLOT(UpdateGUI()));
+
+	// DELETE ME ////////////////////////
+	// DELETE ME ////////////////////////
+	// DELETE ME ////////////////////////
+	RBCOneShot<3, 2048> rbc;
+	rbc.Query(NULL, true);
+	// DELETE ME ////////////////////////
+	// DELETE ME ////////////////////////
+	// DELETE ME ////////////////////////
 }
 
 ReconstructionPlugin::~ReconstructionPlugin()
@@ -56,18 +66,6 @@ ReconstructionPlugin::ProcessEvent(ritk::Event::Pointer EventP)
 		size_t freeMemory, totalMemory;
 		cudaMemGetInfo(&freeMemory, &totalMemory);
 		std::cout << (unsigned long) freeMemory / 1024 / 1024 << " MB / " << (unsigned long) totalMemory / 1024 / 1024 << " MB" << std::endl;
-
-		int a = 3.333333333333333333333333333333333;
-		tester(a);
-
-		float b = 3.333333333333333333333333333333333;
-		tester(b);
-
-		double c = 3.333333333333333333333333333333333;
-		tester(c);
-
-		char* d = "3.333333333333333333333333333333333";
-		tester(d);
 
 		/*std::cout << ".";
 		ritk::NewFrameEvent::RImagePointer m_ReferenceFrame =

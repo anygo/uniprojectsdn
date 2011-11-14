@@ -34,7 +34,6 @@ ReconstructionPlugin::GetPluginGUI()
 	return m_Widget;
 }
 
-
 //----------------------------------------------------------------------------
 void
 ReconstructionPlugin::ProcessEvent(ritk::Event::Pointer EventP)
@@ -57,6 +56,18 @@ ReconstructionPlugin::ProcessEvent(ritk::Event::Pointer EventP)
 		size_t freeMemory, totalMemory;
 		cudaMemGetInfo(&freeMemory, &totalMemory);
 		std::cout << (unsigned long) freeMemory / 1024 / 1024 << " MB / " << (unsigned long) totalMemory / 1024 / 1024 << " MB" << std::endl;
+
+		int a = 3.333333333333333333333333333333333;
+		tester(a);
+
+		float b = 3.333333333333333333333333333333333;
+		tester(b);
+
+		double c = 3.333333333333333333333333333333333;
+		tester(c);
+
+		char* d = "3.333333333333333333333333333333333";
+		tester(d);
 
 		/*std::cout << ".";
 		ritk::NewFrameEvent::RImagePointer m_ReferenceFrame =

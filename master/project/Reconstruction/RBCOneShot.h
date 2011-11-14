@@ -6,7 +6,7 @@
  *	@author		Dominik Neumann
  *
  *	@details
- *	Class for efficient NN search on the GPU using the one-shot Random Ball Cover (RBC) data structure,
+ *	Class for efficient NN search on the GPU using the one-shot random rall rover (RBC) data structure,
  */
 template<uint Dim, uint NumPts>
 class RBCOneShot

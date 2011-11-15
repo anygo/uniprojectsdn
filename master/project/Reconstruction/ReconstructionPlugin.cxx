@@ -16,8 +16,21 @@ ReconstructionPlugin::ReconstructionPlugin()
 	// DELETE ME ////////////////////////
 	// DELETE ME ////////////////////////
 	// DELETE ME ////////////////////////
-	ICP<6, 2048> icp;
-	icp.SetWeight(0.5f);
+
+	float** fixed = NULL;
+	float** moving = NULL;
+
+	uint maxIter = 50;
+	ICP<2048, 6> icp(maxIter); // Initialize ICP
+
+	icp.SetWeight(0.5f); // Set weight for RGB data
+
+	bool devMem = false; // Fixed and moving do not point to GPU memory
+	icp.SetFixedPts(fixed, devMem); // Pass fixed point set
+	icp.SetMovingPts(moving, devMem); // Pass moving point set
+
+	icp.Run(); // Run ICP
+	
 	// DELETE ME ////////////////////////
 	// DELETE ME ////////////////////////
 	// DELETE ME ////////////////////////

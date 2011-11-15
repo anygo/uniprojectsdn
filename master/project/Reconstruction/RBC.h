@@ -1,77 +1,88 @@
 #ifndef RBC_H__
 #define RBC_H__
 
-#include <algorithm>
-
 /**	@class		RBC
- *	@brief		efficient NN search
+ *	@brief		Efficient NN search
  *	@author		Dominik Neumann
  *
  *	@details
  *	Class for efficient NN search on the GPU using the one-shot random ball rover (RBC) data structure
  */
-template<uint Dim, uint NumPts>
+template<uint NumPts, uint Dim>
 class RBC
 {
-	// representative structure on CPU (required for initialization)
-	typedef struct Rep
+	/** @name	Representative structure on CPU (required for initialization) */
+	//@{
+	/// The struct
+	typedef struct
 	{
-		// index of this representative among entire dataset
+		/// Index of this representative among entire dataset
 		unsigned int index;
 
-		// indices of this representative's data points
+		/// Indices of this representative's data points
 		std::list<unsigned int> points;
 	} Rep;
+	//@}
 	
-	// representative structure on GPU
-	typedef struct RepGPU
+	/** @name	Representative structure on GPU */
+	//@{
+	/// The struct
+	typedef struct
 	{
-		// index of this representative among entire dataset
+		/// Index of this representative among entire dataset
 		uint repIdx;
 
-		// number of points in NN list of this representative
+		/// Number of points in NN list of this representative
 		uint numPts;
 
-		// pointer to indices of this representative's data points (in NN list)
+		/// Pointer to indices of this representative's data points (in NN list)
 		uint* NNList;
 	} RepGPU;
+	//@}
 
 public:
-	// constructor (automatically builds RBC data structure)
-	RBC(uint reps = 0) : m_NumReps(reps != 0 ? reps : static_cast<int>(sqrt(static_cast<float>(NumPts)))) { std::cout << "RBC()" << std::endl; /* init weights to 1.f, init GPU memory */ }
+	/// Constructor (automatically builds RBC data structure)
+	RBC(uint reps = 0) : m_NumReps(reps != 0 ? reps : static_cast<int>(sqrt(static_cast<float>(NumPts)))) { /* init weights to 1.f, init GPU memory */ }
 
-	// destructor
-	~RBC() { std::cout << "~RBC()" << std::endl; /* release GPU memory */ }
+	/// Destructor
+	~RBC() { /* release GPU memory */ }
 
-	// RBC construction routine; indicate whether queryPoints are already on GPU using devMem
-	void BuildRBC(float** dataset, bool devMem) { std::cout << "BuildRBC()" << std::endl; std:: cout << "Dim: " << Dim << " NumPts: " << NumPts << " m_NumReps: " << m_NumReps << std::endl; }
+	/// RBC construction routine; indicate whether data points are already on GPU using devMem
+	void BuildRBC(float** dataset, bool devMem) { /* construct RBC */ }
 
-	// NN query for a set of query points; indicate whether queryPoints are already on GPU using devMem; returns indices of (approximative) NNs w.r.t. supplied dataset
-	uint* Query(float** queryPts, bool devMem) { std::cout << "Query()" << std::endl; return m_NNIndices; }
+	/// NN query for a set of query points; indicate whether queryPoints are already on GPU using devMem; returns indices of (approximative) NNs w.r.t. supplied dataset
+	uint* Query(float** queryPts, bool devMem) { /* query */ return m_NNIndices; }
 
-	// set weight for particular dimension dim
-	void SetWeight(uint dim, float weight) { m_Weights[dim] = weight; /* copy to GPU */ }
+	/// Set weight for particular dimension dim
+	void SetWeight(uint dim, float w) { m_Weights[dim] = w; /* copy to GPU */ }
 
-	// set weights for all dimensions
-	void SetWeights(float weights[Dim]) { for (int i = 0; i < Dim; ++i) std::cout << m_Weights[i]; std::cout << std::endl; std::copy(weights, weights+Dim, m_Weights); for (int i = 0; i < Dim; ++i) std::cout << m_Weights[i]; std::cout << std::endl; /* copy to GPU */ }
+	/// Set weights for all dimensions
+	void SetWeights(float weights[Dim]) { std::copy(weights, weights+Dim, m_Weights); /* copy to GPU */ }
 
-private:
-	// number of representatives
+protected:
+	/// Number of representatives
 	uint m_NumReps;
 
-	// pointer to dataset on GPU
+	/// Pointer to dataset on GPU
 	float** m_devDataset;
 
-	// pointer acceleration structure (representative array) on GPU
+	/// Pointer acceleration structure (representative array) on GPU
 	RepGPU* m_devReps;
 
-	// array of NN indices (query result) on CPU/GPU
+	/// Array of NN indices (query result) on CPU/GPU
 	uint m_NNIndices[NumPts];
-	uint* m_devNnIndices;
+	uint* m_devNNIndices;
 
-	// array of weighting factors for each dimension of the data points on CPU/GPU
+	/// Array of weighting factors for each dimension of the data points on CPU/GPU
 	float m_Weights[Dim];
 	float* m_devWeights;
+
+private:
+	/// purposely not implemented
+	RBC(RBC&);
+
+	/// purposely not implemented
+	void operator=(const RBC&); 
 };
 
 #endif // RBC_H__

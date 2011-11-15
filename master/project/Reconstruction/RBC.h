@@ -1,6 +1,8 @@
 #ifndef RBC_H__
 #define RBC_H__
 
+#include <algorithm>
+
 /**	@class		RBC
  *	@brief		efficient NN search
  *	@author		Dominik Neumann
@@ -51,7 +53,7 @@ public:
 	void SetWeight(uint dim, float weight) { m_Weights[dim] = weight; /* copy to GPU */ }
 
 	// set weights for all dimensions
-	void SetWeights(float weights[Dim]) { for (int i = 0; i < Dim; ++i) m_Weights[i] = weights[i]; /* copy to GPU */ }
+	void SetWeights(float weights[Dim]) { for (int i = 0; i < Dim; ++i) std::cout << m_Weights[i]; std::cout << std::endl; std::copy(weights, weights+Dim, m_Weights); for (int i = 0; i < Dim; ++i) std::cout << m_Weights[i]; std::cout << std::endl; /* copy to GPU */ }
 
 private:
 	// number of representatives

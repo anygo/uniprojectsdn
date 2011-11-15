@@ -27,15 +27,17 @@ public:
 	// set maximum number of iterations
 	void SetMaxIter(uint iter) { m_MaxIter = iter; }
 
-	// returns pointer to RBC data structure
-	RBC<Dim, NumPts>* GetRBC() { return &m_RBC; }
+	// set weights for NN search such that weight[dim<3] = 1.f; weight[dim>=3] = w
+	void SetWeight(float w) { float weights[Dim]; for (int i = 0; i < 3; ++i) weights[i] = 1; for (int i = 3; i < Dim; ++i) weights[i] = w; m_RBC.SetWeights(weights); }
 
 private:
 	// RBC data structure for efficient NN search
 	RBC<Dim, NumPts> m_RBC;
 
-	//
+	// pointer to set of fixed points
 	float** m_FixedPts;
+
+	// pointer to set of moving points
 	float** m_MovingPts;
 
 	// maximum number of ICP iterations

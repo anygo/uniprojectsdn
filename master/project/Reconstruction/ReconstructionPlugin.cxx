@@ -16,11 +16,8 @@ ReconstructionPlugin::ReconstructionPlugin()
 	// DELETE ME ////////////////////////
 	// DELETE ME ////////////////////////
 	// DELETE ME ////////////////////////
-	ICP<4, 2048> icp;
-	icp.GetRBC()->BuildRBC(NULL, false);
-	float weights[] = { 1.f, 1.f, 1.f, 0.5f };
-	icp.GetRBC()->SetWeights(weights);
-	icp
+	ICP<6, 2048> icp;
+	icp.SetWeight(0.5f);
 	// DELETE ME ////////////////////////
 	// DELETE ME ////////////////////////
 	// DELETE ME ////////////////////////

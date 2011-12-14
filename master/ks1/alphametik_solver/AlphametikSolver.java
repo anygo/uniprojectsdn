@@ -225,7 +225,7 @@ public class AlphametikSolver {
 		
 		// check input args
 		if (args.length != 3) {
-			System.err.println("Usage: java LetterPuzzle WORD_A WORD_B WORD_SUM");
+			System.err.println("Usage: java AlphametikSolver WORD_A WORD_B WORD_SUM");
 			System.err.println("  -> fallback: \"HACKER CRASH REBOOT\"\n");
 			
 			words = new String[3];

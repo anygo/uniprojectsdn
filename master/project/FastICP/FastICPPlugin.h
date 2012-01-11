@@ -12,6 +12,7 @@
 #include "ICP.h"
 #include "DataGenerator.h"
 #include "KinectDataManager.h"
+#include "VolumeManager.h"
 
 
 typedef ritk::RImageF2								RImageType;
@@ -81,6 +82,11 @@ protected slots:
 	/// This method is called when the user toggles the data mode (synthetic -> Kinect data or vice versa)
 	void ToggleDataMode();
 
+#if 0
+	void NextOne();
+#endif
+
+
 protected:
 	/// The widget
 	FastICPWidget *m_Widget;
@@ -93,7 +99,7 @@ protected:
 
 	/// Generates lines between corresponding points in the given datasets (assumes points with same index in both sets correspond to each other)
 	void PlotCorrespondenceLines(float* Data1, float* Data2, ActorPointer Actor);
-
+	
 	/**	@name Pointers to actors for fixed and moving point set, used for visualization */
 	//@{
 	ActorPointer m_ActorFixed;
@@ -109,7 +115,6 @@ protected:
 
 	/**	@name Pointers to ICP objects using N points */
 	//@{
-	ICP<32,		ICP_DATA_DIM>* m_ICP32;
 	ICP<512,	ICP_DATA_DIM>* m_ICP512;
 	ICP<1024,	ICP_DATA_DIM>* m_ICP1024;
 	ICP<2048,	ICP_DATA_DIM>* m_ICP2048;
@@ -144,6 +149,9 @@ protected:
 
 	/// True, if we currently work on synthetic data, otherwise it will be false (Kinect data)
 	bool m_SyntheticDataMode;
+
+	/// The volume manager
+	VolumeManager<128, 40>* m_Volume;
 };
 
 

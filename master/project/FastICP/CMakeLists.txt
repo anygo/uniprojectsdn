@@ -53,17 +53,6 @@ IF(CUDA_FOUND)
     	)
 	mark_as_advanced(CUDA_CUT_INCLUDE_DIR)
 	INCLUDE_DIRECTORIES(${CUDA_INCLUDE_DIRS} ${CUDA_CUT_INCLUDE_DIR})
-	
-#	FIND_LIBRARY(CUDA_CUT_LIBRARY
-#		NAMES cutil ${cuda_cutil_name}
-#		PATHS ${CUDA_SDK_SEARCH_PATH}
-#		PATH_SUFFIXES "common/lib" "lib"
-#		DOC "Location of cutil library"
-#		NO_DEFAULT_PATH
-#	)
-#	#find_library(CUDA_CUT_LIBRARY NAMES cutil ${cuda_cutil_name} DOC "Location of cutil library")
-#	mark_as_advanced(CUDA_CUT_LIBRARY)
-#	set(CUDA_CUT_LIBRARIES ${CUDA_CUT_LIBRARY})
 ELSE()
 	MESSAGE(FATAL_ERROR "CUDA not found, but needed.")
 ENDIF(CUDA_FOUND)
@@ -81,6 +70,7 @@ SET(FastICP_HDRS
 	defs.h
 	DataGenerator.h
 	KinectDataManager.h
+	VolumeManager.h
 )
 
 SET(FastICP_SRCS
@@ -92,18 +82,21 @@ SET(FastICP_SRCS
 	DataGenerator.cxx
 	KinectDataManager.cxx
 	Instantiations.cxx
+	VolumeManager.txx
 )
 
 SET(FastICP_CUDA_HDRS
 	RBCKernel.h
 	ICPKernel.h
 	KinectDataManagerKernel.h
+	VolumeManagerKernel.h
 )
 
 SET(FastICP_CUDA_SRCS
 	RBC.cu
 	ICP.cu
 	KinectDataManager.cu
+	VolumeManager.cu
 )
 
 SET(FastICP_MOC_HDRS 	

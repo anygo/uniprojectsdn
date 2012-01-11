@@ -2,9 +2,9 @@
 #define ICP_H__
 
 #include "RBC.h"
-#include "vtkSmartPointer.h"
-#include "vtkMatrix4x4.h"
-#include "vtkTransform.h"
+
+// If ESTIMATE_MATRIX_ON_GPU is defined, everything will be executed on the GPU, no memory transfers during ICP necessary
+#define ESTIMATE_MATRIX_ON_GPU
 
 
 /**	@class		ICP
@@ -75,7 +75,10 @@ public:
 
 protected:
 	/// Given two sets of points, estimate the optimal rigid transformation
-	void EstimateTransformationMatrix(DatasetContainer::Element* Moving, DatasetContainer::Element* Fixed, unsigned long* Correspondences);
+	void EstimateTransformationMatrix(DatasetContainer::Element* Moving, DatasetContainer::Element* Fixed);
+
+	/// Compute Eigenvectors from 4x4 symmetric matrix
+	void Jacobi4x4(float *Matrix, float *Eigenvalues, float *Eigenvectors);
 
 	/// Maximum number of ICP iterations
 	const unsigned long m_MaxIter;
@@ -124,6 +127,5 @@ private:
 	void operator=(const ICP&); 
 };
 
-#include "ICP.txx"
 
 #endif // ICP_H__

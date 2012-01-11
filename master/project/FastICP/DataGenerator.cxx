@@ -7,7 +7,6 @@
 
 #include "vtkSmartPointer.h"
 #include "vtkMath.h"
-#include "vtkMatrix4x4.h"
 #include "vtkTransform.h"
 
 
@@ -25,13 +24,15 @@ DataGenerator::DataGenerator()
 
 	// Init container for set of fixed points
 	m_FixedPts = DatasetContainer::New();
-	m_FixedPts->SetContainerSize(ICP_DATA_DIM, m_NumPts);
-	m_FixedPts->Reserve(ICP_DATA_DIM*m_NumPts);
+	DatasetContainer::SizeType DataSize;
+	DataSize.SetElement(0, ICP_DATA_DIM*m_NumPts);
+	m_FixedPts->SetContainerSize(DataSize);
+	m_FixedPts->Reserve(DataSize[0]);
 		
 	// Init container for set of moving points
 	m_MovingPts = DatasetContainer::New();
-	m_MovingPts->SetContainerSize(ICP_DATA_DIM, m_NumPts);
-	m_MovingPts->Reserve(ICP_DATA_DIM*m_NumPts);
+	m_MovingPts->SetContainerSize(DataSize);
+	m_MovingPts->Reserve(DataSize[0]);
 
 	// Init flag for update
 	m_GeometryUpdateRequired = true;
@@ -39,8 +40,10 @@ DataGenerator::DataGenerator()
 	
 	// Init container for intermediate transformation matrix
 	m_TransformationMat = MatrixContainer::New();
-	m_TransformationMat->SetContainerSize(4, 4);
-	m_TransformationMat->Reserve(16);
+	MatrixContainer::SizeType MatSize;
+	MatSize.SetElement(0, 4*4);
+	m_TransformationMat->SetContainerSize(MatSize);
+	m_TransformationMat->Reserve(MatSize[0]);
 
 	// Init standard deviation for noise
 	m_NoiseStdDev = 0.f;
@@ -192,12 +195,14 @@ DataGenerator::SetNumberOfPoints(unsigned long NumPts)
 
 		// Resize containers
 		m_FixedPts = DatasetContainer::New();
-		m_FixedPts->SetContainerSize(ICP_DATA_DIM, m_NumPts);
-		m_FixedPts->Reserve(ICP_DATA_DIM*m_NumPts);
+		DatasetContainer::SizeType DataSize;
+		DataSize.SetElement(0, ICP_DATA_DIM*m_NumPts);
+		m_FixedPts->SetContainerSize(DataSize);
+		m_FixedPts->Reserve(DataSize[0]);
 
 		m_MovingPts = DatasetContainer::New();
-		m_MovingPts->SetContainerSize(ICP_DATA_DIM, m_NumPts);
-		m_MovingPts->Reserve(ICP_DATA_DIM*m_NumPts);
+		m_MovingPts->SetContainerSize(DataSize);
+		m_MovingPts->Reserve(DataSize[0]);
 
 		// Set flags
 		m_ColorUpdateRequired = true;

@@ -90,4 +90,5 @@ private:
 	void operator=(const DataGenerator&); 
 };
 
+
 #endif // DATAGENERATOR_H__

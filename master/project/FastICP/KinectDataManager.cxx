@@ -27,18 +27,24 @@ KinectDataManager::KinectDataManager(unsigned long NumLandmarks, float ClipPerce
 {
 	// Init container for set of all points (including landmarks)
 	m_Pts = DatasetContainer::New();
-	m_Pts->SetContainerSize(ICP_DATA_DIM, KINECT_IMAGE_WIDTH * KINECT_IMAGE_HEIGHT);
-	m_Pts->Reserve(ICP_DATA_DIM * KINECT_IMAGE_WIDTH * KINECT_IMAGE_HEIGHT);
+	DatasetContainer::SizeType DataSize;
+	DataSize.SetElement(0, ICP_DATA_DIM * KINECT_IMAGE_WIDTH * KINECT_IMAGE_HEIGHT);
+	m_Pts->SetContainerSize(DataSize);
+	m_Pts->Reserve(DataSize[0]);
 
 	// Init container for set of landmarks
 	m_Landmarks = DatasetContainer::New();
-	m_Landmarks->SetContainerSize(ICP_DATA_DIM, NumLandmarks);
-	m_Landmarks->Reserve(ICP_DATA_DIM*NumLandmarks);
+	DatasetContainer::SizeType LandmarksSize;
+	LandmarksSize.SetElement(0, ICP_DATA_DIM * NumLandmarks);
+	m_Landmarks->SetContainerSize(LandmarksSize);
+	m_Landmarks->Reserve(LandmarksSize[0]);
 
 	// Init container for set of landmark indices
 	m_LandmarkIndices = IndicesContainer::New();
-	m_LandmarkIndices->SetContainerSize(1, NumLandmarks);
-	m_LandmarkIndices->Reserve(1*NumLandmarks);
+	IndicesContainer::SizeType IndicesSize;
+	IndicesSize.SetElement(0, NumLandmarks);
+	m_LandmarkIndices->SetContainerSize(IndicesSize);
+	m_LandmarkIndices->Reserve(IndicesSize[0]);
 
 	// Init number of points (including landmark indices generation) and clip percentage
 	m_NumLandmarks = 0;
@@ -115,13 +121,17 @@ KinectDataManager::SetNumberOfLandmarks(unsigned long NumLandmarks)
 
 		// Resize landmark container
 		m_Landmarks = DatasetContainer::New();
-		m_Landmarks->SetContainerSize(ICP_DATA_DIM, m_NumLandmarks);
-		m_Landmarks->Reserve(ICP_DATA_DIM*m_NumLandmarks);
+		DatasetContainer::SizeType DataSize;
+		DataSize.SetElement(0, ICP_DATA_DIM*m_NumLandmarks);
+		m_Landmarks->SetContainerSize(DataSize);
+		m_Landmarks->Reserve(DataSize[0]);
 
 		// Resize landmark indices container
 		m_LandmarkIndices = IndicesContainer::New();
-		m_LandmarkIndices->SetContainerSize(1, m_NumLandmarks);
-		m_LandmarkIndices->Reserve(1*m_NumLandmarks);
+		IndicesContainer::SizeType IndicesSize;
+		IndicesSize.SetElement(0, m_NumLandmarks);
+		m_LandmarkIndices->SetContainerSize(IndicesSize);
+		m_LandmarkIndices->Reserve(IndicesSize[0]);
 
 		// Now regenerate the array of indices for the landmarks
 		UpdateLandmarkIndices();
@@ -160,11 +170,6 @@ KinectDataManager::UpdateLandmarkIndices()
 	int validXEnd = 600;
 	int validYStart = 50;
 	int validYEnd = 478;
-
-	/*int validXStart = 0;
-	int validXEnd = 0;
-	int validYStart = 0;
-	int validYEnd = 0;*/
 
 	int xDiff = validXEnd-validXStart;
 	int yDiff = validYEnd-validYStart;
@@ -206,6 +211,7 @@ KinectDataManager::UpdateLandmarkIndices()
 void
 KinectDataManager::TransformPts(MatrixContainer::Pointer Mat)
 {
+	// Apply transformation matrix Mat to points
 	CUDATransformPoints3D(
 		m_Pts->GetCudaMemoryPointer(),
 		Mat->GetCudaMemoryPointer(),
@@ -213,5 +219,18 @@ KinectDataManager::TransformPts(MatrixContainer::Pointer Mat)
 		ICP_DATA_DIM
 		);
 
+	// Synchronize data to host
 	m_Pts->SynchronizeHost();
+}
+
+
+//----------------------------------------------------------------------------
+void
+KinectDataManager::SwapPointsContainer(KinectDataManager* Other)
+{
+	// Swap points
+	DatasetContainer::Pointer PtsTmp;
+	PtsTmp = this->m_Pts;
+	this->m_Pts = Other->m_Pts;
+	Other->m_Pts = PtsTmp;
 }

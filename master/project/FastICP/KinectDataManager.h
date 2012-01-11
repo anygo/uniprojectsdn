@@ -35,6 +35,9 @@ public:
 	/// Import a frame
 	void ImportKinectData(ritk::NewFrameEvent::RImageConstPointer Data);
 
+	/// Swap data
+	void SwapPointsContainer(KinectDataManager* Other);
+
 	/// Set number of points per dataset
 	void SetNumberOfLandmarks(unsigned long NumLandmarks);
 
@@ -77,5 +80,6 @@ private:
 	/// Purposely not implemented
 	void operator=(const KinectDataManager&); 
 };
+
 
 #endif // KINECTDATAMANAGER_H__

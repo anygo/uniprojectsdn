@@ -37,19 +37,15 @@ __global__ void CUDARangeToWorldKernel(float* pointsOut)
 
 	float X2Z = 1.209f;
 	float Y2Z = 0.9132f;
-	float fNormalizedX = gu / KINECT_IMAGE_WIDTH - 0.5f; // check for float
+	float fNormalizedX = gu / KINECT_IMAGE_WIDTH - 0.5f; // Check for float
 	float x = fNormalizedX * value * X2Z;
 
 	float fNormalizedY = 0.5f - gv / KINECT_IMAGE_HEIGHT;
 	float y = fNormalizedY * value * Y2Z;
 
-	// The corresponding x,y,z triple (world coordinates)
-	//float4 WC = make_float4(x, y, value, 1.0f);
-
-	// Set the WC for the points without Mesh Structure
-	pointsOut[(int)(gv*KINECT_IMAGE_WIDTH + gu)*ICP_DATA_DIM+0] = x;
-	pointsOut[(int)(gv*KINECT_IMAGE_WIDTH + gu)*ICP_DATA_DIM+1] = y;
-	pointsOut[(int)(gv*KINECT_IMAGE_WIDTH + gu)*ICP_DATA_DIM+2] = value;
+	// Set the WC for the points without Mesh Structure (beware: optimized, works only for 6D data, where the first 3 components are x, y and z!)
+	float3* PointsOutFloat3 = (float3*)pointsOut;
+	PointsOutFloat3[(int)(gv*KINECT_IMAGE_WIDTH + gu)*2] = make_float3(x, y, value);
 }
 
 
@@ -62,29 +58,19 @@ __global__ void kernelExtractLandmarks(float* landmarksOut, float* pointsIn, uns
 	if (tid >= numLandmarks)
 		return;
 
-	// Search for a valid position
+	// Search for a valid position heuristically
 	unsigned long PointsIdx = indices[tid]*ICP_DATA_DIM;
-	unsigned long LandmarksIdx = tid*ICP_DATA_DIM;
+	unsigned long LandmarksIdx = tid*2;
 	int FailCounter = 0;
-	while (pointsIn[PointsIdx+0] != pointsIn[PointsIdx+0] && ++FailCounter < 128)
+	while (pointsIn[PointsIdx] != pointsIn[PointsIdx] && ++FailCounter < 128)
 		PointsIdx = (PointsIdx + 32*ICP_DATA_DIM) % (KINECT_IMAGE_WIDTH * KINECT_IMAGE_HEIGHT * ICP_DATA_DIM);
 
-	// Write landmarks
-	landmarksOut[LandmarksIdx+0] = pointsIn[PointsIdx+0]; // X
-	landmarksOut[LandmarksIdx+1] = pointsIn[PointsIdx+1]; // Y
-	landmarksOut[LandmarksIdx+2] = pointsIn[PointsIdx+2]; // Z
-		
-	// Normalize color
-	float r = pointsIn[PointsIdx+3];
-	float g = pointsIn[PointsIdx+4];
-	float b = pointsIn[PointsIdx+5];
+	// Write landmarks using float3 for speedup
+	float3* LandmarksOutFloat3 = (float3*)landmarksOut;
+	float3* PointsInFloat3 = (float3*)pointsIn;
 
-	//float rgb = r+g+b;
-	const float rgb = 1.f;
-
-	landmarksOut[LandmarksIdx+3] = r/(rgb);
-	landmarksOut[LandmarksIdx+4] = g/(rgb);
-	landmarksOut[LandmarksIdx+5] = b/(rgb);
+	LandmarksOutFloat3[LandmarksIdx] = PointsInFloat3[PointsIdx/3];
+	LandmarksOutFloat3[LandmarksIdx+1] = PointsInFloat3[PointsIdx/3+1];
 }
 
 

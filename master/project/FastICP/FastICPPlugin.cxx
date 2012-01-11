@@ -24,13 +24,15 @@ FastICPPlugin::FastICPPlugin()
 	m_Widget = new FastICPWidget();
 	connect(this, SIGNAL(UpdateGUI()), m_Widget, SLOT(UpdateGUI()));
 
-	// Plugin-specific signals/slots
+	// -- Plugin-specific signals/slots --
+	// ICP-related
 	connect(m_Widget->m_PushButtonRunICP, SIGNAL(clicked()), this, SLOT(RunICP()));
 	connect(m_Widget->m_ComboBoxICPNumPts, SIGNAL(currentIndexChanged(int)), this, SLOT(ChangeNumPts()));
 	connect(m_Widget->m_CheckBoxPlotDistances, SIGNAL(stateChanged(int)), this, SLOT(PlotCorrespondenceLinesWrapper()));
 	connect(m_Widget->m_HorizontalSliderRGBWeight, SIGNAL(valueChanged(int)), this, SLOT(ChangeRGBWeight(int)));
 	connect(m_Widget->m_RadioButtonSyntheticData, SIGNAL(toggled(bool)), this, SLOT(ToggleDataMode()));
 
+	// Data-related: synthetic
 	connect(m_Widget->m_PushButtonGenerateSampleData, SIGNAL(clicked()), this, SLOT(GenerateSyntheticData()));
 	connect(m_Widget->m_ComboBoxDataDistribution, SIGNAL(currentIndexChanged(int)), this, SLOT(GenerateSyntheticData()));
 	connect(m_Widget->m_CheckBoxLUTColor, SIGNAL(stateChanged(int)), this, SLOT(GenerateSyntheticData()));	
@@ -42,6 +44,7 @@ FastICPPlugin::FastICPPlugin()
 	connect(m_Widget->m_HorizontalSliderTransZ, SIGNAL(valueChanged(int)), this, SLOT(GenerateSyntheticData()));
 	connect(m_Widget->m_HorizontalSliderNoisyData, SIGNAL(valueChanged(int)), this, SLOT(GenerateSyntheticData()));
 
+	// Data-related: real (Kinect)
 	connect(m_Widget->m_PushButtonImportFrameFixed, SIGNAL(clicked()), this, SLOT(ImportFixedData()));
 	connect(m_Widget->m_PushButtonImportFrameMoving, SIGNAL(clicked()), this, SLOT(ImportMovingData()));
 	connect(m_Widget->m_HorizontalSliderClipPercentage, SIGNAL(valueChanged(int)), this, SLOT(ChangeClipPercentage(int)));
@@ -70,14 +73,12 @@ FastICPPlugin::FastICPPlugin()
 	m_Widget->m_VisualizationWidget3D->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->SetBackground2(.3, .3, .3);
 
 	// Init ICP objects to NULL
-#define ICP_SET_TO_NULL(X) m_ICP##X = NULL;
-	ICP_SET_TO_NULL(32)
-	ICP_SET_TO_NULL(512)
-	ICP_SET_TO_NULL(1024)
-	ICP_SET_TO_NULL(2048)
-	ICP_SET_TO_NULL(4096)
-	ICP_SET_TO_NULL(8192)
-	ICP_SET_TO_NULL(16384)
+	m_ICP512   = NULL;
+	m_ICP1024  = NULL;
+	m_ICP2048  = NULL;
+	m_ICP4096  = NULL;
+	m_ICP8192  = NULL;
+	m_ICP16384 = NULL;
 
 	// This will set m_NumPts and init the appropriate ICP object
 	ChangeNumPts();
@@ -100,6 +101,9 @@ FastICPPlugin::FastICPPlugin()
 		static_cast<float>(m_Widget->m_HorizontalSliderClipPercentage->maximum()) / 2.01f; // In between [0;0.5[
 	m_KinectMoving = new KinectDataManager(m_NumPts, ClipPercentage);
 
+	// Init VolumeManager
+	m_Volume = new VolumeManager<128, 40>;
+
 	// Init flags
 	m_KinectFixedImported = false;
 	m_KinectMovingImported = false;
@@ -114,6 +118,7 @@ FastICPPlugin::~FastICPPlugin()
 	delete m_DataGenerator;
 	delete m_KinectFixed;
 	delete m_KinectMoving;
+	delete m_Volume;
 
 	delete m_Widget;
 }
@@ -154,8 +159,9 @@ FastICPPlugin::ProcessEvent(ritk::Event::Pointer EventP)
 		// We have to lock as this member may be used by another thread
 		LockPlugin();
 		m_CurrentFrame = CurrentFrameP;
-		m_FrameAvailable = true;
 		UnlockPlugin();
+
+		m_FrameAvailable = true;		
 	} 
 	else
 	{
@@ -164,13 +170,70 @@ FastICPPlugin::ProcessEvent(ritk::Event::Pointer EventP)
 }
 
 
+#if 0
+void
+FastICPPlugin::NextOne()
+{
+	// Old fixed points
+	m_KinectFixed->SwapPointsContainer(m_KinectMoving);
+	m_KinectFixed->TransformPts(m_ICP2048->GetTransformationMatrixContainer());
+	m_KinectFixed->SetClipPercentage(0);
+	switch (m_NumPts)
+	{
+
+#define ICP_SET_POINTS_KINECT_FIXED(X) case X: m_ICP##X->SetFixedPts(m_KinectFixed->GetLandmarkContainer()); break;
+
+		ICP_SET_POINTS_KINECT_FIXED(512)
+		ICP_SET_POINTS_KINECT_FIXED(1024)
+		ICP_SET_POINTS_KINECT_FIXED(2048)
+		ICP_SET_POINTS_KINECT_FIXED(4096)
+		ICP_SET_POINTS_KINECT_FIXED(8192)
+		ICP_SET_POINTS_KINECT_FIXED(16384)
+	}
+
+
+
+	// New moving points
+	m_KinectMoving->SetNumberOfLandmarks(m_NumPts);
+	LockPlugin();
+	m_KinectMoving->ImportKinectData(m_CurrentFrame);
+	UnlockPlugin();
+
+	static int cnt = 0;
+	if (cnt == 0)
+		m_KinectMoving->TransformPts(m_ICP2048->GetTransformationMatrixContainer());
+	cnt++;
+
+	switch (m_NumPts)
+	{
+
+#define ICP_SET_POINTS_KINECT_MOVING(X) case X: m_ICP##X->SetMovingPts(m_KinectMoving->GetLandmarkContainer()); break;
+
+		ICP_SET_POINTS_KINECT_MOVING(512)
+		ICP_SET_POINTS_KINECT_MOVING(1024)
+		ICP_SET_POINTS_KINECT_MOVING(2048)
+		ICP_SET_POINTS_KINECT_MOVING(4096)
+		ICP_SET_POINTS_KINECT_MOVING(8192)
+		ICP_SET_POINTS_KINECT_MOVING(16384)
+	}
+
+	
+	RunICP();
+
+	CopyFloatDataToActor(m_KinectMoving->GetLandmarkContainer()->GetBufferPointer(), m_NumPts, m_ActorMoving);
+	
+	emit UpdateGUI();
+}
+#endif
+
 //----------------------------------------------------------------------------
 void
 FastICPPlugin::ChangeNumPts()
 {
-	// Check if ICP is already initialized and delete all other instances
+	// Get desired number of points from GUI
 	int selected = m_Widget->m_ComboBoxICPNumPts->currentText().toInt();
 
+	// Delete previous and create new ICP object if appropriate
 	if (m_NumPts != selected)
 	{
 		m_NumPts = selected;
@@ -180,7 +243,6 @@ FastICPPlugin::ChangeNumPts()
 
 #define ICP_CONSTRUCTOR(X) case X: if (!m_ICP##X) m_ICP##X = new ICP<X, ICP_DATA_DIM>; m_ICP##X->SetPayloadWeight(m_PayloadWeight); break;
 
-		ICP_CONSTRUCTOR(32)
 		ICP_CONSTRUCTOR(512)
 		ICP_CONSTRUCTOR(1024)
 		ICP_CONSTRUCTOR(2048)
@@ -200,7 +262,7 @@ FastICPPlugin::ChangeNumPts()
 	m_ActorMoving->SetData(EmptyPolyData, true);
 	m_ActorLines->SetData(EmptyPolyData, true);
 
-	// Disable button
+	// Disable ICP button
 	m_Widget->m_PushButtonRunICP->setDisabled(true);
 
 	emit UpdateGUI();
@@ -212,7 +274,6 @@ void
 FastICPPlugin::DeleteICPObjects()
 {
 #define ICP_DELETE(X) if (m_ICP##X) { delete m_ICP##X; m_ICP##X = NULL; }
-	ICP_DELETE(32)
 	ICP_DELETE(512)
 	ICP_DELETE(1024)
 	ICP_DELETE(2048)
@@ -251,6 +312,13 @@ FastICPPlugin::CopyFloatDataToActor(float* Data, unsigned long NumPts, ActorPoin
 	PolyData->SetVerts(Cells);
 	PolyData->Update();
 
+	/*double bounds[6];
+	PolyData->ComputeBounds();
+	PolyData->GetBounds(bounds);
+	std::stringstream boundsStream;
+	std::copy(bounds, bounds+6, std::ostream_iterator<double>(boundsStream, " "));
+	LOG_DEB("bounds: " << boundsStream.str());*/
+
 	// Update actor
 	Actor->SetData(PolyData, false);
 }
@@ -260,15 +328,16 @@ FastICPPlugin::CopyFloatDataToActor(float* Data, unsigned long NumPts, ActorPoin
 void
 FastICPPlugin::ChangeRGBWeight(int Value)
 {
+	// Compute new weight from slider value
 	m_PayloadWeight = static_cast<float>(Value) / 
 		static_cast<float>(m_Widget->m_HorizontalSliderRGBWeight->maximum()); // In between [0;1]
 
+	// Tell ICP to update its internal weight parameters
 	switch (m_NumPts) 
 	{
 
 #define ICP_SET_PAYLOAD_WEIGHT(X) case X: m_ICP##X->SetPayloadWeight(m_PayloadWeight); break;
 
-	ICP_SET_PAYLOAD_WEIGHT(32)
 	ICP_SET_PAYLOAD_WEIGHT(512)
 	ICP_SET_PAYLOAD_WEIGHT(1024)
 	ICP_SET_PAYLOAD_WEIGHT(2048)
@@ -277,7 +346,11 @@ FastICPPlugin::ChangeRGBWeight(int Value)
 	ICP_SET_PAYLOAD_WEIGHT(16384)
 	}
 
-	std::cout << "New weight (XYZ vs. RGB): " << 1.f - m_PayloadWeight << " vs. " << m_PayloadWeight << std::endl;
+	// Update StatusTip and ToolTip
+	m_Widget->m_HorizontalSliderRGBWeight->setToolTip("XYZ vs. RGB Weight: " + QString::number(1.f - m_PayloadWeight) + " vs. " + QString::number(m_PayloadWeight));
+	m_Widget->m_HorizontalSliderRGBWeight->setStatusTip("XYZ vs. RGB Weight: " + QString::number(1.f - m_PayloadWeight) + " vs. " + QString::number(m_PayloadWeight));
+
+	emit UpdateGUI();
 }
 
 
@@ -287,19 +360,25 @@ FastICPPlugin::RunICP()
 {
 	if ( !m_Widget->m_CheckBoxAnimate->isChecked() )
 	{
-		QTime Timer;
-		Timer.start();
+		// Runtime statistics
+		cudaEvent_t start_event, stop_event;
+		float ICPTime = 0;
+		cudaEventCreateWithFlags(&start_event, cudaEventBlockingSync);
+		cudaEventCreateWithFlags(&stop_event, cudaEventBlockingSync);
+		cudaEventRecord(start_event, 0);
 
 		// Here we store number of iterations and final matrix norm
 		unsigned long NumIter;
 		float FinalNorm;
-		int ICPTime;
-
+		
 		// Run ICP and show resulting set of moving points
 		switch (m_NumPts) 
 		{
 
-#define ICP_RUN(X)	case X: m_ICP##X->Run(&NumIter, &FinalNorm); ICPTime = Timer.elapsed();																		\
+#define ICP_RUN(X)	case X: m_ICP##X->Run(&NumIter, &FinalNorm);																								\
+							cudaEventRecord(stop_event, 0);																										\
+							cudaEventSynchronize(stop_event);																									\
+							cudaEventElapsedTime(&ICPTime, start_event, stop_event);																			\
 						if ( !m_SyntheticDataMode )																												\
 							m_KinectMoving->TransformPts(m_ICP##X->GetTransformationMatrixContainer());															\
 						if ( m_SyntheticDataMode || ( !m_SyntheticDataMode && m_ShowLandmarks ) )																\
@@ -308,7 +387,6 @@ FastICPPlugin::RunICP()
 							CopyFloatDataToActor(m_KinectMoving->GetPtsContainer()->GetBufferPointer(), KINECT_IMAGE_WIDTH*KINECT_IMAGE_HEIGHT, m_ActorMoving);	\
 						break;	
 	
-		ICP_RUN(32)
 		ICP_RUN(512)
 		ICP_RUN(1024)
 		ICP_RUN(2048)
@@ -317,8 +395,9 @@ FastICPPlugin::RunICP()
 		ICP_RUN(16384)
 		}
 
-		float TimePerIter = static_cast<float>(ICPTime)/static_cast<float>(NumIter);
-		std::cout << "ICP: " << ICPTime << "ms" << "\t Iterations: " << NumIter << " => " << TimePerIter << "ms/iter" << std::endl;
+		// Compute and print average runtime
+		float TimePerIter = ICPTime/static_cast<float>(NumIter);
+		LOG_DEB("ICP: " << ICPTime << "ms. Iterations: " << NumIter << " => " << TimePerIter << "ms/iter");
 
 		// Plot lines
 		PlotCorrespondenceLinesWrapper();
@@ -327,20 +406,18 @@ FastICPPlugin::RunICP()
 	}
 	else
 	{
-
 		if ( !m_SyntheticDataMode && !m_Widget->m_CheckBoxShowLandmarks->isChecked() )
 		{
-			std::cout << "Animation for entire Kinect image is not implemented" << std::endl <<
-				" -> try Landmarks only or synthetic data" << std::endl;
+			LOG_DEB("Animation for entire Kinect image is not implemented, try landmarks only or synthetic data");
 			return;
 		}
 
+		// Initialize ICP first
 		switch (m_NumPts) 
 		{
 
 #define ICP_INITIALIZE(X)	case X: m_ICP##X->Initialize();	break;
 
-				ICP_INITIALIZE(32)
 				ICP_INITIALIZE(512)
 				ICP_INITIALIZE(1024)
 				ICP_INITIALIZE(2048)
@@ -349,22 +426,22 @@ FastICPPlugin::RunICP()
 				ICP_INITIALIZE(16384)
 		}
 
+		// Iterate until convergence
 		bool AnotherIteration = true;
 		while (AnotherIteration)
 		{
 			switch (m_NumPts)
 			{
 
-#define ICP_ITERATE(X)	case X: AnotherIteration = m_ICP##X->NextIteration();																						\
-							if ( !m_SyntheticDataMode )																												\
-								m_KinectMoving->TransformPts(m_ICP##X->GetTransformationMatrixContainer());															\
-							if ( m_SyntheticDataMode || ( !m_SyntheticDataMode && m_ShowLandmarks ) )																\
-								m_ICP##X->GetMovingPtsContainer()->SynchronizeHost(); CopyFloatDataToActor(m_ICP##X->GetMovingPts(), m_NumPts, m_ActorMoving);		\
-							if ( !m_SyntheticDataMode && !m_ShowLandmarks )																							\
+#define ICP_ITERATE(X)	case X: AnotherIteration = m_ICP##X->NextIteration();																							\
+							if ( !AnotherIteration && !m_SyntheticDataMode )																							\
+								m_KinectMoving->TransformPts(m_ICP##X->GetTransformationMatrixContainer());																\
+							if ( m_SyntheticDataMode || ( !m_SyntheticDataMode && m_ShowLandmarks ) )																	\
+								m_ICP##X->GetMovingPtsContainer()->SynchronizeHost(); CopyFloatDataToActor(m_ICP##X->GetMovingPts(), m_NumPts, m_ActorMoving);			\
+							if ( !m_SyntheticDataMode && !m_ShowLandmarks )																								\
 								CopyFloatDataToActor(m_KinectMoving->GetPtsContainer()->GetBufferPointer(), KINECT_IMAGE_WIDTH*KINECT_IMAGE_HEIGHT, m_ActorMoving);	\
 							break;	
 
-			ICP_ITERATE(32)
 			ICP_ITERATE(512)
 			ICP_ITERATE(1024)
 			ICP_ITERATE(2048)
@@ -373,13 +450,14 @@ FastICPPlugin::RunICP()
 			ICP_ITERATE(16384)
 			}
 
+			// Plot lines
 			PlotCorrespondenceLinesWrapper();
 
 			emit UpdateGUI();
+
+			// Force Qt event processing now (required for animation effect)
 			QApplication::processEvents();
 		}
-
-		return;
 	} 
 }
 
@@ -393,7 +471,7 @@ FastICPPlugin::GenerateSyntheticData()
 	const float TranslationFactor = 512.f; // no specific meaning
 	const float NoiseStdDevFactor = 10.f; // no specific meaning
 
-	// Get data from GUI
+	// Get parameters from GUI
 	float RotX = static_cast<float>(m_Widget->m_HorizontalSliderRotX->sliderPosition()) /
 		static_cast<float>(m_Widget->m_HorizontalSliderRotX->maximum()) *
 		RotationFactor; 
@@ -439,7 +517,6 @@ FastICPPlugin::GenerateSyntheticData()
 
 #define ICP_SET_POINTS(X) case X: m_ICP##X->SetFixedPts(m_DataGenerator->GetFixedPtsContainer()); m_ICP##X->SetMovingPts(m_DataGenerator->GetMovingPtsContainer()); break;
 		
-		ICP_SET_POINTS(32)
 		ICP_SET_POINTS(512)
 		ICP_SET_POINTS(1024)
 		ICP_SET_POINTS(2048)
@@ -481,7 +558,7 @@ FastICPPlugin::PlotCorrespondenceLines(float* Data1, float* Data2, ActorPointer 
 	vtkSmartPointer<vtkCellArray> Lines = vtkSmartPointer<vtkCellArray>::New();
 	Colors->SetNumberOfComponents(4);
 
-
+	// Init variables
 	double MinDist = DBL_MAX;
 	double MaxDist = DBL_MIN;
 	double TotalDist = 0;
@@ -515,7 +592,8 @@ FastICPPlugin::PlotCorrespondenceLines(float* Data1, float* Data2, ActorPointer 
 	double DistRange = MaxDist - MinDist;
 	for (int i = 0; i < m_NumPts; ++i)
 	{
-		Colors->InsertNextTuple4(55 + ((Dists[i] - MinDist) / DistRange) * 200, 55 + ((Dists[i] - MinDist) / DistRange) * 200, 55 + ((Dists[i] - MinDist) / DistRange) * 200, 100);
+		const double Val = 55 + ((Dists[i] - MinDist) / DistRange) * 200;
+		Colors->InsertNextTuple4(Val, Val, Val, 100);
 	}
 
 	delete [] Dists;
@@ -526,12 +604,10 @@ FastICPPlugin::PlotCorrespondenceLines(float* Data1, float* Data2, ActorPointer 
 	PolyData->SetLines(Lines);
 	PolyData->Update();
 
-	//std::cout << "Mean distance: " << TotalDist / static_cast<double>(m_NumPts) << std::endl;
-
 	// Update actor
 	Actor->SetData(PolyData, false);
 
-	// Add actor
+	// Add actor to visualization widget
 	m_Widget->m_VisualizationWidget3D->AddActor(m_ActorLines);
 }
 
@@ -546,7 +622,6 @@ FastICPPlugin::PlotCorrespondenceLinesWrapper()
 #define ICP_PLOT_CORRESPONDING_LINES(X) case X: if (m_ICP##X->GetFixedPtsContainer().IsNotNull()) PlotCorrespondenceLines(m_ICP##X->GetFixedPts(), m_ICP##X->GetMovingPts(), m_ActorLines); break;
 	switch (m_NumPts) 
 	{
-	ICP_PLOT_CORRESPONDING_LINES(32)
 	ICP_PLOT_CORRESPONDING_LINES(512)
 	ICP_PLOT_CORRESPONDING_LINES(1024)
 	ICP_PLOT_CORRESPONDING_LINES(2048)
@@ -565,7 +640,7 @@ FastICPPlugin::ImportFixedData()
 {
 	if (!m_FrameAvailable)
 	{
-		std::cout << "No frame available!" << std::endl;
+		LOG_DEB("No frame available!")
 		return;
 	}
 
@@ -576,6 +651,16 @@ FastICPPlugin::ImportFixedData()
 	LockPlugin();
 	m_KinectFixed->ImportKinectData(m_CurrentFrame);
 	UnlockPlugin();
+
+	/*LOG_DEB("AddPoints");
+	m_Volume->AddPoints(m_KinectFixed->GetLandmarkContainer());
+
+	unsigned long Count;
+	LOG_DEB("GetOccupiedPoints");
+	float* tmp = m_Volume->GetOccupiedPoints(Count);
+
+	LOG_DEB("CopyFloatDataToActor");
+	CopyFloatDataToActor(tmp, Count, m_ActorFixed);*/
 
 	// Visualize fixed points
 	if (m_ShowLandmarks)
@@ -589,7 +674,6 @@ FastICPPlugin::ImportFixedData()
 
 #define ICP_SET_POINTS_KINECT_FIXED(X) case X: m_ICP##X->SetFixedPts(m_KinectFixed->GetLandmarkContainer()); break;
 		
-		ICP_SET_POINTS_KINECT_FIXED(32)
 		ICP_SET_POINTS_KINECT_FIXED(512)
 		ICP_SET_POINTS_KINECT_FIXED(1024)
 		ICP_SET_POINTS_KINECT_FIXED(2048)
@@ -643,7 +727,6 @@ FastICPPlugin::ImportMovingData()
 
 #define ICP_SET_POINTS_KINECT_MOVING(X) case X: m_ICP##X->SetMovingPts(m_KinectMoving->GetLandmarkContainer()); break;
 		
-		ICP_SET_POINTS_KINECT_MOVING(32)
 		ICP_SET_POINTS_KINECT_MOVING(512)
 		ICP_SET_POINTS_KINECT_MOVING(1024)
 		ICP_SET_POINTS_KINECT_MOVING(2048)
@@ -671,13 +754,20 @@ FastICPPlugin::ImportMovingData()
 void
 FastICPPlugin::ChangeClipPercentage(int Value)
 {
+	// Compute new clip percentage from horizontal slider value, such that ClipPercentage in [0;0.5[
 	float ClipPercentage = static_cast<float>(Value) / 
-		static_cast<float>(m_Widget->m_HorizontalSliderClipPercentage->maximum()) / 2.01f;
+		static_cast<float>(m_Widget->m_HorizontalSliderClipPercentage->maximum()) / 2.1f;
 
+	// Update moving landmarks
 	m_KinectMoving->SetClipPercentage(ClipPercentage);
 
+	// Visualize landmarks, if appropriate
 	if (m_ShowLandmarks)
 		CopyFloatDataToActor(m_KinectMoving->GetLandmarkContainer()->GetBufferPointer(), m_NumPts, m_ActorMoving);
+
+	// Update StatusTip and ToolTip
+	m_Widget->m_HorizontalSliderClipPercentage->setToolTip("Clip Percentage: " + QString::number(ClipPercentage));
+	m_Widget->m_HorizontalSliderClipPercentage->setStatusTip("Clip Percentage: " + QString::number(ClipPercentage));
 
 	emit UpdateGUI();
 }
@@ -707,6 +797,7 @@ FastICPPlugin::ToggleShowLandmarks()
 	// Update member
 	m_ShowLandmarks = m_Widget->m_CheckBoxShowLandmarks->isChecked();
 
+	// Visualize
 	if (m_ShowLandmarks)
 	{
 		CopyFloatDataToActor(m_KinectFixed->GetLandmarkContainer()->GetBufferPointer(), m_NumPts, m_ActorFixed);

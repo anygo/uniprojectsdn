@@ -33,16 +33,16 @@ public:
 	void BuildRBC(DatasetContainer::Pointer Dataset);
 
 	/// NN query for a set of query points; returns indices of (approximative) NNs w.r.t. supplied dataset
-	unsigned long* Query(DatasetContainer::Pointer QueryPts);
+	unsigned long* Query(DatasetContainer::Pointer QueryPts, bool SynchronizeCorrespondences = true);
 
 	/// Get container with correspondence indices (if you want to use them on the GPU)
 	inline IndicesContainer::Pointer GetCorrespondencesContainer() { return m_NNIndices; }
 
 	/// Set weights for all dimensions
-	void SetWeights(float Weights[Dim]);
+	void SetWeights(const float Weights[Dim]);
 
 	/// Set weight only for particular dimension DimNew
-	void SetWeight(unsigned long DimNew, float Weight);
+	void SetWeight(unsigned long Idx, float Weight);
 
 protected:
 	/// Number of representatives
@@ -51,9 +51,7 @@ protected:
 	/// Container for dataset that is used to build the RBC data structure
 	typename DatasetContainer::Pointer m_Dataset;
 
-	/// Container for acceleration structure (representative array) on GPU
-	//typename RepContainer::Pointer m_Reps;
-	RepGPU* m_Reps;
+	/// Acceleration structure (representative array) on GPU
 	RepGPU* m_devReps;
 
 	/// Container that holds the NN lists for all representatives in a single 1-D array
@@ -76,6 +74,5 @@ private:
 	void operator=(const RBC&); 
 };
 
-#include "RBC.txx"
 
 #endif // RBC_H__

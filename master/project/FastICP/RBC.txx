@@ -1,6 +1,8 @@
 #include <algorithm>
 #include <iterator>
 
+#include "RBC.h"
+
 
 //----------------------------------------------------------------------------
 extern "C"
@@ -19,10 +21,10 @@ RBC<NumPts, Dim>::RBC(unsigned long reps) : m_NumReps(reps != 0 ? reps : static_
 	m_Dataset = NULL;
 
 	// Init container for representatives (can be done now, because m_NumReps is constant and therefore it will not change)
-	m_Reps = new RepGPU[m_NumReps];
+	RepGPU *Reps = new RepGPU[m_NumReps];
 	ritkCudaSafeCall(cudaMalloc((void**)&(m_devReps), NumPts*sizeof(RepGPU)));
 
-	// Make RBC indices reproducable
+	// Make RBC indices reproducible
 	srand(0);
 
 	// Generate representative indices randomly in the range from [0;NumPts[
@@ -34,7 +36,7 @@ RBC<NumPts, Dim>::RBC(unsigned long reps) : m_NumReps(reps != 0 ? reps : static_
 		bool duplicate = false;
 		for (int j = 0; j < i; ++j)
 		{
-			if (m_Reps[j].repIdx == repIdx)
+			if (Reps[j].repIdx == repIdx)
 			{
 				duplicate = true;
 			}
@@ -46,32 +48,39 @@ RBC<NumPts, Dim>::RBC(unsigned long reps) : m_NumReps(reps != 0 ? reps : static_
 			continue;
 		}
 
-		m_Reps[i].repIdx = repIdx;
+		Reps[i].repIdx = repIdx;
 	}
 
 	// Copy representatives (so far only initialized with repIdx) to GPU
-	ritkCudaSafeCall(cudaMemcpy(m_devReps, m_Reps, m_NumReps*sizeof(RepGPU), cudaMemcpyHostToDevice));
+	ritkCudaSafeCall(cudaMemcpy(m_devReps, Reps, m_NumReps*sizeof(RepGPU), cudaMemcpyHostToDevice));
+
+	// Representatives are no longer needed (on host)
+	delete [] Reps;
 
 	// Init container for query results (array of indices of NNs)
 	m_NNIndices = IndicesContainer::New(); // Set size later, since it depends on number of query points
 
 	// Init container for RBC indices, also uses during RBC construction
 	m_PointToRep = IndicesContainer::New();
-	m_PointToRep->SetContainerSize(NumPts, 1);
-	m_PointToRep->Reserve(NumPts*1);
+	IndicesContainer::SizeType IndicesSize;
+	IndicesSize.SetElement(0, 1*NumPts);
+	m_PointToRep->SetContainerSize(IndicesSize);
+	m_PointToRep->Reserve(IndicesSize[0]);
 	m_PointToRep->SynchronizeDevice();
 
 	// Init container for NN lists (a single 1-D array, each representative knows its offset and length)
 	m_NNLists = IndicesContainer::New();
-	m_NNLists->SetContainerSize(NumPts, 1);
-	m_NNLists->Reserve(NumPts*1);
+	m_NNLists->SetContainerSize(IndicesSize);
+	m_NNLists->Reserve(IndicesSize[0]);
 	m_NNLists->SynchronizeDevice();
 
 	// Init container for array of weights
 	m_Weights = WeightsContainer::New();
-	m_Weights->SetContainerSize(Dim, 1); // 1-D array of weights
-	m_Weights->Reserve(Dim*1);
-	std::fill(m_Weights->GetBufferPointer(), m_Weights->GetBufferPointer()+Dim, 1.f); // Init weights to 1.f
+	WeightsContainer::SizeType WeightsSize;
+	WeightsSize.SetElement(0, Dim);
+	m_Weights->SetContainerSize(WeightsSize); // 1-D array of weights
+	m_Weights->Reserve(WeightsSize[0]);
+	std::fill(m_Weights->GetBufferPointer(), m_Weights->GetBufferPointer()+Dim, 1.f/static_cast<float>(Dim)); // Init weights such that sum(weights) eq 1.f
 	m_Weights->SynchronizeDevice(); // Transfer weights to GPU
 }
 
@@ -80,9 +89,6 @@ RBC<NumPts, Dim>::RBC(unsigned long reps) : m_NumReps(reps != 0 ? reps : static_
 template<unsigned long NumPts, unsigned long Dim>
 RBC<NumPts, Dim>::~RBC()
 {
-	// GPU memory should be released automatically
-
-	delete [] m_Reps;
 	ritkCudaSafeCall(cudaFree(m_devReps));
 }
 
@@ -92,8 +98,6 @@ template<unsigned long NumPts, unsigned long Dim>
 void RBC<NumPts, Dim>::BuildRBC(DatasetContainer::Pointer Dataset)
 {
 	m_Dataset = Dataset;
-	// TODO how do I know, if m_Dataset needs to be synchronized now?
-	//m_Dataset->SynchronizeDevice();
 
 	// Call the GPU routine that takes care of the rest
 	CUDABuildRBC(
@@ -111,14 +115,16 @@ void RBC<NumPts, Dim>::BuildRBC(DatasetContainer::Pointer Dataset)
 
 //----------------------------------------------------------------------------
 template<unsigned long NumPts, unsigned long Dim>
-unsigned long* RBC<NumPts, Dim>::Query(DatasetContainer::Pointer QueryPts)
+unsigned long* RBC<NumPts, Dim>::Query(DatasetContainer::Pointer QueryPts, bool SynchronizeCorrespondences)
 {
 	// Resize container for NN search result
 	int numQueryPts = QueryPts->Capacity()/Dim;
 	if (m_NNIndices->Capacity() != numQueryPts)
 	{
-		m_NNIndices->SetContainerSize(numQueryPts, 1);
-		m_NNIndices->Reserve(numQueryPts*1);
+		IndicesContainer::SizeType IndicesSize;
+		IndicesSize.SetElement(0, numQueryPts*1);
+		m_NNIndices->SetContainerSize(IndicesSize);
+		m_NNIndices->Reserve(IndicesSize[0]);
 	}
 
 	// Compute the NNs on GPU
@@ -134,15 +140,19 @@ unsigned long* RBC<NumPts, Dim>::Query(DatasetContainer::Pointer QueryPts)
 		);
 
 	// Copy computed NN indices from GPU to CPU
-	m_NNIndices->SynchronizeHost();
-
-	return m_NNIndices->GetBufferPointer();
+	if (SynchronizeCorrespondences)
+	{
+		m_NNIndices->SynchronizeHost();
+		return m_NNIndices->GetBufferPointer();
+	}
+	else
+		return NULL;
 }
 
 
 //----------------------------------------------------------------------------
 template<unsigned long NumPts, unsigned long Dim>
-void RBC<NumPts, Dim>::SetWeights(float Weights[Dim])
+void RBC<NumPts, Dim>::SetWeights(const float Weights[Dim])
 {
 	// copy weights to our internal container
 	std::copy(Weights, Weights+Dim, stdext::checked_array_iterator<float*>(m_Weights->GetBufferPointer(), Dim));
@@ -154,10 +164,10 @@ void RBC<NumPts, Dim>::SetWeights(float Weights[Dim])
 
 //----------------------------------------------------------------------------
 template<unsigned long NumPts, unsigned long Dim>
-void RBC<NumPts, Dim>::SetWeight(unsigned long DimNew, float Weight)
+void RBC<NumPts, Dim>::SetWeight(unsigned long Idx, float Weight)
 {
 	// copy weight to our internal container
-	m_Weights->GetBufferPointer()[DimNew] = Weight;
+	m_Weights->GetBufferPointer()[Idx] = Weight;
 
 	// synchronize device (copy data to GPU)
 	m_Weights->SynchronizeDevice();

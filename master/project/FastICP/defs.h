@@ -2,11 +2,17 @@
 #define DEFS_H__
 
 // In this plugin, we always deal with 6-D data, XYZ + RGB
+#ifndef ICP_DATA_DIM
 #define ICP_DATA_DIM 6
+#endif
 
 // Kinect data definitions
+#ifndef KINECT_IMAGE_WIDTH
 #define KINECT_IMAGE_WIDTH 640
+#endif
+#ifndef KINECT_IMAGE_HEIGHT
 #define KINECT_IMAGE_HEIGHT 480
+#endif
 
 // Maximum number of representatives
 #ifndef MAX_REPS
@@ -20,21 +26,28 @@
 
 // Buffer size used for allocating shared memory
 #ifndef CUDA_BUFFER_SIZE
-#define CUDA_BUFFER_SIZE 128
+#define CUDA_BUFFER_SIZE CUDA_THREADS_PER_BLOCK
 #endif
 
-// Used in .cu-files
-#define DivUp(a,b) ((a % b != 0) ? (a/b + 1) : (a/b))
+// Use texture memory instead of global memory in some situations
+//#define USE_TEXTURE_MEMORY
 
-// Macro
-//#define __COMPUTERUNTIME(CODE,NAME) CODE
-#define __COMPUTERUNTIME(CODE,NAME)													\
-{																					\
-	QTime TIMER; const int NTIMES = 250; int ELAPSED;								\
-	TIMER.start();																	\
-	for (int i = 0; i < NTIMES; ++i) { CODE }										\
-	ELAPSED = TIMER.elapsed();														\
-	std::cout << NAME << ": " << (float)ELAPSED/(float)NTIMES << "ms" << std::endl; \
+// Used in .cu-files
+#ifndef DIVUP
+#define DIVUP(a,b) ((a % b != 0) ? (a/b + 1) : (a/b))
+#endif
+
+// Macro for runtime evaluations
+//#define COMPUTERUNTIME(CODE,NAME) CODE
+#define COMPUTERUNTIME(CODE,NAME)									\
+{																	\
+	QTime EstimateRuntime;											\
+	const int NTimes = 250;											\
+	EstimateRuntime.start();										\
+	for (int i = 0; i < NTimes; ++i) { CODE }						\
+	int Elapsed = EstimateRuntime.elapsed();						\
+	LOG_DEB(NAME << ": " << (float)Elapsed/(float)NTimes << "ms")	\
 }
+
 
 #endif // DEFS_H

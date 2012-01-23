@@ -27,22 +27,22 @@ public:
 	RBC(unsigned long reps = 0); 
 
 	/// Destructor
-	~RBC();
+	virtual ~RBC();
 
 	/// RBC construction routine
-	void BuildRBC(DatasetContainer::Pointer Dataset);
+	virtual void BuildRBC(DatasetContainer::Pointer Dataset);
 
 	/// NN query for a set of query points; returns indices of (approximative) NNs w.r.t. supplied dataset
-	unsigned long* Query(DatasetContainer::Pointer QueryPts, bool SynchronizeCorrespondences = true);
+	virtual unsigned long* Query(DatasetContainer::Pointer QueryPts, bool SynchronizeCorrespondences = true);
 
 	/// Get container with correspondence indices (if you want to use them on the GPU)
-	inline IndicesContainer::Pointer GetCorrespondencesContainer() { return m_NNIndices; }
+	virtual inline IndicesContainer::Pointer GetCorrespondencesContainer() { return m_NNIndices; }
 
 	/// Set weights for all dimensions
-	void SetWeights(const float Weights[Dim]);
+	virtual void SetWeights(const float Weights[Dim]);
 
 	/// Set weight only for particular dimension DimNew
-	void SetWeight(unsigned long Idx, float Weight);
+	virtual void SetWeight(unsigned long Idx, float Weight);
 
 protected:
 	/// Number of representatives

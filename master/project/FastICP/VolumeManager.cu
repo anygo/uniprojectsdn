@@ -6,7 +6,15 @@
 
 //----------------------------------------------------------------------------
 extern "C"
-void CUDAAddPointsToVolume(float* points, float* voxels, float* origin, unsigned long numPts, unsigned int dimSize, unsigned int spacing)
+void CUDAAddPointsToVolumeVoxelToPoint(float* points, unsigned char* voxels, float* config, unsigned long numPts, int numVoxels)
 {
-	kernelAddPointsToVolume<<<DIVUP(dimSize*dimSize*dimSize, CUDA_THREADS_PER_BLOCK), CUDA_THREADS_PER_BLOCK>>>(points, voxels, origin, numPts, dimSize, spacing);
+	kernelAddPointsToVolumeVoxelToPoint<<<DIVUP(numVoxels, CUDA_THREADS_PER_BLOCK), CUDA_THREADS_PER_BLOCK>>>(points, voxels, config, numPts);
+}
+
+
+//----------------------------------------------------------------------------
+extern "C"
+void CUDAAddPointsToVolumePointToVoxel(float* points, unsigned char* voxels, float* config, unsigned long numPts)
+{
+	kernelAddPointsToVolumePointToVoxel<<<DIVUP(numPts, CUDA_THREADS_PER_BLOCK), CUDA_THREADS_PER_BLOCK>>>(points, voxels, config, numPts);
 }

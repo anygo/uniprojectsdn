@@ -29,56 +29,56 @@ public:
 	ICP(unsigned long MaxIter = 250);
 
 	/// Destructor
-	~ICP();
+	virtual ~ICP();
 
 	/// Set fixed points
-	void SetFixedPts(DatasetContainer::Pointer Fixed);
+	virtual void SetFixedPts(DatasetContainer::Pointer Fixed);
 
 	/// Import fixed points from 1-D linearized float array of size NumPts*Dim
-	void SetFixedPts(float* Fixed);
+	virtual void SetFixedPts(float* Fixed);
 
 	/// Set moving points
-	void SetMovingPts(DatasetContainer::Pointer Moving);
+	virtual void SetMovingPts(DatasetContainer::Pointer Moving);
 
 	/// Import moving points from 1-D linearized float array of size NumPts*Dim
-	void SetMovingPts(float* Moving);
+	virtual void SetMovingPts(float* Moving);
 
 	/// Returns pointer to the dataset container holding the fixed points (e.g. if you want to use the point on the GPU later)
-	inline DatasetContainer::Pointer GetFixedPtsContainer() const { return m_FixedPts; }
+	virtual inline DatasetContainer::Pointer GetFixedPtsContainer() const { return m_FixedPts; }
 
 	/// Returns pointer to the set of fixed points as a 1-D linearized float array of size NumPts*Dim
-	inline float* GetFixedPts() const { return m_FixedPts->GetBufferPointer(); }
+	virtual inline float* GetFixedPts() const { return m_FixedPts->GetBufferPointer(); }
 
 	/// Returns pointer to the dataset container holding the moving points (e.g. if you want to use the point on the GPU later)
-	inline DatasetContainer::Pointer GetMovingPtsContainer() const { return m_MovingPts; }
+	virtual inline DatasetContainer::Pointer GetMovingPtsContainer() const { return m_MovingPts; }
 
 	/// Returns pointer to the set of moving points as a 1-D linearized float array of size NumPts*Dim
-	inline float* GetMovingPts() const { return m_MovingPts->GetBufferPointer(); }
+	virtual inline float* GetMovingPts() const { return m_MovingPts->GetBufferPointer(); }
 
 	/// Set weights for NN search such that and \sum{weights for dim geq 3 (typically RGB)} = Weight and \sum{weights for dim leq 2 (typically XYZ)} = 1-Weight 
-	void SetPayloadWeight(float Weight);
+	virtual void SetPayloadWeight(float Weight);
 
-	/// Run ICP and write resulting transformation to 'Mat', writes final number of iterations and final matrix norm to NumIter and FinalNorm respectively
-	void Run(unsigned long* NumIter = NULL, float* FinalNorm = NULL);
+	/// Run ICP; writes final number of iterations and final matrix norm to NumIter and FinalNorm respectively
+	virtual void Run(unsigned long* NumIter = NULL, float* FinalNorm = NULL);
 
 	/// Initializes the ICP (setup of data structures, etc)
-	void Initialize();
+	virtual void Initialize();
 
-	/// Run next ICP iteration (if you want to call from outside, use this function AFTER initializing the ICP once)
-	bool NextIteration();
+	/// Run next ICP iteration (if you want to call from outside, use this function AFTER initializing the ICP)
+	virtual bool NextIteration();
 
 	/// Return resulting transformation matrix (4x4 linearized)
-	inline float* GetTransformationMatrix() const { return m_AccumulateMat->GetBufferPointer(); }
+	virtual inline float* GetTransformationMatrix() const { return m_AccumulateMat->GetBufferPointer(); }
 
 	/// Return container with resulting transformation matrix (4x4 linearized)
-	inline MatrixContainer::Pointer GetTransformationMatrixContainer() const { return m_AccumulateMat; }
+	virtual inline MatrixContainer::Pointer GetTransformationMatrixContainer() const { return m_AccumulateMat; }
 
 protected:
 	/// Given two sets of points, estimate the optimal rigid transformation
-	void EstimateTransformationMatrix(DatasetContainer::Element* Moving, DatasetContainer::Element* Fixed);
+	virtual void EstimateTransformationMatrix(DatasetContainer::Element* Moving, DatasetContainer::Element* Fixed);
 
 	/// Compute Eigenvectors from 4x4 symmetric matrix
-	void Jacobi4x4(float *Matrix, float *Eigenvalues, float *Eigenvectors);
+	virtual void Jacobi4x4(float *Matrix, float *Eigenvalues, float *Eigenvectors);
 
 	/// Maximum number of ICP iterations
 	const unsigned long m_MaxIter;
@@ -93,7 +93,7 @@ protected:
 	float m_FrobNorm;
 
 	/// RBC data structure for efficient NN search
-	RBC<NumPts, Dim>* m_RBC;
+	std::shared_ptr<RBC<NumPts, Dim>> m_RBC;
 
 	/// Pointer to set of fixed points
 	typename DatasetContainer::Pointer m_FixedPts;

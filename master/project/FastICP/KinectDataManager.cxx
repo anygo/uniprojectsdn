@@ -99,12 +99,7 @@ KinectDataManager::ImportKinectData(ritk::NewFrameEvent::RImageConstPointer Data
 	m_Pts->SynchronizeHost();
 
 	// Now we extract m_NumLandmarks landmarks (a subset of all points)
-	CUDAExtractLandmarks(
-		m_Landmarks->GetCudaMemoryPointer(),
-		m_Pts->GetCudaMemoryPointer(),
-		m_LandmarkIndices->GetCudaMemoryPointer(),
-		m_NumLandmarks
-		);
+	ExtractLandmarks();
 
 	// And synchronize to the host
 	m_Landmarks->SynchronizeHost();	
@@ -149,12 +144,7 @@ KinectDataManager::SetClipPercentage(float ClipPercentage)
 	UpdateLandmarkIndices();
 
 	// Now we extract m_NumLandmarks landmarks (a subset of all points)
-	CUDAExtractLandmarks(
-		m_Landmarks->GetCudaMemoryPointer(),
-		m_Pts->GetCudaMemoryPointer(),
-		m_LandmarkIndices->GetCudaMemoryPointer(),
-		m_NumLandmarks
-		);
+	ExtractLandmarks();
 
 	// And synchronize to the host
 	m_Landmarks->SynchronizeHost();	
@@ -233,4 +223,17 @@ KinectDataManager::SwapPointsContainer(KinectDataManager* Other)
 	PtsTmp = this->m_Pts;
 	this->m_Pts = Other->m_Pts;
 	Other->m_Pts = PtsTmp;
+}
+
+
+//----------------------------------------------------------------------------
+void
+KinectDataManager::ExtractLandmarks()
+{
+	CUDAExtractLandmarks(
+		m_Landmarks->GetCudaMemoryPointer(),
+		m_Pts->GetCudaMemoryPointer(),
+		m_LandmarkIndices->GetCudaMemoryPointer(),
+		m_NumLandmarks
+		);
 }

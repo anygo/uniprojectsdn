@@ -9,7 +9,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>856</width>
+    <width>1019</width>
     <height>770</height>
    </rect>
   </property>
@@ -569,6 +569,13 @@ p, li { white-space: pre-wrap; }
              </widget>
             </item>
             <item>
+             <widget class="QPushButton" name="m_PushButtonAddToVolume">
+              <property name="text">
+               <string>Add to Volume (Moving Points)</string>
+              </property>
+             </widget>
+            </item>
+            <item>
              <widget class="QFrame" name="frame_9">
               <property name="frameShape">
                <enum>QFrame::StyledPanel</enum>
@@ -596,7 +603,7 @@ p, li { white-space: pre-wrap; }
                   <number>10</number>
                  </property>
                  <property name="value">
-                  <number>10</number>
+                  <number>18</number>
                  </property>
                  <property name="orientation">
                   <enum>Qt::Horizontal</enum>
@@ -644,7 +651,7 @@ p, li { white-space: pre-wrap; }
       <item row="0" column="0">
        <widget class="QGroupBox" name="groupBox_4">
         <property name="title">
-         <string>Preview</string>
+         <string>Point Clouds</string>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout">
          <item>
@@ -678,6 +685,79 @@ p, li { white-space: pre-wrap; }
         </layout>
        </widget>
       </item>
+      <item row="0" column="1">
+       <widget class="QGroupBox" name="m_GroupBoxVolumeVisualization">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="title">
+         <string>Volume</string>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout_5">
+         <item>
+          <widget class="ritk::VisualizationWidget3D" name="m_VisualizationWidget3DVolume" native="true">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>100</width>
+             <height>100</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>10000</width>
+             <height>10000</height>
+            </size>
+           </property>
+           <property name="statusTip">
+            <string/>
+           </property>
+           <property name="autoFillBackground">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="m_CheckBoxAutoStitch">
+           <property name="text">
+            <string>AutoStitch</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="m_PushButtonResetVolume">
+           <property name="text">
+            <string>Reset Volume</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QWidget" name="widget" native="true">
+           <layout class="QHBoxLayout" name="horizontalLayout_9">
+            <property name="margin">
+             <number>0</number>
+            </property>
+            <item>
+             <widget class="QPushButton" name="m_PushButtonSaveVolume">
+              <property name="focusPolicy">
+               <enum>Qt::StrongFocus</enum>
+              </property>
+              <property name="text">
+               <string>Save Volume as Meta Image (.mha)</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
      </layout>
     </widget>
    </item>
@@ -703,8 +783,8 @@ p, li { white-space: pre-wrap; }
      <y>158</y>
     </hint>
     <hint type="destinationlabel">
-     <x>66</x>
-     <y>189</y>
+     <x>94</x>
+     <y>418</y>
     </hint>
    </hints>
   </connection>
@@ -719,8 +799,8 @@ p, li { white-space: pre-wrap; }
      <y>158</y>
     </hint>
     <hint type="destinationlabel">
-     <x>154</x>
-     <y>383</y>
+     <x>182</x>
+     <y>620</y>
     </hint>
    </hints>
   </connection>
@@ -753,6 +833,38 @@ p, li { white-space: pre-wrap; }
     <hint type="destinationlabel">
      <x>190</x>
      <y>77</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>m_RadioButtonRealData</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>m_GroupBoxVolumeVisualization</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>247</x>
+     <y>157</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>740</x>
+     <y>160</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>m_CheckBoxAutoStitch</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>groupBox_5</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>753</x>
+     <y>675</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>271</x>
+     <y>161</y>
     </hint>
    </hints>
   </connection>

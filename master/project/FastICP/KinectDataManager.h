@@ -30,32 +30,35 @@ public:
 	KinectDataManager(unsigned long NumLandmarks = 2048, float ClipPercentage = 0.1f);
 
 	/// Destructor
-	~KinectDataManager();
+	virtual ~KinectDataManager();
 
 	/// Import a frame
-	void ImportKinectData(ritk::NewFrameEvent::RImageConstPointer Data);
+	virtual void ImportKinectData(ritk::NewFrameEvent::RImageConstPointer Data);
 
 	/// Swap data
-	void SwapPointsContainer(KinectDataManager* Other);
+	virtual void SwapPointsContainer(KinectDataManager* Other);
 
 	/// Set number of points per dataset
-	void SetNumberOfLandmarks(unsigned long NumLandmarks);
+	virtual void SetNumberOfLandmarks(unsigned long NumLandmarks);
 
 	/// Set clip percentage for landmark extraction
-	void SetClipPercentage(float ClipPercentage);
+	virtual void SetClipPercentage(float ClipPercentage);
+
+	/// Extract landmarks from current set of points
+	virtual void ExtractLandmarks();
 
 	/// Apply transformation to all points
-	void TransformPts(MatrixContainer::Pointer Mat);
+	virtual void TransformPts(MatrixContainer::Pointer Mat);
 
 	/// Returns pointer to the dataset container holding the fixed points
-	inline DatasetContainer::Pointer GetPtsContainer() const { return m_Pts; }
+	virtual inline DatasetContainer::Pointer GetPtsContainer() const { return m_Pts; }
 
 	/// Returns pointer to the dataset container holding the fixed points
-	inline DatasetContainer::Pointer GetLandmarkContainer() const { return m_Landmarks; }
+	virtual inline DatasetContainer::Pointer GetLandmarkContainer() const { return m_Landmarks; }
 	
 protected:
 	/// Update the indices for the landmark extraction
-	void UpdateLandmarkIndices();
+	virtual void UpdateLandmarkIndices();
 
 	/// Pointer to set of all points
 	DatasetContainer::Pointer m_Pts;

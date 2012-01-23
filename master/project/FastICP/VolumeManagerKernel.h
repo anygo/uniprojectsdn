@@ -9,47 +9,55 @@
 
 
 //----------------------------------------------------------------------------
-__global__ void kernelAddPointsToVolume(float* points, float* voxels, float* origin, unsigned long numPts, unsigned int dimSize, unsigned int spacing)
+__global__ void kernelAddPointsToVolumeVoxelToPoint(float* points, unsigned char* voxels, float* config, unsigned long numPts)
 {
 	const int tid = blockIdx.x*blockDim.x + threadIdx.x;
 
-	if ( tid >= dimSize*dimSize*dimSize ) return;
+	// Get config
+	float3* ConfigFloat3 = (float3*)config;
+	float3 Origin = ConfigFloat3[0];
+	float3 Spacing = ConfigFloat3[1];
+	float3 Dim = ConfigFloat3[2];
 
-	// Compute x-, y- and z-boundaries	
+	if ( tid >= Dim.x*Dim.y*Dim.z ) return;
+
+	// Compute x-, y- and z-boundaries of this thread's voxel
 	int Tmp = tid;
-	int zUnits = Tmp % dimSize;
-	Tmp /= dimSize;
-	int yUnits = Tmp % dimSize;
-	Tmp /= dimSize;
-	int xUnits = Tmp % dimSize;
+	int zUnits = Tmp % (int)Dim.z;
+	Tmp /= (int)Dim.z;
+	int yUnits = Tmp % (int)Dim.y;
+	Tmp /= (int)Dim.y;
+	int xUnits = Tmp % (int)Dim.x;
 
-	float xMin = origin[0] + (xUnits  )*spacing;
-	float xMax = origin[0] + (xUnits+1)*spacing;
+	float xMin = Origin.x + (xUnits  )*Spacing.x;
+	float xMax = Origin.x + (xUnits+1)*Spacing.x;
 
-	float yMin = origin[1] + (yUnits  )*spacing;
-	float yMax = origin[1] + (yUnits+1)*spacing;
+	float yMin = Origin.y + (yUnits  )*Spacing.y;
+	float yMax = Origin.y + (yUnits+1)*Spacing.y;
 
-	float zMin = origin[2] + (zUnits  )*spacing;
-	float zMax = origin[2] + (zUnits+1)*spacing;
-
+	float zMin = Origin.z + (zUnits  )*Spacing.z;
+	float zMax = Origin.z + (zUnits+1)*Spacing.z;
 
 	// For each point, determine if it lies inside the voxel handled by this thread
 	float r = 0, g = 0, b = 0;
+	float x, y, z;
 	float Counter = 0;
 	for (int i = 0; i < numPts; ++i)
 	{
-		float x,y,z;
-		x = points[i*ICP_DATA_DIM+0];
-		y = points[i*ICP_DATA_DIM+1];
-		z = points[i*ICP_DATA_DIM+2];
+		// Get the i'th point's spatial coordinates
+		const float3 Coords = *((float3*)(points+tid*ICP_DATA_DIM));
+		x = Coords.x;
+		y = Coords.y;
+		z = Coords.z;
 
-		if (x >= xMin && x < xMax &&
-			y >= yMin && y < yMax &&
-			z >= zMin && z < zMax)
+		if (x >= xMin && x < xMax && y >= yMin && y < yMax && z >= zMin && z < zMax)
 		{
-			r += points[i*ICP_DATA_DIM+3];
-			g += points[i*ICP_DATA_DIM+4];
-			b += points[i*ICP_DATA_DIM+5];
+			// Accumulate color
+			const float3 Color = *((float3*)(points+(tid*ICP_DATA_DIM+3)));
+			r += Color.x;
+			g += Color.y;
+			b += Color.z;
+
 			++Counter;
 		}
 	}
@@ -57,19 +65,94 @@ __global__ void kernelAddPointsToVolume(float* points, float* voxels, float* ori
 	// If at least one point is inside this voxel, store the average color
 	if (Counter > 0)
 	{
-		// Store colors within a 4-byte-block as uchars
-		/*float Colors;
-		unsigned char* ColorsUChar = (unsigned char*)&Colors;
-		ColorsUChar[0] = r/Counter;
-		ColorsUChar[1] = g/Counter;
-		ColorsUChar[2] = b/Counter;
-		ColorsUChar[3] = 255;
-
-		voxels[tid] = Colors;*/
-
-		float4* VoxelsFloat4 = (float4*)voxels;
-		VoxelsFloat4[tid] = make_float4(r/Counter, g/Counter, b/Counter, 0);
+		// Store colors in uchar4*-casted voxels-pointer
+		uchar4* VoxelsFloat4 = (uchar4*)voxels;
+		VoxelsFloat4[tid] = make_uchar4(r/Counter, g/Counter, b/Counter, 0);
 	}
+}
+
+
+//----------------------------------------------------------------------------
+__global__ void kernelAddPointsToVolumePointToVoxel(float* points, unsigned char* voxels, float* config, unsigned long numPts)
+{
+	const int tid = blockIdx.x*blockDim.x + threadIdx.x;
+
+	if ( tid >= numPts ) return;
+
+	// Get config
+	float3* ConfigFloat3 = (float3*)config;
+	const float3 Origin = ConfigFloat3[0];
+	const float3 Spacing = ConfigFloat3[1];
+	const float3 Dim = ConfigFloat3[2];
+
+	// Compute total number of voxels
+	const int NumVoxels = Dim.x*Dim.y*Dim.z;
+
+	// Get this thread's point world coordinates
+	const float3 Coords = *((float3*)(points+tid*ICP_DATA_DIM));
+	const float3 Color  = *((float3*)(points+(tid*ICP_DATA_DIM+3)));
+
+	// Compute volume coordinates
+	const int x = (Coords.x-Origin.x)/Spacing.x;
+	const int y = (Coords.y-Origin.y)/Spacing.y;
+	const int z = (Coords.z-Origin.z)/Spacing.z;
+
+	// Check if voxel is inside specified volume
+	if (x < 0 || x >= Dim.x || y < 0 || y >= Dim.y || z < 0 || z >= Dim.z)
+		return;
+
+	// Create color uchar4
+	const uchar4 ColorUChar4 = make_uchar4(Color.x, Color.y, Color.z, 255);
+
+	// Cast voxels to uchar4*
+	uchar4* VoxelsUChar4 = (uchar4*)voxels;
+
+#if 0
+	// Blurring (also use neighboring voxels)	
+	#pragma unroll
+	for (int xBlur = -1; xBlur < 1; ++xBlur)
+	{
+		#pragma unroll
+		for (int yBlur = -1; yBlur < 1; ++yBlur)
+		{
+			#pragma unroll
+			for (int zBlur = -1; zBlur < 1; ++zBlur)
+			{
+				// Compute voxel index of linearized volume
+				int VoxelIdx = (x+xBlur)*Dim.y*Dim.z + (y+yBlur)*Dim.z + (z+zBlur);
+
+				// Write to global memory
+				if (VoxelIdx >= 0 && VoxelIdx < NumVoxels)
+				{
+					// Get previous color of that voxel
+					uchar4 PrevColor = VoxelsUChar4[VoxelIdx];
+
+					// If appropriate, compute mean of previous and current color, otherwise use current color
+					if (*((float*)&PrevColor) > 0)
+						VoxelsUChar4[VoxelIdx] = make_uchar4((PrevColor.x+ColorUChar4.x)/2, (PrevColor.y+ColorUChar4.y)/2, (PrevColor.z+ColorUChar4.z)/2, 0);
+					else
+						VoxelsUChar4[VoxelIdx] = ColorUChar4;
+				}		
+			}
+		}
+	}
+#else
+	// Compute voxel index of linearized volume
+	int VoxelIdx = x*Dim.y*Dim.z + y*Dim.z + z;
+
+	// Write to global memory
+	if (VoxelIdx >= 0 && VoxelIdx < NumVoxels)
+	{
+		// Get previous color of that voxel
+		uchar4 PrevColor = VoxelsUChar4[VoxelIdx];
+
+		// If appropriate, compute mean of previous and current color, otherwise use current color
+		if (*((float*)&PrevColor) > 0)
+			VoxelsUChar4[VoxelIdx] = make_uchar4((PrevColor.x+ColorUChar4.x)/2, (PrevColor.y+ColorUChar4.y)/2, (PrevColor.z+ColorUChar4.z)/2, 0);
+		else
+			VoxelsUChar4[VoxelIdx] = ColorUChar4;
+	}
+#endif
 }
 
 

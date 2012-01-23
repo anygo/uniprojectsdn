@@ -15,7 +15,7 @@ void CUDAQueryRBC(float* data, float* weights, float* query, RepGPU* reps, unsig
 
 //----------------------------------------------------------------------------
 template<unsigned long NumPts, unsigned long Dim>
-RBC<NumPts, Dim>::RBC(unsigned long reps) : m_NumReps(reps != 0 ? reps : static_cast<int>(sqrt(static_cast<float>(NumPts))))
+RBC<NumPts, Dim>::RBC(unsigned long reps) : m_NumReps(reps != 0 ? reps < MAX_REPS ? reps : MAX_REPS : static_cast<int>(sqrt(static_cast<float>(NumPts))))
 {
 	// Set dataset container to NULL (will be provided later by RBC::BuildRBC() call)
 	m_Dataset = NULL;
@@ -146,7 +146,9 @@ unsigned long* RBC<NumPts, Dim>::Query(DatasetContainer::Pointer QueryPts, bool 
 		return m_NNIndices->GetBufferPointer();
 	}
 	else
+	{
 		return NULL;
+	}
 }
 
 

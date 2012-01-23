@@ -92,7 +92,7 @@ __global__ void kernelBuildRBC(float* data, float* weights, RepGPU* reps, unsign
 	}
 	reps[tid].numPts = cnt;
 
-	// Store to shared memory, s.t. the other threads can read it
+	// Store to shared memory, such that the other threads can read it
 	counts[tid] = cnt;
 
 	__syncthreads();
@@ -107,9 +107,6 @@ __global__ void kernelBuildRBC(float* data, float* weights, RepGPU* reps, unsign
 
 	// Write modified NNList address to tid'th representative's NNList pointer
 	reps[tid].NNList = NNLists+offset;
-
-	__syncthreads();
-
 
 	// Step 4: Copy point indices to their corresponding NN lists
 	int curEl = 0;

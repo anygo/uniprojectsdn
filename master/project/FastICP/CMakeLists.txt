@@ -53,6 +53,7 @@ IF(CUDA_FOUND)
     	)
 	mark_as_advanced(CUDA_CUT_INCLUDE_DIR)
 	INCLUDE_DIRECTORIES(${CUDA_INCLUDE_DIRS} ${CUDA_CUT_INCLUDE_DIR})
+	SET(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} "--ptxas-options=-v")
 ELSE()
 	MESSAGE(FATAL_ERROR "CUDA not found, but needed.")
 ENDIF(CUDA_FOUND)
@@ -82,7 +83,7 @@ SET(FastICP_SRCS
 	DataGenerator.cxx
 	KinectDataManager.cxx
 	Instantiations.cxx
-	VolumeManager.txx
+	VolumeManager.cxx
 )
 
 SET(FastICP_CUDA_HDRS
@@ -144,7 +145,6 @@ TARGET_LINK_LIBRARIES(${FastICP_LIBRARY}
 	${QT_LIBRARIES}
 	${CUDA_CUDA_LIBRARY} 
 	${CUDA_CUDART_LIBRARY} 
-	#${CUDA_CUT_LIBRARIES}
 )
 SET_TARGET_PROPERTIES(${FastICP_LIBRARY} PROPERTIES DEBUG_POSTFIX "d")
 

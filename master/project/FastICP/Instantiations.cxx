@@ -1,9 +1,6 @@
 #include "ICP.txx"
 #include "RBC.txx"
-#include "VolumeManager.txx"
 
-
-template class VolumeManager<128, 40>;
 
 //template class RBC<512,6>;
 //template class RBC<1024,6>;

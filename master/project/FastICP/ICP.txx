@@ -33,7 +33,7 @@ ICP<NumPts, Dim>::ICP(unsigned long MaxIter) : m_MaxIter(MaxIter), m_NormThresho
 {
 	// Create RBC object
 	const unsigned long NumReps = 0; // numReps=0 will result in sqrt(NumPts) automatically during construction of RBC
-	m_RBC = new RBC<NumPts, Dim>(NumReps);
+	m_RBC = std::shared_ptr<RBC<NumPts, Dim> >(new RBC<NumPts, Dim>(NumReps));
 
 	// Init container for set of fixed points
 	m_FixedPtsInitialized = false;
@@ -52,6 +52,9 @@ ICP<NumPts, Dim>::ICP(unsigned long MaxIter) : m_MaxIter(MaxIter), m_NormThresho
 	m_AccumulateMat = MatrixContainer::New();
 	m_AccumulateMat->SetContainerSize(MatSize);
 	m_AccumulateMat->Reserve(MatSize[0]);
+	const float Id4x4[16] = {1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};
+	std::copy(Id4x4, Id4x4+16, stdext::checked_array_iterator<float*>(m_AccumulateMat->GetBufferPointer(), 16));
+	m_AccumulateMat->SynchronizeDevice();
 
 	// Init container for temporary Cuda memory
 	m_TmpCudaMemory = DatasetContainer::New();
@@ -73,8 +76,6 @@ ICP<NumPts, Dim>::ICP(unsigned long MaxIter) : m_MaxIter(MaxIter), m_NormThresho
 template<unsigned long NumPts, unsigned long Dim>
 ICP<NumPts, Dim>::~ICP()
 {
-	// Delete internal RBC object
-	delete m_RBC;
 }
 
 
@@ -186,9 +187,18 @@ void ICP<NumPts, Dim>::Initialize()
 	m_RBC->BuildRBC(m_FixedPts);
 
 	// Fill elements of accumulation matrix so that we get the identity matrix (4x4) and transfer to GPU
-	const float Id4x4[16] = {1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};
-	std::copy(Id4x4, Id4x4+16, stdext::checked_array_iterator<float*>(m_AccumulateMat->GetBufferPointer(), 16));
-	m_AccumulateMat->SynchronizeDevice();
+	//const float Id4x4[16] = {1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};
+	//std::copy(Id4x4, Id4x4+16, stdext::checked_array_iterator<float*>(m_AccumulateMat->GetBufferPointer(), 16));
+	//m_AccumulateMat->SynchronizeDevice();
+
+	// Apply previous transform
+	// TODO UNDO!!!
+	CUDATransformPoints3D(
+		m_MovingPts->GetCudaMemoryPointer(),
+		m_AccumulateMat->GetCudaMemoryPointer(),
+		NumPts,
+		Dim
+		);
 
 	// We use the Frobenius norm of the intermediate transformation matrix as an indicator for convergence
 	m_FrobNorm = FLT_MAX;

@@ -22,4 +22,5 @@ void
 FastICPWidget::UpdateGUI()
 {	
 	m_VisualizationWidget3D->UpdateGUI();
+	m_VisualizationWidget3DVolume->UpdateGUI();
 }

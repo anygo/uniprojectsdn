@@ -20,7 +20,7 @@ template<unsigned int NumPts, unsigned int Dim, unsigned int Offset>
 __device__ void ParallelReduction(int tid, float* SM)
 {
 	// Compute index position for current thread
-	int pos = tid*Dim;
+	const int pos = tid*Dim;
 
 	// Run reduction
 	if ( NumPts >= 512 )
@@ -109,6 +109,129 @@ __device__ void ParallelReduction(int tid, float* SM)
 		if ( tid < Threshold )
 		{
 			SM[pos + Offset] += SM[pos + Threshold*Dim + Offset];
+		}
+		__syncthreads();
+	}
+}
+
+
+// Parallel reduction
+//----------------------------------------------------------------------------
+template<unsigned int NumPts, unsigned int Dim, unsigned int Offset>
+__device__ void ParallelReductionFloat3(int tid, float* SM)
+{
+	const int DimDiv3 = Dim/3;
+
+	// Compute index position for current thread
+	const int pos = tid*DimDiv3;
+
+	float3* SMFloat3 = (float3*)SM;
+
+	// Run reduction
+	if ( NumPts >= 512 )
+	{
+		const int Threshold = 256;
+		if ( tid < Threshold )
+		{
+			float3 First = SMFloat3[pos + Offset];
+			float3 Second = SMFloat3[pos + Threshold*DimDiv3 + Offset];
+			SMFloat3[pos + Offset] = make_float3(First.x+Second.x, First.y+Second.y, First.z+Second.z);
+		}
+		__syncthreads();
+	}
+
+	if ( NumPts >= 256 )
+	{
+		const int Threshold = 128;
+		if ( tid < Threshold )
+		{
+			float3 First = SMFloat3[pos + Offset];
+			float3 Second = SMFloat3[pos + Threshold*DimDiv3 + Offset];
+			SMFloat3[pos + Offset] = make_float3(First.x+Second.x, First.y+Second.y, First.z+Second.z);
+		}
+		__syncthreads();
+	}
+
+	if ( NumPts >= 128 )
+	{
+		const int Threshold = 64;
+		if ( tid < Threshold )
+		{
+			float3 First = SMFloat3[pos + Offset];
+			float3 Second = SMFloat3[pos + Threshold*DimDiv3 + Offset];
+			SMFloat3[pos + Offset] = make_float3(First.x+Second.x, First.y+Second.y, First.z+Second.z);
+		}
+		__syncthreads();
+	}
+
+	if ( NumPts >= 64 )
+	{
+		const int Threshold = 32;
+		if ( tid < Threshold )
+		{
+			float3 First = SMFloat3[pos + Offset];
+			float3 Second = SMFloat3[pos + Threshold*DimDiv3 + Offset];
+			SMFloat3[pos + Offset] = make_float3(First.x+Second.x, First.y+Second.y, First.z+Second.z);
+		}
+		__syncthreads();
+	}
+
+	if ( NumPts >= 32 )
+	{
+		const int Threshold = 16;
+		if ( tid < Threshold )
+		{
+			float3 First = SMFloat3[pos + Offset];
+			float3 Second = SMFloat3[pos + Threshold*DimDiv3 + Offset];
+			SMFloat3[pos + Offset] = make_float3(First.x+Second.x, First.y+Second.y, First.z+Second.z);
+		}
+		__syncthreads();
+	}
+
+	if ( NumPts >= 16 )
+	{
+		const int Threshold = 8;
+		if ( tid < Threshold )
+		{
+			float3 First = SMFloat3[pos + Offset];
+			float3 Second = SMFloat3[pos + Threshold*DimDiv3 + Offset];
+			SMFloat3[pos + Offset] = make_float3(First.x+Second.x, First.y+Second.y, First.z+Second.z);
+		}
+		__syncthreads();
+	}
+
+	if ( NumPts >= 8 )
+	{
+		const int Threshold = 4;
+		if ( tid < Threshold )
+		{
+			float3 First = SMFloat3[pos + Offset];
+			float3 Second = SMFloat3[pos + Threshold*DimDiv3 + Offset];
+			SMFloat3[pos + Offset] = make_float3(First.x+Second.x, First.y+Second.y, First.z+Second.z);
+		}
+		__syncthreads();
+	}
+
+	if ( NumPts >= 4 )
+	{
+		const int Threshold = 2;
+		if ( tid < Threshold )
+		{
+			float3 First = SMFloat3[pos + Offset];
+			float3 Second = SMFloat3[pos + Threshold*DimDiv3 + Offset];
+			SMFloat3[pos + Offset] = make_float3(First.x+Second.x, First.y+Second.y, First.z+Second.z);
+		}
+		__syncthreads();
+	}
+
+	if ( NumPts >= 2 )
+	{
+		const int Threshold = 1;
+		if ( tid < Threshold )
+		{
+			float3 First = SMFloat3[pos + Offset];
+			float3 Second = SMFloat3[pos + Threshold*DimDiv3 + Offset];
+			SMFloat3[pos + Offset] = make_float3(First.x+Second.x, First.y+Second.y, First.z+Second.z);
 		}
 		__syncthreads();
 	}
@@ -215,6 +338,8 @@ __global__ void kernelComputeCentroid(float* points, float* out, unsigned long* 
 	getCoordsFromFloat4Tex<Dim>(x1, y1, z1, posPoints);
 	getCoordsFromFloat4Tex<Dim>(x2, y2, z2, posPoints2);
 
+	int posTmp = threadIdx.x*3;
+
 	TmpShared[posTmp+0] = x1 + x2;
 	TmpShared[posTmp+1] = y1 + y2;
 	TmpShared[posTmp+2] = z1 + z2;
@@ -227,21 +352,13 @@ __global__ void kernelComputeCentroid(float* points, float* out, unsigned long* 
 	float3 First = PointsFloat3[Dim == 6 ? posPoints*2 : posPoints]; // If we still are in 6D, we need to multiply the position by 2, since we assume float3
 	float3 Second = PointsFloat3[Dim == 6 ? posPoints2*2 : posPoints2];
 	TmpSharedFloat3[threadIdx.x] = make_float3(First.x + Second.x, First.y + Second.y, First.z + Second.z);
-
-	/*posPoints *= Dim;
-	posPoints2 *= Dim;
-	TmpShared[posTmp+0] = points[posPoints+0] + points[posPoints2+0];
-	TmpShared[posTmp+1] = points[posPoints+1] + points[posPoints2+1];
-	TmpShared[posTmp+2] = points[posPoints+2] + points[posPoints2+2];*/
 #endif
 
 	__syncthreads();
 	
 	
 	// Perform parallel reduction for x, y and z coordinate	
-	ParallelReduction<NumPtsPerBlock, 3, 0>(threadIdx.x, TmpShared); // X
-	ParallelReduction<NumPtsPerBlock, 3, 1>(threadIdx.x, TmpShared); // Y
-	ParallelReduction<NumPtsPerBlock, 3, 2>(threadIdx.x, TmpShared); // Z
+	ParallelReductionFloat3<NumPtsPerBlock, 3, 0>(threadIdx.x, TmpShared); // X
 
 	// Store values to global memory
 	const float Factor = 1.f / ( (float)BlockSizeX*2.f);
@@ -275,53 +392,46 @@ __global__ void kernelBuildMMatrices(float* moving, float* fixed, float* centroi
 	const unsigned int NumPtsPerBlock = CUDA_THREADS_PER_BLOCK < NumPts ? CUDA_THREADS_PER_BLOCK : NumPts;
 
 	float a[3];
-	a[0] = moving[tid*Dim+0] - centroidMoving[0];
-	a[1] = moving[tid*Dim+1] - centroidMoving[1];
-	a[2] = moving[tid*Dim+2] - centroidMoving[2];
+	float3 CentroidMoving = *((float3*)centroidMoving);
+	a[0] = moving[tid*Dim+0] - CentroidMoving.x;
+	a[1] = moving[tid*Dim+1] - CentroidMoving.y;
+	a[2] = moving[tid*Dim+2] - CentroidMoving.z;
 
 	float b[3];
+	float3 CentroidFixed = *((float3*)centroidFixed);
 	const unsigned long NNIdx = correspondences[tid];
-	b[0] = fixed[NNIdx*Dim+0] - centroidFixed[0];
-	b[1] = fixed[NNIdx*Dim+1] - centroidFixed[1];
-	b[2] = fixed[NNIdx*Dim+2] - centroidFixed[2];
+	b[0] = fixed[NNIdx*Dim+0] - CentroidFixed.x;
+	b[1] = fixed[NNIdx*Dim+1] - CentroidFixed.y;
+	b[2] = fixed[NNIdx*Dim+2] - CentroidFixed.z;
 
-	float M[3][3] = {0,0,0, 0,0,0, 0,0,0};
+	float M[9] = {0,0,0, 0,0,0, 0,0,0};
 
 	// Accumulate the products a*T(b) into the matrix M
 	for (int j = 0; j < 3; ++j) 
 	{
-		M[j][0] += a[j]*b[0];
-		M[j][1] += a[j]*b[1];
-		M[j][2] += a[j]*b[2];
+		M[j*3+0] += a[j]*b[0];
+		M[j*3+1] += a[j]*b[1];
+		M[j*3+2] += a[j]*b[2];
 	}
 
 	__shared__ float TmpShared[NumPtsPerBlock * 9]; // Shared memory for all 3x3 M matrices of this particular block
 
 	// Linearize matrix (shared memory)
-	float* startIdx = &TmpShared[threadIdx.x * 9];
-	startIdx[0] = M[0][0];
-	startIdx[1] = M[0][1];
-	startIdx[2] = M[0][2];
-	startIdx[3] = M[1][0];
-	startIdx[4] = M[1][1];
-	startIdx[5] = M[1][2];
-	startIdx[6] = M[2][0];
-	startIdx[7] = M[2][1];
-	startIdx[8] = M[2][2];
+	float* StartIdx = &TmpShared[threadIdx.x * 9];
+	float4* StartIdxFloat4 = (float4*)StartIdx;
+	float4* MFloat4 = (float4*)M;
+
+	StartIdxFloat4[0] = MFloat4[0];
+	StartIdxFloat4[1] = MFloat4[1];
+	StartIdx[8] = M[8];
 
 	__syncthreads();
 
 
 	// Reduce results
-	ParallelReduction<NumPtsPerBlock, 9, 0>(threadIdx.x, TmpShared);
-	ParallelReduction<NumPtsPerBlock, 9, 1>(threadIdx.x, TmpShared);
-	ParallelReduction<NumPtsPerBlock, 9, 2>(threadIdx.x, TmpShared);
-	ParallelReduction<NumPtsPerBlock, 9, 3>(threadIdx.x, TmpShared);
-	ParallelReduction<NumPtsPerBlock, 9, 4>(threadIdx.x, TmpShared);
-	ParallelReduction<NumPtsPerBlock, 9, 5>(threadIdx.x, TmpShared);
-	ParallelReduction<NumPtsPerBlock, 9, 6>(threadIdx.x, TmpShared);
-	ParallelReduction<NumPtsPerBlock, 9, 7>(threadIdx.x, TmpShared);
-	ParallelReduction<NumPtsPerBlock, 9, 8>(threadIdx.x, TmpShared);
+	ParallelReductionFloat3<NumPtsPerBlock, 9, 0>(threadIdx.x, TmpShared);
+	ParallelReductionFloat3<NumPtsPerBlock, 9, 1>(threadIdx.x, TmpShared);
+	ParallelReductionFloat3<NumPtsPerBlock, 9, 2>(threadIdx.x, TmpShared);
 
 	// Store sum of matrices of this block to global memory
 	if (NumPts < 3)
@@ -335,7 +445,7 @@ __global__ void kernelBuildMMatrices(float* moving, float* fixed, float* centroi
 
 			OutFloat4[0] = TmpSharedFloat4[0];
 			OutFloat4[1] = TmpSharedFloat4[1];
-			out[9] = TmpShared[9];
+			out[8] = TmpShared[8];
 		}
 	}
 	else if (threadIdx.x < 3)
@@ -362,21 +472,6 @@ __global__ void kernelReduceMMatrices(float* matrices, float* out)
 
 	__shared__ float TmpShared[NumPtsPerBlock * 9]; // For all 3x3 M matrices of this particular block
 
-	// Compute indices in matrices array and shared memory
-	//const int posMatrices = tid*9;
-	//const int posTmp = threadIdx.x*9;
-
-	// Copy data
-	//TmpShared[posTmp+0] = matrices[posMatrices+0];
-	//TmpShared[posTmp+1] = matrices[posMatrices+1];
-	//TmpShared[posTmp+2] = matrices[posMatrices+2];
-	//TmpShared[posTmp+3] = matrices[posMatrices+3];
-	//TmpShared[posTmp+4] = matrices[posMatrices+4];
-	//TmpShared[posTmp+5] = matrices[posMatrices+5];
-	//TmpShared[posTmp+6] = matrices[posMatrices+6];
-	//TmpShared[posTmp+7] = matrices[posMatrices+7];
-	//TmpShared[posTmp+8] = matrices[posMatrices+8];
-
 	// Copy data (float3 version)
 	const int posMatrices = tid*3; // 9 divided by 3, since we use float3
 	const int posTmp = threadIdx.x*3; // 9 divided by 3, since we use float3
@@ -392,15 +487,9 @@ __global__ void kernelReduceMMatrices(float* matrices, float* out)
 	
 	
 	// Reduce
-	ParallelReduction<NumPtsPerBlock, 9, 0>(threadIdx.x, TmpShared);
-	ParallelReduction<NumPtsPerBlock, 9, 1>(threadIdx.x, TmpShared);
-	ParallelReduction<NumPtsPerBlock, 9, 2>(threadIdx.x, TmpShared);
-	ParallelReduction<NumPtsPerBlock, 9, 3>(threadIdx.x, TmpShared);
-	ParallelReduction<NumPtsPerBlock, 9, 4>(threadIdx.x, TmpShared);
-	ParallelReduction<NumPtsPerBlock, 9, 5>(threadIdx.x, TmpShared);
-	ParallelReduction<NumPtsPerBlock, 9, 6>(threadIdx.x, TmpShared);
-	ParallelReduction<NumPtsPerBlock, 9, 7>(threadIdx.x, TmpShared);
-	ParallelReduction<NumPtsPerBlock, 9, 8>(threadIdx.x, TmpShared);
+	ParallelReductionFloat3<NumPtsPerBlock, 9, 0>(threadIdx.x, TmpShared);
+	ParallelReductionFloat3<NumPtsPerBlock, 9, 1>(threadIdx.x, TmpShared);
+	ParallelReductionFloat3<NumPtsPerBlock, 9, 2>(threadIdx.x, TmpShared);
 
 	// Store values to global memory
 	if (NumPts < 3)
@@ -414,7 +503,7 @@ __global__ void kernelReduceMMatrices(float* matrices, float* out)
 
 			OutFloat4[0] = TmpSharedFloat4[0];
 			OutFloat4[1] = TmpSharedFloat4[1];
-			out[9] = TmpShared[9];
+			out[8] = TmpShared[8];
 		}
 	}
 	else if (threadIdx.x < 3)
@@ -451,6 +540,7 @@ __global__ void kernelTransformPoints3D(float* points, float* m)
 
 	__syncthreads();
 
+
 	if (tid >= NumPts)
 		return;
 
@@ -466,7 +556,7 @@ __global__ void kernelTransformPoints3D(float* points, float* m)
 	// since w will always be 1 in this ICP implementation
 
 	// Update coordinates (one float3 instead of 3 floats sequentially)
-	PointsFloat3[0] = make_float3(x, y, z);
+	*PointsFloat3 = make_float3(x, y, z);
 }
 
 
@@ -481,9 +571,10 @@ __global__ void kernelAccumulateMatrix(float* accu, float* m)
 	accuShared[threadIdx.x] = accu[threadIdx.x];
 	mShared[threadIdx.x] = m[threadIdx.x];
 
-	if (threadIdx.x >= 4) return;
-
 	__syncthreads();
+
+
+	if (threadIdx.x >= 4) return;
 
 	// Compute matrix-matrix (4x4) multiplication
 	float sum;
@@ -664,8 +755,8 @@ __device__ void kernelJacobi4x4(float *Matrix, float *Eigenvalues, float *Eigenv
 __global__ void kernelEstimateTransformationFromMMatrix(float* centroidMoving, float* centroidFixed, float* matrix, float* outMatrix)
 {
 	// Copy centroids
-	const float CentroidMoving[3] = {centroidMoving[0], centroidMoving[1], centroidMoving[2]};
-	const float CentroidFixed[3] = {centroidFixed[0], centroidFixed[1], centroidFixed[2]};
+	const float3 CentroidMoving = *((float3*)centroidMoving);
+	const float3 CentroidFixed = *((float3*)centroidFixed);
 
 	// Copy matrix
 	float M[3*3];
@@ -709,34 +800,41 @@ __global__ void kernelEstimateTransformationFromMMatrix(float* centroidMoving, f
 	const float xz = x*z;
 	const float yz = y*z;
 
+	// Create temporary matrix (top 3x4 part of the 4x4 matrix)
+	float TmpMat[12];
+
 	// Fill output matrix
-	outMatrix[0*4+0] = ww + xx - yy - zz; 
-	outMatrix[1*4+0] = 2.f*(wz + xy);
-	outMatrix[2*4+0] = 2.f*(-wy + xz);
+	TmpMat[0*4+0] = ww + xx - yy - zz; 
+	TmpMat[1*4+0] = 2.f*(wz + xy);
+	TmpMat[2*4+0] = 2.f*(-wy + xz);
 
-	outMatrix[0*4+1] = 2.f*(-wz + xy);  
-	outMatrix[1*4+1] = ww - xx + yy - zz;
-	outMatrix[2*4+1] = 2.f*(wx + yz);
+	TmpMat[0*4+1] = 2.f*(-wz + xy);  
+	TmpMat[1*4+1] = ww - xx + yy - zz;
+	TmpMat[2*4+1] = 2.f*(wx + yz);
 
-	outMatrix[0*4+2] = 2.f*(wy + xz);
-	outMatrix[1*4+2] = 2.f*(-wx + yz);
-	outMatrix[2*4+2] = ww - xx - yy + zz;
+	TmpMat[0*4+2] = 2.f*(wy + xz);
+	TmpMat[1*4+2] = 2.f*(-wx + yz);
+	TmpMat[2*4+2] = ww - xx - yy + zz;
 
 	// The translation is given by the difference in the transformed moving centroid and the fixed centroid
-	float TransX, TransY, TransZ;
-	TransX = outMatrix[0*4+0] * CentroidMoving[0] + outMatrix[0*4+1] * CentroidMoving[1] + outMatrix[0*4+2] * CentroidMoving[2];
-	TransY = outMatrix[1*4+0] * CentroidMoving[0] + outMatrix[1*4+1] * CentroidMoving[1] + outMatrix[1*4+2] * CentroidMoving[2];
-	TransZ = outMatrix[2*4+0] * CentroidMoving[0] + outMatrix[2*4+1] * CentroidMoving[1] + outMatrix[2*4+2] * CentroidMoving[2];
+	const float TransX = TmpMat[0*4+0] * CentroidMoving.x + TmpMat[0*4+1] * CentroidMoving.y + TmpMat[0*4+2] * CentroidMoving.z;
+	const float TransY = TmpMat[1*4+0] * CentroidMoving.x + TmpMat[1*4+1] * CentroidMoving.y + TmpMat[1*4+2] * CentroidMoving.z;
+	const float TransZ = TmpMat[2*4+0] * CentroidMoving.x + TmpMat[2*4+1] * CentroidMoving.y + TmpMat[2*4+2] * CentroidMoving.z;
 
-	outMatrix[0*4+3] = CentroidFixed[0] - TransX;
-	outMatrix[1*4+3] = CentroidFixed[1] - TransY;
-	outMatrix[2*4+3] = CentroidFixed[2] - TransZ;
+	TmpMat[0*4+3] = CentroidFixed.x - TransX;
+	TmpMat[1*4+3] = CentroidFixed.y - TransY;
+	TmpMat[2*4+3] = CentroidFixed.z - TransZ;
+
+	// Write matrix to global memory using float4 for faster access
+	float4* TmpMatFloat4 = (float4*)TmpMat;
+	float4* OutMatrixFloat4 = (float4*)outMatrix;
+
+	OutMatrixFloat4[0] = TmpMatFloat4[0]; // First row
+	OutMatrixFloat4[1] = TmpMatFloat4[1]; // Second row
+	OutMatrixFloat4[2] = TmpMatFloat4[2]; // Third row
 
 	// Fill the bottom row of the 4x4 matrix
-	outMatrix[3*4+0] = 0.f;
-	outMatrix[3*4+1] = 0.f;
-	outMatrix[3*4+2] = 0.f;
-	outMatrix[3*4+3] = 1.f;
+	OutMatrixFloat4[3] = make_float4(0.f, 0.f, 0.f, 1.f);  // Fourth row
 }
 
 

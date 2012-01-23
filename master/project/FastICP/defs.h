@@ -19,7 +19,7 @@
 #define MAX_REPS 256
 #endif
 
-// # Threads per block
+// # Threads per block (do NOT change this value: 128)
 #ifndef CUDA_THREADS_PER_BLOCK
 #define CUDA_THREADS_PER_BLOCK 128
 #endif
@@ -29,25 +29,13 @@
 #define CUDA_BUFFER_SIZE CUDA_THREADS_PER_BLOCK
 #endif
 
-// Use texture memory instead of global memory in some situations
+// Use texture memory instead of global memory in some situations (buggy!)
 //#define USE_TEXTURE_MEMORY
 
 // Used in .cu-files
 #ifndef DIVUP
 #define DIVUP(a,b) ((a % b != 0) ? (a/b + 1) : (a/b))
 #endif
-
-// Macro for runtime evaluations
-//#define COMPUTERUNTIME(CODE,NAME) CODE
-#define COMPUTERUNTIME(CODE,NAME)									\
-{																	\
-	QTime EstimateRuntime;											\
-	const int NTimes = 250;											\
-	EstimateRuntime.start();										\
-	for (int i = 0; i < NTimes; ++i) { CODE }						\
-	int Elapsed = EstimateRuntime.elapsed();						\
-	LOG_DEB(NAME << ": " << (float)Elapsed/(float)NTimes << "ms")	\
-}
 
 
 #endif // DEFS_H

@@ -15,12 +15,6 @@
 #include "VolumeManager.h"
 
 
-typedef ritk::RImageF2								RImageType;
-typedef RImageType::Pointer							RImagePointer;
-typedef RImageType::ConstPointer					RImageConstPointer;
-typedef vtkSmartPointer<ritk::RImageActorPipeline>	ActorPointer;
-
-
 /**	@class	FastICPPlugin
  *	@author	Dominik Neumann
  *	@brief	Sample application using our efficient ICP variant
@@ -32,6 +26,11 @@ typedef vtkSmartPointer<ritk::RImageActorPipeline>	ActorPointer;
 class FastICPPlugin : public ritk::ApplicationPlugin
 {
 	Q_OBJECT
+
+	typedef ritk::RImageF2								RImageType;
+	typedef RImageType::Pointer							RImagePointer;
+	typedef RImageType::ConstPointer					RImageConstPointer;
+	typedef vtkSmartPointer<ritk::RImageActorPipeline>	ActorPointer;
 
 public:
 	/// Constructor
@@ -82,10 +81,20 @@ protected slots:
 	/// This method is called when the user toggles the data mode (synthetic -> Kinect data or vice versa)
 	void ToggleDataMode();
 
-#if 0
-	void NextOne();
-#endif
+	/// Add current moving point set to volume
+	void AddToVolume(bool Visualize = true);
 
+	/// Visualize the volume
+	void VisualizeVolume();
+
+	/// Save internal volume as meta image file (.mha)
+	void SaveVolume();
+
+	/// Reset volume to initial state (all voxels -> 0)
+	void ResetVolume();
+
+	// Stitch the current frame to the volume
+	void AutoStitch();
 
 protected:
 	/// The widget
@@ -100,11 +109,12 @@ protected:
 	/// Generates lines between corresponding points in the given datasets (assumes points with same index in both sets correspond to each other)
 	void PlotCorrespondenceLines(float* Data1, float* Data2, ActorPointer Actor);
 	
-	/**	@name Pointers to actors for fixed and moving point set, used for visualization */
+	/**	@name Pointers to actors for e.g. fixed and moving point set, used for visualization */
 	//@{
 	ActorPointer m_ActorFixed;
 	ActorPointer m_ActorMoving;
 	ActorPointer m_ActorLines;
+	ActorPointer m_ActorVolumeAsPointCloud;
 	//@}
 
 	/// Stores weight for payload (RGB data), used during NN search (RBC)
@@ -124,15 +134,15 @@ protected:
 	//@}
 	
 	/// Pointer to our data generator for synthetic data
-	DataGenerator* m_DataGenerator;
+	std::shared_ptr<DataGenerator> m_DataGenerator;
 
 	/// Pointer to current frame from RITK pipeline
 	ritk::NewFrameEvent::RImageConstPointer m_CurrentFrame;
 
 	/**	@name Pointers to Kinect data managers (required when we use real data) */
 	//@{
-	KinectDataManager* m_KinectFixed;
-	KinectDataManager* m_KinectMoving;
+	std::shared_ptr<KinectDataManager> m_KinectFixed;
+	std::shared_ptr<KinectDataManager> m_KinectMoving;
 	//@}
 
 	/// True, if user chooses to show landmarks instead of the whole frame (Kinect data only)
@@ -151,7 +161,7 @@ protected:
 	bool m_SyntheticDataMode;
 
 	/// The volume manager
-	VolumeManager<128, 40>* m_Volume;
+	VolumeManager::Pointer m_Volume;
 };
 
 

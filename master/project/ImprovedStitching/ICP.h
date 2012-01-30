@@ -3,9 +3,6 @@
 
 #include "RBC.h"
 
-// If ESTIMATE_MATRIX_ON_GPU is defined, everything will be executed on the GPU, no memory transfers during ICP necessary
-#define ESTIMATE_MATRIX_ON_GPU
-
 
 /**	@class		ICP
  *	@brief		Implementation of the ICP algorithm
@@ -76,9 +73,6 @@ public:
 protected:
 	/// Given two sets of points, estimate the optimal rigid transformation
 	virtual void EstimateTransformationMatrix(DatasetContainer::Element* Moving, DatasetContainer::Element* Fixed);
-
-	/// Compute Eigenvectors from 4x4 symmetric matrix
-	virtual void Jacobi4x4(float *Matrix, float *Eigenvalues, float *Eigenvectors);
 
 	/// Maximum number of ICP iterations
 	const unsigned long m_MaxIter;

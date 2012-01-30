@@ -151,7 +151,7 @@ void ICP<NumPts, Dim>::SetPayloadWeight(float Weight)
 	// You should only provide values between [0;1]
 	if (Weight < 0 || Weight > 1)
 	{
-		LOG_DEB("Warning: You should only provide values in [0;1].");
+		LOG_DEB("Warning: You should only provide values in [0;1]. Not " << Weight << ".");
 	}
 
 	float Weights[Dim];
@@ -187,10 +187,13 @@ void ICP<NumPts, Dim>::Initialize()
 	// Build RBC tree
 	m_RBC->BuildRBC(m_FixedPts);
 
-	// Fill elements of accumulation matrix so that we get the identity matrix (4x4) and transfer to GPU
-	const float Id4x4[16] = {1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};
-	std::copy(Id4x4, Id4x4+16, stdext::checked_array_iterator<float*>(m_AccumulateMat->GetBufferPointer(), 16));
-	m_AccumulateMat->SynchronizeDevice();
+	// Apply previous transform
+	CUDATransformPoints3D(
+		m_MovingPts->GetCudaMemoryPointer(),
+		m_AccumulateMat->GetCudaMemoryPointer(),
+		NumPts,
+		Dim
+		);
 
 	// We use the Frobenius norm of the intermediate transformation matrix as an indicator for convergence
 	m_FrobNorm = FLT_MAX;
@@ -265,157 +268,6 @@ bool ICP<NumPts, Dim>::NextIteration()
 
 //----------------------------------------------------------------------------
 template<unsigned long NumPts, unsigned long Dim>
-void ICP<NumPts, Dim>::Jacobi4x4(float *Matrix, float *Eigenvalues, float *Eigenvectors)
-{
-	/////////////////////////////////////////////////////////////////
-	// The following code is a modified version of parts of		   //
-	// 'vtkJacobiN' from 'vtkMath' the Visualization Toolkit (VTK, //
-	//								          http://www.vtk.org/) //
-	/////////////////////////////////////////////////////////////////
-
-#define ROTATE(Matrix, i, j, k, l) g = Matrix[i*n+j]; h = Matrix[k*n+l]; Matrix[i*n+j] = g-s*(h+g*tau); Matrix[k*n+l] = h + s*(g-h*tau);
-
-	float bspace[4], zspace[4];
-	float *b = bspace;
-	float *z = zspace;
-
-	// We have a 4x4 matrix
-	const int n = 4;
-	const int MaxRotations = 20;
-
-	// Initialize
-	for (int ip = 0; ip < n; ++ip)
-	{
-		b[ip] = Eigenvalues[ip] = Matrix[ip*n+ip];
-		z[ip] = 0.f;
-	}
-
-	// Begin rotation sequence
-	for (int i = 0; i < MaxRotations; ++i)
-	{
-		float sm = 0.f;
-		for (int ip = 0; ip < n-1; ++ip)
-		{
-			for (int iq = ip+1; iq < n; ++iq)
-			{
-				sm += fabs(Matrix[ip*n+iq]);
-			}
-		}
-		if (sm == 0.f) break;
-
-		float tresh = i < 3 ? 0.2f*sm/(n*n) : 0.f;
-		for (int ip = 0; ip < n-1; ++ip)
-		{
-			for (int iq = ip+1; iq < n; ++iq)
-			{
-				float g = 100.f*fabs(Matrix[ip*n+iq]);
-
-				// After 4 sweeps
-				if (i > 3 && (fabs(Eigenvalues[ip]) + g) == fabs(Eigenvalues[ip]) && (fabs(Eigenvalues[iq]) + g) == fabs(Eigenvalues[iq]))
-					Matrix[ip*n+iq] = 0.f;
-				else if (fabs(Matrix[ip*n+iq]) > tresh)
-				{
-					float h = Eigenvalues[iq] - Eigenvalues[ip];
-					float t;
-					if ( (fabs(h)+g) == fabs(h) ) t = Matrix[ip*n+iq] / h;
-					else
-					{
-						float theta = 0.5f*h / Matrix[ip*n+iq];
-						t = 1.f / (fabs(theta) + sqrt(1.f+theta*theta));
-						if (theta < 0.f) t = -t;
-					}
-					float c = 1.f / sqrt(1.f + t*t);
-					float s = t*c;
-					float tau = s/(1.f + c);
-					h = t*Matrix[ip*n+iq];
-					z[ip] -= h;
-					z[iq] += h;
-					Eigenvalues[ip] -= h;
-					Eigenvalues[iq] += h;
-					Matrix[ip*n+iq] = 0.f;
-
-					// ip already shifted left by 1 unit
-					for (int j = 0; j <= ip-1; ++j)
-					{
-						ROTATE(Matrix, j, ip, j, iq);
-					}
-
-					// ip and iq already shifted left by 1 unit
-					for (int j = ip+1; j <= iq-1; ++j)
-					{
-						ROTATE(Matrix, ip, j, j, iq);
-					}
-
-					// iq already shifted left by 1 unit
-					for (int j = iq+1; j < n; ++j)
-					{
-						ROTATE(Matrix, ip, j, iq, j);
-					}
-
-					for (int j = 0; j < n; ++j)
-					{
-						ROTATE(Eigenvectors, j, ip, j, iq);
-					}
-				}
-			}
-		}
-
-		for (int ip = 0; ip < n; ++ip)
-		{
-			b[ip] += z[ip];
-			Eigenvalues[ip] = b[ip];
-			z[ip] = 0.f;
-		}
-	}
-
-	// Sort eigenfunctions
-	for (int j = 0; j < n-1; ++j)
-	{
-		int k = j;
-		float tmp = Eigenvalues[k];
-		for (int i = j + 1; i < n; ++i)
-		{
-			if (Eigenvalues[i] >= tmp)
-			{
-				k = i;
-				tmp = Eigenvalues[k];
-			}
-		}
-
-		if (k != j)
-		{
-			Eigenvalues[k] = Eigenvalues[j];
-			Eigenvalues[j] = tmp;
-			for (int i = 0; i < n; ++i)
-			{
-				tmp = Eigenvectors[i*n+j];
-				Eigenvectors[i*n+j] = Eigenvectors[i*n+k];
-				Eigenvectors[i*n+k] = tmp;
-			}
-		}
-	}
-
-	// Ensure eigenvector consistency (i.e., Jacobi can compute vectors that
-	// are negative of one another (.707,.707,0) and (-.707,-.707,0). This can
-	// reek havoc in hyperstreamline/other stuff. We will select the most
-	// positive eigenvector.
-	int ceil_half_n = (n >> 1) + (n & 1);
-	for (int j = 0; j < n; ++j)
-	{
-		int numPos = 0;
-		for (int i = 0; i < n; ++i)
-			if (Eigenvectors[i*n+j] >= 0.f)
-				numPos++;
-
-		if (numPos < ceil_half_n)
-			for (int i = 0; i < n; ++i)
-				Eigenvectors[i*n+j] *= -1.f;
-	}
-}
-
-
-//----------------------------------------------------------------------------
-template<unsigned long NumPts, unsigned long Dim>
 void ICP<NumPts, Dim>::EstimateTransformationMatrix(DatasetContainer::Element* Moving, DatasetContainer::Element* Fixed)
 {
 	/////////////////////////////////////////////////////////////////
@@ -479,7 +331,6 @@ void ICP<NumPts, Dim>::EstimateTransformationMatrix(DatasetContainer::Element* M
 		NumPts/CUDA_THREADS_PER_BLOCK
 		);
 
-#ifdef ESTIMATE_MATRIX_ON_GPU
 	// Estimate transformation matrix
 	CUDAEstimateTransformationFromMMatrix(
 		m_CentroidsAndMMatrix->GetCudaMemoryPointer(), // Centroid of moving point set
@@ -487,95 +338,4 @@ void ICP<NumPts, Dim>::EstimateTransformationMatrix(DatasetContainer::Element* M
 		m_CentroidsAndMMatrix->GetCudaMemoryPointer()+6, // M matrix
 		m_TmpMat->GetCudaMemoryPointer() // Final transformation matrix (output)
 		);
-
-#else
-	m_CentroidsAndMMatrix->SynchronizeHost();
-
-	// Copy centroids
-	const float xMoving = m_CentroidsAndMMatrix->GetBufferPointer()[0];
-	const float yMoving = m_CentroidsAndMMatrix->GetBufferPointer()[1];
-	const float zMoving = m_CentroidsAndMMatrix->GetBufferPointer()[2];
-	const float xFixed = m_CentroidsAndMMatrix->GetBufferPointer()[3];
-	const float yFixed = m_CentroidsAndMMatrix->GetBufferPointer()[4];
-	const float zFixed = m_CentroidsAndMMatrix->GetBufferPointer()[5];
-
-	const float CentroidMoving[3] = {xMoving, yMoving, zMoving};
-	const float CentroidFixed[3] = {xFixed, yFixed, zFixed};
-
-	// Copy matrix
-	float M[3*3];
-	for (int r = 0; r < 3; ++r)
-		for (int c = 0; c < 3; ++c)
-			M[r*3+c] = m_CentroidsAndMMatrix->GetBufferPointer()[r*3+c + 6]; // First element of matrix is at position 6
-
-	// Build the 4x4 matrix N
-	float Ndata[4*4] = {M[0*3+0] + M[1*3+1] + M[2*3+2], M[1*3+2] - M[2*3+1], M[2*3+0] - M[0*3+2], M[0*3+1] - M[1*3+0],
-						M[1*3+2] - M[2*3+1], M[0*3+0] - M[1*3+1] - M[2*3+2], M[0*3+1] + M[1*3+0], M[2*3+0] + M[0*3+2],
-						M[2*3+0] - M[0*3+2], M[0*3+1] + M[1*3+0], - M[0*3+0] + M[1*3+1] - M[2*3+2], M[1*3+2] + M[2*3+1],
-						M[0*3+1] - M[1*3+0], M[2*3+0] + M[0*3+2], M[1*3+2] + M[2*3+1], - M[0*3+0] - M[1*3+1] + M[2*3+2] };
-
-	// Eigen-decompose N (is symmetric)
-	float Eigenvectors[4*4] = {1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};
-	float Eigenvalues[4];
-
-	Jacobi4x4(Ndata, Eigenvalues, Eigenvectors);
-
-	// The eigenvector with the largest eigenvalue is the quaternion we want
-	// (they are sorted in decreasing order for us by JacobiN)
-	float w, x, y, z;
-
-	// Points are not collinear
-	w = Eigenvectors[0*4+0];
-	x = Eigenvectors[1*4+0];
-	y = Eigenvectors[2*4+0];
-	z = Eigenvectors[3*4+0];
-
-	// Convert quaternion to a rotation matrix
-	const float ww = w*w;
-	const float wx = w*x;
-	const float wy = w*y;
-	const float wz = w*z;
-
-	const float xx = x*x;
-	const float yy = y*y;
-	const float zz = z*z;
-
-	const float xy = x*y;
-	const float xz = x*z;
-	const float yz = y*z;
-
-	// Pointer to our matrix
-	float* TmpMatPtr = m_TmpMat->GetBufferPointer();
-
-	TmpMatPtr[0*4+0] = ww + xx - yy - zz; 
-	TmpMatPtr[1*4+0] = 2.0*(wz + xy);
-	TmpMatPtr[2*4+0] = 2.0*(-wy + xz);
-
-	TmpMatPtr[0*4+1] = 2.0*(-wz + xy);  
-	TmpMatPtr[1*4+1] = ww - xx + yy - zz;
-	TmpMatPtr[2*4+1] = 2.0*(wx + yz);
-
-	TmpMatPtr[0*4+2] = 2.0*(wy + xz);
-	TmpMatPtr[1*4+2] = 2.0*(-wx + yz);
-	TmpMatPtr[2*4+2] = ww - xx - yy + zz;
-
-	// The translation is given by the difference in the transformed moving centroid and the fixed centroid
-	float TransX, TransY, TransZ;
-	TransX = TmpMatPtr[0*4+0] * CentroidMoving[0] + TmpMatPtr[0*4+1] * CentroidMoving[1] + TmpMatPtr[0*4+2] * CentroidMoving[2];
-	TransY = TmpMatPtr[1*4+0] * CentroidMoving[0] + TmpMatPtr[1*4+1] * CentroidMoving[1] + TmpMatPtr[1*4+2] * CentroidMoving[2];
-	TransZ = TmpMatPtr[2*4+0] * CentroidMoving[0] + TmpMatPtr[2*4+1] * CentroidMoving[1] + TmpMatPtr[2*4+2] * CentroidMoving[2];
-
-	TmpMatPtr[0*4+3] = CentroidFixed[0] - TransX;
-	TmpMatPtr[1*4+3] = CentroidFixed[1] - TransY;
-	TmpMatPtr[2*4+3] = CentroidFixed[2] - TransZ;
-
-	// Fill the bottom row of the 4x4 matrix
-	TmpMatPtr[3*4+0] = 0.0;
-	TmpMatPtr[3*4+1] = 0.0;
-	TmpMatPtr[3*4+2] = 0.0;
-	TmpMatPtr[3*4+3] = 1.0;
-
-	// Synchronize to device
-	m_TmpMat->SynchronizeDevice();
-#endif
 }

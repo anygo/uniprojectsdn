@@ -27,7 +27,7 @@
      </property>
      <layout class="QGridLayout" name="gridLayout_10">
       <item row="0" column="0">
-       <widget class="QGroupBox" name="groupBox_5">
+       <widget class="QGroupBox" name="m_GroupBoxControls">
         <property name="enabled">
          <bool>true</bool>
         </property>
@@ -212,10 +212,35 @@
              </widget>
             </item>
             <item>
-             <widget class="QCheckBox" name="m_CheckBoxAnimate">
-              <property name="text">
-               <string>Animate ICP</string>
+             <widget class="QFrame" name="frame_10">
+              <property name="frameShape">
+               <enum>QFrame::StyledPanel</enum>
               </property>
+              <property name="frameShadow">
+               <enum>QFrame::Raised</enum>
+              </property>
+              <layout class="QHBoxLayout" name="horizontalLayout_9">
+               <property name="margin">
+                <number>0</number>
+               </property>
+               <item>
+                <widget class="QCheckBox" name="m_CheckBoxAnimate">
+                 <property name="text">
+                  <string>Animate ICP</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QCheckBox" name="m_CheckBoxAnimateICPSlowMotion">
+                 <property name="enabled">
+                  <bool>false</bool>
+                 </property>
+                 <property name="text">
+                  <string>Slow Motion</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
              </widget>
             </item>
             <item>
@@ -569,13 +594,6 @@ p, li { white-space: pre-wrap; }
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="m_PushButtonAddToVolume">
-              <property name="text">
-               <string>Add to Volume (Moving Points)</string>
-              </property>
-             </widget>
-            </item>
-            <item>
              <widget class="QFrame" name="frame_9">
               <property name="frameShape">
                <enum>QFrame::StyledPanel</enum>
@@ -685,79 +703,6 @@ p, li { white-space: pre-wrap; }
         </layout>
        </widget>
       </item>
-      <item row="0" column="1">
-       <widget class="QGroupBox" name="m_GroupBoxVolumeVisualization">
-        <property name="enabled">
-         <bool>true</bool>
-        </property>
-        <property name="title">
-         <string>Volume</string>
-        </property>
-        <layout class="QVBoxLayout" name="verticalLayout_5">
-         <item>
-          <widget class="ritk::VisualizationWidget3D" name="m_VisualizationWidget3DVolume" native="true">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="minimumSize">
-            <size>
-             <width>100</width>
-             <height>100</height>
-            </size>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>10000</width>
-             <height>10000</height>
-            </size>
-           </property>
-           <property name="statusTip">
-            <string/>
-           </property>
-           <property name="autoFillBackground">
-            <bool>true</bool>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QCheckBox" name="m_CheckBoxAutoStitch">
-           <property name="text">
-            <string>AutoStitch</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="m_PushButtonResetVolume">
-           <property name="text">
-            <string>Reset Volume</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QWidget" name="widget" native="true">
-           <layout class="QHBoxLayout" name="horizontalLayout_9">
-            <property name="margin">
-             <number>0</number>
-            </property>
-            <item>
-             <widget class="QPushButton" name="m_PushButtonSaveVolume">
-              <property name="focusPolicy">
-               <enum>Qt::StrongFocus</enum>
-              </property>
-              <property name="text">
-               <string>Save Volume as Meta Image (.mha)</string>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </widget>
-         </item>
-        </layout>
-       </widget>
-      </item>
      </layout>
     </widget>
    </item>
@@ -799,8 +744,8 @@ p, li { white-space: pre-wrap; }
      <y>158</y>
     </hint>
     <hint type="destinationlabel">
-     <x>182</x>
-     <y>620</y>
+     <x>210</x>
+     <y>593</y>
     </hint>
    </hints>
   </connection>
@@ -837,34 +782,18 @@ p, li { white-space: pre-wrap; }
    </hints>
   </connection>
   <connection>
-   <sender>m_RadioButtonRealData</sender>
+   <sender>m_CheckBoxAnimate</sender>
    <signal>toggled(bool)</signal>
-   <receiver>m_GroupBoxVolumeVisualization</receiver>
-   <slot>setVisible(bool)</slot>
+   <receiver>m_CheckBoxAnimateICPSlowMotion</receiver>
+   <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>247</x>
-     <y>157</y>
+     <x>140</x>
+     <y>180</y>
     </hint>
     <hint type="destinationlabel">
-     <x>740</x>
-     <y>160</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>m_CheckBoxAutoStitch</sender>
-   <signal>clicked(bool)</signal>
-   <receiver>groupBox_5</receiver>
-   <slot>setDisabled(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>753</x>
-     <y>675</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>271</x>
-     <y>161</y>
+     <x>155</x>
+     <y>180</y>
     </hint>
    </hints>
   </connection>

@@ -5,14 +5,12 @@
 #include "ritkRImage.h"
 #include "ritkRImageActorPipeline.h"
 
-#include "FastICPPlugin.h"
 #include "FastICPWidget.h"
 
 #include "defs.h"
 #include "ICP.h"
 #include "DataGenerator.h"
 #include "KinectDataManager.h"
-#include "VolumeManager.h"
 
 
 /**	@class	FastICPPlugin
@@ -27,14 +25,18 @@ class FastICPPlugin : public ritk::ApplicationPlugin
 {
 	Q_OBJECT
 
+public:
+	/**	@name Plugin Typedefs */
+	//@{
 	typedef ritk::RImageF2								RImageType;
 	typedef RImageType::Pointer							RImagePointer;
 	typedef RImageType::ConstPointer					RImageConstPointer;
 	typedef vtkSmartPointer<ritk::RImageActorPipeline>	ActorPointer;
+	//@}
 
-public:
 	/// Constructor
 	FastICPPlugin();
+
 	/// Destructor
 	~FastICPPlugin();
 
@@ -81,21 +83,6 @@ protected slots:
 	/// This method is called when the user toggles the data mode (synthetic -> Kinect data or vice versa)
 	void ToggleDataMode();
 
-	/// Add current moving point set to volume
-	void AddToVolume(bool Visualize = true);
-
-	/// Visualize the volume
-	void VisualizeVolume();
-
-	/// Save internal volume as meta image file (.mha)
-	void SaveVolume();
-
-	/// Reset volume to initial state (all voxels -> 0)
-	void ResetVolume();
-
-	// Stitch the current frame to the volume
-	void AutoStitch();
-
 protected:
 	/// The widget
 	FastICPWidget *m_Widget;
@@ -114,7 +101,6 @@ protected:
 	ActorPointer m_ActorFixed;
 	ActorPointer m_ActorMoving;
 	ActorPointer m_ActorLines;
-	ActorPointer m_ActorVolumeAsPointCloud;
 	//@}
 
 	/// Stores weight for payload (RGB data), used during NN search (RBC)
@@ -134,15 +120,15 @@ protected:
 	//@}
 	
 	/// Pointer to our data generator for synthetic data
-	std::shared_ptr<DataGenerator> m_DataGenerator;
+	itk::SmartPointer<DataGenerator> m_DataGenerator;
 
 	/// Pointer to current frame from RITK pipeline
 	ritk::NewFrameEvent::RImageConstPointer m_CurrentFrame;
 
 	/**	@name Pointers to Kinect data managers (required when we use real data) */
 	//@{
-	std::shared_ptr<KinectDataManager> m_KinectFixed;
-	std::shared_ptr<KinectDataManager> m_KinectMoving;
+	itk::SmartPointer<KinectDataManager> m_KinectFixed;
+	itk::SmartPointer<KinectDataManager> m_KinectMoving;
 	//@}
 
 	/// True, if user chooses to show landmarks instead of the whole frame (Kinect data only)
@@ -159,9 +145,6 @@ protected:
 
 	/// True, if we currently work on synthetic data, otherwise it will be false (Kinect data)
 	bool m_SyntheticDataMode;
-
-	/// The volume manager
-	VolumeManager::Pointer m_Volume;
 };
 
 

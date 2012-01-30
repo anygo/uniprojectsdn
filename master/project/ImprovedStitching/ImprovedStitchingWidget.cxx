@@ -1,25 +1,24 @@
-#include "FastICPWidget.h"
+#include "ImprovedStitchingWidget.h"
 #include "ritkDebugManager.h"
 
 #include <windows.h> 
 
 
 //----------------------------------------------------------------------------
-FastICPWidget::FastICPWidget()
+ImprovedStitchingWidget::ImprovedStitchingWidget()
 {
 	setupUi(this);
 }
 
 
 //----------------------------------------------------------------------------
-FastICPWidget::~FastICPWidget()
+ImprovedStitchingWidget::~ImprovedStitchingWidget()
 {
 }
 
 
 //----------------------------------------------------------------------------
 void
-FastICPWidget::UpdateGUI()
-{	
-	m_VisualizationWidget3D->UpdateGUI();
+ImprovedStitchingWidget::UpdateGUI()
+{
 }

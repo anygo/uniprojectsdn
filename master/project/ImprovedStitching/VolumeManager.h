@@ -5,6 +5,7 @@
 #include "itkRGBAPixel.h"
 
 #include "ritkCudaRegularMemoryImportImageContainer.h"
+#include "ritkCuda3DArrayImportImageContainer.h"
 #include "RBC.h"
 
 
@@ -35,6 +36,7 @@ public:
 	typedef Superclass::SpacingType						SpacingType;
 	typedef Superclass::DirectionType					DirectionType;
 	typedef Superclass::PointType						PointType;
+	typedef Superclass::PixelType						PixelType;
 	typedef Superclass::InternalPixelType				InternalPixelType;
 	//@}
 
@@ -47,32 +49,14 @@ public:
 	/// Image dimension
 	itkStaticConstMacro(ImageDimension, unsigned int, Superclass::ImageDimension);
 
-	/** @name Convenience methods to set the LargestPossibleRegion, BufferedRegion and RequestedRegion. Allocate must still be called.*/
-	//@{
-	virtual void SetRegions(RegionType region);
-	virtual void SetRegions(SizeType size);
-	//@}
-
-	/**	@name LargestPossibleRegion, BufferedRegion, RequestedRegion.*/
-	//@{
-	virtual void SetLargestPossibleRegion(const RegionType &region);
-	virtual void SetRequestedRegion(const RegionType &region);
+	/// Override required, since the size of the volume needs to be copied to GPU
 	virtual void SetBufferedRegion(const RegionType &region);
-	//@}
 
-	/** @name Set the spacing.*/
-	//@{
+	/// Override required, since spacing needs to be copied to GPU
 	virtual void SetSpacing(const SpacingType &Spacing);
-	virtual void SetSpacing(const double Spacing[ImageDimension]);
-	virtual void SetSpacing(const float Spacing[ImageDimension]);
-	//@}
 
-	/** @name Set the origin.*/
-	//@{
+	/// Override required, since origin needs to be copied to GPU
 	virtual void SetOrigin(const PointType &Origin);
-	virtual void SetOrigin(const double Origin[ImageDimension]);
-	virtual void SetOrigin(const float Origin[ImageDimension]);
-	//@}
 
 	/// Allocate the volume
 	virtual void Allocate();
@@ -80,8 +64,8 @@ public:
 
 	/**	@name CUDA memory containers */
 	//@{
-	typedef ritk::CudaRegularMemoryImportImageContainerF				DatasetContainer;
-	typedef ritk::CudaRegularMemoryImportImageContainer<ulong, uchar>	VoxelContainer;
+	typedef ritk::CudaRegularMemoryImportImageContainerF								DatasetContainer;
+	typedef ritk::CudaRegularMemoryImportImageContainer<ulong, itk::RGBAPixel<uchar> >	VoxelContainer;
 	//@}
 	
 
@@ -93,6 +77,9 @@ public:
 
 	/// Reset the volume
 	virtual void ResetVolume();
+
+	/// Synchronize the voxels to host
+	virtual void SynchronizeDataToHost() { m_Voxels->SynchronizeHost(); }
 	
 protected:
 	/// Constructor 
@@ -112,6 +99,8 @@ protected:
 
 	/// Configuration container for spacing, dimension extent and origin (since we need it on the GPU as well)
 	DatasetContainer::Pointer m_Config;
+
+	int m_AddPointsCalls;
 
 private:
 	/// Purposely not implemented

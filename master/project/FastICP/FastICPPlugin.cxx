@@ -20,6 +20,11 @@
 
 #include <QFileDialog>
 
+// Required for Sleep() in animated ICP
+#ifdef WIN32
+#include "windows.h"
+#endif
+
 
 //----------------------------------------------------------------------------
 FastICPPlugin::FastICPPlugin()
@@ -53,11 +58,6 @@ FastICPPlugin::FastICPPlugin()
 	connect(m_Widget->m_PushButtonImportFrameMoving, SIGNAL(clicked()), this, SLOT(ImportMovingData()));
 	connect(m_Widget->m_HorizontalSliderClipPercentage, SIGNAL(valueChanged(int)), this, SLOT(ChangeClipPercentage(int)));
 	connect(m_Widget->m_CheckBoxShowLandmarks, SIGNAL(stateChanged(int)), this, SLOT(ToggleShowLandmarks()));
-
-	// Volume-related
-	connect(m_Widget->m_PushButtonAddToVolume, SIGNAL(clicked()), this, SLOT(AddToVolume()));
-	connect(m_Widget->m_PushButtonSaveVolume, SIGNAL(clicked()), this, SLOT(SaveVolume()));
-	connect(m_Widget->m_PushButtonResetVolume, SIGNAL(clicked()), this, SLOT(ResetVolume()));
 
 	
 	// Init members
@@ -96,7 +96,7 @@ FastICPPlugin::FastICPPlugin()
 	ChangeRGBWeight(m_Widget->m_HorizontalSliderRGBWeight->value());
 
 	// Init data generator
-	m_DataGenerator = std::shared_ptr<DataGenerator>(new DataGenerator);
+	m_DataGenerator = DataGenerator::New();
 
 	// Init member variable that stores current plugin mode (synthetic or Kinect data)
 	m_SyntheticDataMode = m_Widget->m_RadioButtonSyntheticData->isChecked();
@@ -104,61 +104,15 @@ FastICPPlugin::FastICPPlugin()
 	// Init switch for landmarks vs all points
 	m_ShowLandmarks = m_Widget->m_CheckBoxShowLandmarks->isChecked();
 
+	// Init KinectDataManagers
+	m_KinectFixed = KinectDataManager::New();
+	m_KinectMoving = KinectDataManager::New();
+
 	// Init clip percentage for Kinect data manager (moving points)
 	float ClipPercentage = static_cast<float>(m_Widget->m_HorizontalSliderClipPercentage->value()) / 
 		static_cast<float>(m_Widget->m_HorizontalSliderClipPercentage->maximum()) / 2.01f; // Roughly inbetween [0;0.5[
-
-	// Init KinectDataManagers
-	m_KinectFixed = std::shared_ptr<KinectDataManager>(new KinectDataManager(m_NumPts, 0));
-	m_KinectMoving = std::shared_ptr<KinectDataManager>(new KinectDataManager(m_NumPts, ClipPercentage));
-
-	// Init VolumeManager
-	m_Volume = VolumeManager::New();
-
-	// Set Origin
-	VolumeManager::PointType Origin;
-	Origin[0] = -3072;
-	Origin[1] = -3072;
-	Origin[2] = -1536;
-	m_Volume->SetOrigin(Origin);
-
-	// Set spacing
-	VolumeManager::SpacingType Spacing;
-	Spacing[0] = 24;
-	Spacing[1] = 24;
-	Spacing[2] = 24;
-	m_Volume->SetSpacing(Spacing);
-
-	// Set regions
-	VolumeManager::RegionType Region;
-
-	// Region requires start index and size
-	VolumeManager::IndexType Start;
-	Start.Fill(0);
-	VolumeManager::SizeType Size;
-	Size[0] = 256;
-	Size[1] = 256;
-	Size[2] = 256;
-
-	Region.SetIndex(Start);
-	Region.SetSize(Size);
-
-	m_Volume->SetRegions(Region);
-
-	// Allocate memory
-	m_Volume->Allocate();
-
-	// Init volume actor
-	m_ActorVolumeAsPointCloud = ActorPointer::New();
-	m_ActorVolumeAsPointCloud->SetVisualizationMode(ritk::RImageActorPipeline::RGB);
-	m_ActorVolumeAsPointCloud->GetProperty()->SetPointSize(2);
-	m_Widget->m_VisualizationWidget3DVolume->AddActor(m_ActorVolumeAsPointCloud);
-	m_Widget->m_VisualizationWidget3DVolume->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->SetBackground(.1, .1, .1);
-	m_Widget->m_VisualizationWidget3DVolume->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->SetBackground2(.3, .3, .3);
-
-	// Hide volume visualization if synthetic data mode is enabled
-	if (m_SyntheticDataMode)
-		m_Widget->m_GroupBoxVolumeVisualization->setHidden(true);
+	m_KinectMoving->SetClipPercentage(ClipPercentage);
+	m_KinectFixed->SetClipPercentage(0);
 
 	// Init flags
 	m_KinectFixedImported = false;
@@ -214,62 +168,11 @@ FastICPPlugin::ProcessEvent(ritk::Event::Pointer EventP)
 		UnlockPlugin();
 
 		m_FrameAvailable = true;
-
-
-		// Stitching
-		if (!m_SyntheticDataMode && m_Widget->m_CheckBoxAutoStitch->isChecked())
-		{
-			LockPlugin();
-			AutoStitch();
-			UnlockPlugin();
-
-			VisualizeVolume();
-		}
 	} 
 	else
 	{
 		LOG_DEB("Unknown event");
 	}
-}
-
-
-//----------------------------------------------------------------------------
-void
-FastICPPlugin::AutoStitch()
-{
-	// Previous moving points are now fixed points
-	m_KinectFixed->SwapPointsContainer(m_KinectMoving.get());
-
-	// In case, the number of landmarks has changed
-	m_KinectFixed->SetNumberOfLandmarks(m_NumPts);
-
-	// Extract landmarks from "swapped" point cloud (we can not use the landmarks
-	// from the set of moving points, because we do NOT clip the fixed set of points)
-	m_KinectFixed->ExtractLandmarks();
-
-	// New moving points
-	m_KinectMoving->SetNumberOfLandmarks(m_NumPts);
-	m_KinectMoving->ImportKinectData(m_CurrentFrame);
-
-	// Pass data to ICP
-	switch (m_NumPts)
-	{
-
-#define ICP_SET_POINTS2(X) case X: m_ICP##X->SetFixedPts(m_KinectFixed->GetLandmarkContainer()); m_ICP##X->SetMovingPts(m_KinectMoving->GetLandmarkContainer()); break;
-
-		ICP_SET_POINTS2(512)
-		ICP_SET_POINTS2(1024)
-		ICP_SET_POINTS2(2048)
-		ICP_SET_POINTS2(4096)
-		ICP_SET_POINTS2(8192)
-		ICP_SET_POINTS2(16384)
-	}
-
-	// Start ICP
-	RunICP();
-	
-	// Add moving points to volume
-	AddToVolume(false);
 }
 
 
@@ -405,9 +308,6 @@ FastICPPlugin::ChangeRGBWeight(int Value)
 void
 FastICPPlugin::RunICP()
 {
-	// TODO DELETE ME
-	bool BLAFU = m_Widget->m_CheckBoxAutoStitch->isChecked();
-
 	if ( !m_Widget->m_CheckBoxAnimate->isChecked() )
 	{
 		// Runtime statistics
@@ -431,9 +331,9 @@ FastICPPlugin::RunICP()
 							cudaEventElapsedTime(&ICPTime, start_event, stop_event);																			\
 						if ( !m_SyntheticDataMode )																												\
 							m_KinectMoving->TransformPts(m_ICP##X->GetTransformationMatrixContainer());															\
-						if ( m_SyntheticDataMode || ( !m_SyntheticDataMode && m_ShowLandmarks ) && !BLAFU )														\
+						if ( m_SyntheticDataMode || ( !m_SyntheticDataMode && m_ShowLandmarks ) )																\
 							CopyFloatDataToActor(m_ICP##X->GetMovingPts(), m_NumPts, m_ActorMoving);															\
-						if ( !m_SyntheticDataMode && !m_ShowLandmarks && !BLAFU )																				\
+						if ( !m_SyntheticDataMode && !m_ShowLandmarks )																							\
 							CopyFloatDataToActor(m_KinectMoving->GetPtsContainer()->GetBufferPointer(), KINECT_IMAGE_WIDTH*KINECT_IMAGE_HEIGHT, m_ActorMoving);	\
 						break;	
 	
@@ -449,21 +349,20 @@ FastICPPlugin::RunICP()
 		float TimePerIter = ICPTime/static_cast<float>(NumIter);
 		LOG_DEB("ICP: " << ICPTime << "ms. Iterations: " << NumIter << " => " << TimePerIter << "ms/iter");
 
-		if (!BLAFU)
-		{
-			// Plot lines
-			PlotCorrespondenceLinesWrapper();
+		// Plot lines
+		PlotCorrespondenceLinesWrapper();
 
-			emit UpdateGUI();
-		}
+		emit UpdateGUI();
 	}
-	else if (!BLAFU)
+	else
 	{
 		if ( !m_SyntheticDataMode && !m_Widget->m_CheckBoxShowLandmarks->isChecked() )
 		{
 			LOG_DEB("Animation for entire Kinect image is not implemented, try landmarks only or synthetic data");
 			return;
 		}
+
+		m_Widget->m_GroupBoxControls->setEnabled(false);
 
 		// Initialize ICP first
 		switch (m_NumPts) 
@@ -483,6 +382,11 @@ FastICPPlugin::RunICP()
 		bool AnotherIteration = true;
 		while (AnotherIteration)
 		{
+			#ifdef WIN32
+			QTime Timer;
+			Timer.start();
+			#endif
+
 			switch (m_NumPts)
 			{
 
@@ -510,11 +414,17 @@ FastICPPlugin::RunICP()
 
 			// Force Qt event processing now (required for animation effect)
 			QApplication::processEvents();
+
+			#ifdef WIN32
+			bool SlowMotion = m_Widget->m_CheckBoxAnimateICPSlowMotion->isChecked();
+			int MaxSleepTime = SlowMotion ? 1000/15 : 1000/60; // maximum of 15 fps or 60 fps respectively
+			int TimeLeftToSleep = MaxSleepTime - Timer.elapsed();
+			if (TimeLeftToSleep > 0)
+				Sleep(TimeLeftToSleep);
+			#endif
 		}
-	} 
-	else
-	{
-		LOG_DEB("BLAFU <- reminder to rewrite this section");
+
+		m_Widget->m_GroupBoxControls->setEnabled(true);
 	}
 }
 
@@ -854,91 +764,6 @@ FastICPPlugin::ToggleShowLandmarks()
 		CopyFloatDataToActor(m_KinectFixed->GetPtsContainer()->GetBufferPointer(), KINECT_IMAGE_WIDTH*KINECT_IMAGE_HEIGHT, m_ActorFixed);
 		CopyFloatDataToActor(m_KinectMoving->GetPtsContainer()->GetBufferPointer(), KINECT_IMAGE_WIDTH*KINECT_IMAGE_HEIGHT, m_ActorMoving);
 	}
-
-	emit UpdateGUI();
-}
-
-
-//----------------------------------------------------------------------------
-void
-FastICPPlugin::AddToVolume(bool Visualize)
-{
-	/*float Runtime = 0.f;
-	cudaEvent_t start_event, stop_event;
-	cudaEventCreateWithFlags(&start_event, cudaEventBlockingSync);
-	cudaEventCreateWithFlags(&stop_event, cudaEventBlockingSync);
-	cudaEventRecord(start_event, 0);*/
-
-	m_Volume->AddPoints(m_KinectMoving->GetPtsContainer());
-
-	/*cudaEventRecord(stop_event, 0);                                                
-	cudaEventSynchronize(stop_event);                        
-	cudaEventElapsedTime(&Runtime , start_event, stop_event);                            
-
-	LOG_DEB("AddToVolume(): " << Runtime << "ms");*/
-
-	if (Visualize)
-	{
-		VisualizeVolume();
-	}
-}
-
-
-//----------------------------------------------------------------------------
-void
-FastICPPlugin::SaveVolume()
-{
-	QString FileName = QFileDialog::getSaveFileName(this->m_Widget,
-		tr("Save Volume"), "C:/_DATA/volume.mha", tr("MetaImage Files (*.mha)"));
-
-	if (!FileName.isEmpty())
-	{
-		// Use ITK for file writing
-		typedef itk::ImageFileWriter<VolumeManager> WriterType;
-		WriterType::Pointer writer = WriterType::New();
-		writer->SetFileName(FileName.toStdString().c_str());
-		writer->SetInput(m_Volume);
-		writer->Update();
-
-		// Compute filesize
-		std::ifstream InStream(FileName.toStdString().c_str());
-		InStream.seekg(0, std::ios::end);
-		std::ios::pos_type pos = InStream.tellg();
-		float FileSize = static_cast<float>(pos)/1024.f/1024.f;
-
-		LOG_DEB("Volume saved: " << FileName.toStdString().c_str() << " (" << FileSize << " MiB)");
-	}
-}
-
-
-//----------------------------------------------------------------------------
-void
-FastICPPlugin::ResetVolume()
-{
-	// Set all voxels to 0
-	m_Volume->ResetVolume();
-
-	// Remove all points from volume actor
-	vtkSmartPointer<vtkPolyData> EmptyPolyData = vtkSmartPointer<vtkPolyData>::New();
-	m_ActorVolumeAsPointCloud->SetData(EmptyPolyData, true);
-
-	emit UpdateGUI();
-}
-
-
-//----------------------------------------------------------------------------
-void
-FastICPPlugin::VisualizeVolume()
-{
-	// Visualize
-	unsigned long Count;
-	float* tmp = m_Volume->GetOccupiedPoints(Count);
-
-	CopyFloatDataToActor(tmp, Count, m_ActorVolumeAsPointCloud);
-
-	// Reset camera
-	if (m_Widget->m_CheckBoxAutoResetCamera->isChecked() && !m_Widget->m_CheckBoxAutoStitch->isChecked())
-		m_Widget->m_VisualizationWidget3DVolume->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->ResetCamera();	
 
 	emit UpdateGUI();
 }

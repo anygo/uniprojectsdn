@@ -155,8 +155,8 @@ DataGenerator::GenerateData()
 				m_FixedPts->GetBufferPointer()[i*ICP_DATA_DIM+5] = 0;
 
 				m_MovingPts->GetBufferPointer()[i*ICP_DATA_DIM+3] = 0;
-				m_MovingPts->GetBufferPointer()[i*ICP_DATA_DIM+4] = 0;
-				m_MovingPts->GetBufferPointer()[i*ICP_DATA_DIM+5] = 255;
+				m_MovingPts->GetBufferPointer()[i*ICP_DATA_DIM+4] = 200;
+				m_MovingPts->GetBufferPointer()[i*ICP_DATA_DIM+5] = 0;
 			}
 		}
 	}

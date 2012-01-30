@@ -5,8 +5,6 @@
 #include "ritkRImage.h"
 #include "ritkRImageActorPipeline.h"
 
-#include "vtkSmartPointer.h"
-
 
 /**	@class		DataGenerator
  *	@brief		Class that generates synthetic data

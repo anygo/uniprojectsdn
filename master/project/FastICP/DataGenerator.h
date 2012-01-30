@@ -12,15 +12,29 @@
  *	This is a class that generates two randomly distributed RGB-colored 3-D point sets that are both identical, except
  *	that the second point set can be transformed and made noisy.
  */
-class DataGenerator
+class DataGenerator : public itk::Object
 {
+public:
+	/**	@name Standard ITK typedefs */
+	//@{
+	typedef DataGenerator									Self;
+	typedef itk::Object										Superclass;
+	typedef itk::SmartPointer<Self>							Pointer;
+	typedef itk::SmartPointer<const Self>					ConstPointer;
+	//@}
+
+	/// Object creation
+	itkNewMacro(Self);
+
+	/// RTTI
+	itkTypeMacro(OpenGLSkeletonEntity, itk::Object);
+
 	/**	@name CUDA memory containers */
 	//@{
 	typedef ritk::CudaRegularMemoryImportImageContainerF DatasetContainer;
 	typedef ritk::CudaRegularMemoryImportImageContainerF MatrixContainer;
 	//@}
 
-public:
 	/// Constructor 
 	DataGenerator();
 

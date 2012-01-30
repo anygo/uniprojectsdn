@@ -2,11 +2,6 @@
 #include "ritkRGBRImage.h"
 #include "defs.h"
 
-#include "vtkPolyData.h"
-#include "vtkPoints.h"
-#include "vtkPointData.h"
-#include "vtkCellData.h"
-#include "vtkDataArray.h"
 #include "itkImageRegionConstIterator.h"
 
 
